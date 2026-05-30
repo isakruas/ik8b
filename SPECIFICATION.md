@@ -37,13 +37,13 @@ Line comments start with `#` and continue to the end of the line.
 The reserved keywords are:
 
 ```ik
-const mut imut ram eeprom flash loop return import switch namespace
+const mut imut ram eeprom flash loop return import switch namespace ptr str
 ```
 
 The primitive type names are:
 
 ```ik
-u8 u16 void
+u8 u16 i8 i16 bool char r8 r16 void
 ```
 
 Boolean literals are lexical aliases:
@@ -137,16 +137,32 @@ supported.
 
 ### 5.1 Types
 
-The scalar integer types are:
+The primitive scalar types are:
 
 | Type | Width | Semantics |
 |---|---:|---|
 | `u8` | 8 bits | Unsigned byte, wrapping modulo 256. |
 | `u16` | 16 bits | Unsigned word, wrapping modulo 65536, little-endian in memory. |
+| `i8` | 8 bits | Signed integer, range `[-128, 127]`. |
+| `i16` | 16 bits | Signed integer, range `[-32768, 32767]`, little-endian in memory. |
+| `bool` | 8 bits | Boolean type representing `true` (1) or `false` (0). |
+| `char` | 8 bits | Single character literal or byte representation. |
+| `r8` | 8 bits | CPU register reference mapping directly to one of `R0`..`R31`. |
+| `r16` | 16 bits | CPU register pair reference mapping directly to a register pair. |
 | `void` | no value | Function return type only. |
 
-Array types are written on variable declarations as `u8[N]` or `u16[N]`, where
-`N` is a numeric literal.
+The context/pointer-aware complex types are:
+
+- **Pointer Types (`ptr <space> <pointee_type>`)**:
+  References a memory address in the specified pointer space (`ram`, `eeprom`, or `flash`) pointing to a value of `<pointee_type>`. Examples:
+  - `ptr ram u8` (pointer to mutable `u8` in SRAM)
+  - `ptr flash u16` (pointer to constant `u16` in Program Flash)
+  - `ptr eeprom u8` (pointer to persistent `u8` in EEPROM)
+
+- **String Types (`str ram`)**:
+  References a mutable string in SRAM (`ram`).
+
+Array types are written as `Type[N]`, where `Type` is any valid base type and `N` is a numeric literal. Example: `u8[16]`, `i16[4]`.
 
 ### 5.2 Constants
 

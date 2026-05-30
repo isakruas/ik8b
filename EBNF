@@ -95,7 +95,15 @@ VariableIdentifier   ::= "$" Identifier
 FunctionIdentifier   ::= "@" Identifier
 RegisterIdentifier   ::= "%" Identifier
 
-Type                 ::= "u8" | "u16" | "void"
+Type                 ::= ( PrimitiveType | PointerType | StringType ) [ "[" Number "]" ]
+
+PrimitiveType        ::= "u8" | "u16" | "i8" | "i16" | "bool" | "char" | "r8" | "r16" | "void"
+
+PointerType          ::= "ptr" PointerSpace Type
+
+StringType           ::= "str" "ram"
+
+PointerSpace         ::= "ram" | "eeprom" | "flash"
 
 Identifier           ::= ( Letter | "_" ) { Letter | Digit | "_" | "/" | "." }
 

@@ -121,6 +121,25 @@ pub struct CodeGenerator {
     leaf_functions: std::collections::HashSet<String>,
     func_bodies: std::collections::HashMap<String, (Vec<(String, String)>, String, Vec<Stmt>)>,
     imut_constants: HashMap<String, i64>,
+    // Names of variables whose declared type is signed (i8/i16/r8/r16). Width is normalized to
+    // u8/u16 in `variables`, so signedness is tracked here and consulted only where instruction
+    // selection differs (comparisons, division/modulo, sign-extension, constant folding).
+    signed_vars: std::collections::HashSet<String>,
+    // Functions whose return type is signed.
+    signed_funcs: std::collections::HashSet<String>,
+    // Fixed-point variables and their fractional-bit count (r8 -> 4, r16 -> 8). Used to apply
+    // scale corrections on `*` and `/`. Fixed-point types are also signed (tracked above).
+    fixed_vars: HashMap<String, u8>,
+    fixed_funcs: HashMap<String, u8>,
+    ptr_funcs: HashMap<String, (String, String)>,
+    str_funcs: HashMap<String, String>,
+    // Pointer variables: name -> (target memory space "ram"/"flash"/"eeprom", pointee type).
+    // Width is normalized to u16 (a 16-bit address) in `variables`.
+    ptr_vars: HashMap<String, (String, String)>,
+    // String variables: name -> storage space ("ram").
+    str_vars: HashMap<String, String>,
+    // Intern pool for string literals materialized in SRAM: literal bytes -> base address.
+    string_pool: HashMap<String, u16>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -158,6 +177,15 @@ impl CodeGenerator {
             func_bodies: std::collections::HashMap::new(),
             total_registers_used: std::collections::HashSet::new(),
             imut_constants: HashMap::new(),
+            signed_vars: std::collections::HashSet::new(),
+            signed_funcs: std::collections::HashSet::new(),
+            fixed_vars: HashMap::new(),
+            fixed_funcs: HashMap::new(),
+            ptr_funcs: HashMap::new(),
+            str_funcs: HashMap::new(),
+            ptr_vars: HashMap::new(),
+            str_vars: HashMap::new(),
+            string_pool: HashMap::new(),
         }
     }
 
@@ -204,8 +232,8 @@ impl CodeGenerator {
 
     /// Emits hardware register read protocol to load byte from EEPROM address `addr` into `target`.
     fn emit_eeprom_read(&mut self, addr: u16, target: u8) -> Result<(), String> {
-        if matches!(self.target_core, TargetCore::AVRxt | TargetCore::AVRxm) {
-            return Err("Memory Error: imut storage is not supported on AVRxt/AVRxm architecture cores".to_string());
+        if matches!(self.target_core, TargetCore::AVRxt | TargetCore::AVRxm | TargetCore::AVRrc) {
+            return Err("Memory Error: imut storage is not supported on AVRxt/AVRxm/AVRrc architecture cores".to_string());
         }
         // 1. Wait for completion of previous write: SBIC 0x1F, 1 ; RJMP -2
         self.emit(Pass1Inst::Op(0x99F9)); // SBIC 0x1F, 1
@@ -245,8 +273,8 @@ impl CodeGenerator {
     }
 
     fn emit_eeprom_write(&mut self, addr: u16, src: u8) -> Result<(), String> {
-        if matches!(self.target_core, TargetCore::AVRxt | TargetCore::AVRxm) {
-            return Err("Memory Error: imut storage is not supported on AVRxt/AVRxm architecture cores".to_string());
+        if matches!(self.target_core, TargetCore::AVRxt | TargetCore::AVRxm | TargetCore::AVRrc) {
+            return Err("Memory Error: imut storage is not supported on AVRxt/AVRxm/AVRrc architecture cores".to_string());
         }
         // 1. Wait for completion of previous write: SBIC 0x1F, 1 ; RJMP -2
         self.emit(Pass1Inst::Op(0x99F9)); // SBIC 0x1F, 1
@@ -290,8 +318,52 @@ impl CodeGenerator {
         // 4. Trigger write: SBI 0x1F, 2 (EEMPE) followed immediately by SBI 0x1F, 1 (EEPE)
         self.emit(Pass1Inst::Op(0x9AFA)); // SBI 0x1F, 2
         self.emit(Pass1Inst::Op(0x9AF9)); // SBI 0x1F, 1
-        self.emit(Pass1Inst::Op(0x98F9)); // CBI 0x1F, 1 (EEPE) - Simulator compatibility helper
 
+        Ok(())
+    }
+
+    /// Reads one byte from EEPROM at runtime address in Z (R30:R31) into `target`.
+    fn emit_eeprom_read_z(&mut self, target: u8) -> Result<(), String> {
+        if matches!(self.target_core, TargetCore::AVRxt | TargetCore::AVRxm | TargetCore::AVRrc) {
+            return Err("Memory Error: EEPROM access is not supported on AVRxt/AVRxm/AVRrc architecture cores".to_string());
+        }
+        // Wait for any previous write to complete.
+        self.emit(Pass1Inst::Op(0x99F9)); // SBIC 0x1F, 1
+        self.emit(Pass1Inst::Op(0xCFFE)); // RJMP -2
+
+        // EEARL <- ZL (R30), EEARH <- ZH (R31)
+        let out_eearl = 0xB800 | ((0x21 & 0x30) << 5) | ((30u16) << 4) | (0x21 & 0x0F);
+        let out_eearh = 0xB800 | ((0x22 & 0x30) << 5) | ((31u16) << 4) | (0x22 & 0x0F);
+        self.emit(Pass1Inst::Op(out_eearl));
+        self.emit(Pass1Inst::Op(out_eearh));
+
+        // Trigger read and fetch byte from EEDR.
+        self.emit(Pass1Inst::Op(0x9AF8)); // SBI 0x1F, 0
+        let in_eedr = 0xB000 | ((0x20 & 0x30) << 5) | ((target as u16) << 4) | (0x20 & 0x0F);
+        self.emit(Pass1Inst::Op(in_eedr));
+        Ok(())
+    }
+
+    /// Writes one byte from `src` to EEPROM at runtime address in Z (R30:R31).
+    fn emit_eeprom_write_z(&mut self, src: u8) -> Result<(), String> {
+        if matches!(self.target_core, TargetCore::AVRxt | TargetCore::AVRxm | TargetCore::AVRrc) {
+            return Err("Memory Error: EEPROM access is not supported on AVRxt/AVRxm/AVRrc architecture cores".to_string());
+        }
+        // Wait for any previous write to complete.
+        self.emit(Pass1Inst::Op(0x99F9)); // SBIC 0x1F, 1
+        self.emit(Pass1Inst::Op(0xCFFE)); // RJMP -2
+
+        // EEARL <- ZL (R30), EEARH <- ZH (R31), EEDR <- src
+        let out_eearl = 0xB800 | ((0x21 & 0x30) << 5) | ((30u16) << 4) | (0x21 & 0x0F);
+        let out_eearh = 0xB800 | ((0x22 & 0x30) << 5) | ((31u16) << 4) | (0x22 & 0x0F);
+        let out_eedr = 0xB800 | ((0x20 & 0x30) << 5) | ((src as u16) << 4) | (0x20 & 0x0F);
+        self.emit(Pass1Inst::Op(out_eearl));
+        self.emit(Pass1Inst::Op(out_eearh));
+        self.emit(Pass1Inst::Op(out_eedr));
+
+        // EEMPE then EEPE.
+        self.emit(Pass1Inst::Op(0x9AFA)); // SBI 0x1F, 2
+        self.emit(Pass1Inst::Op(0x9AF9)); // SBI 0x1F, 1
         Ok(())
     }
 
@@ -442,6 +514,14 @@ impl CodeGenerator {
             }
         }
 
+        // Stage 0C.5: lower fractional literals to scaled fixed-point integers before any
+        // integer-only constant folding runs.
+        for node in &mut ast {
+            if let ASTNode::Func { params, ret_ty, body, .. } = node {
+                resolve_fixed_literals_func(params, ret_ty, body)?;
+            }
+        }
+
         // Stage 0D: constant propagation on rewritten AST.
         for node in &mut ast {
             if let ASTNode::Func { body, .. } = node {
@@ -456,17 +536,45 @@ impl CodeGenerator {
         for node in &ast {
             match node {
                 ASTNode::Const { name, ty, value } => {
-                    if ty == "u8" && (*value < 0 || *value > 255) {
-                        return Err(format!("Constant {} value {} overflows type u8 (0..255)", name, value));
+                    validate_type(ty)?;
+                    match ty.as_str() {
+                        "u8" if *value < 0 || *value > 255 =>
+                            return Err(format!("Constant {} value {} overflows type u8 (0..255)", name, value)),
+                        "u16" if *value < 0 || *value > 65535 =>
+                            return Err(format!("Constant {} value {} overflows type u16 (0..65535)", name, value)),
+                        "i8" if *value < -128 || *value > 127 =>
+                            return Err(format!("Constant {} value {} overflows type i8 (-128..127)", name, value)),
+                        "i16" if *value < -32768 || *value > 32767 =>
+                            return Err(format!("Constant {} value {} overflows type i16 (-32768..32767)", name, value)),
+                        _ => {}
                     }
-                    if ty == "u16" && (*value < 0 || *value > 65535) {
-                        return Err(format!("Constant {} value {} overflows type u16 (0..65535)", name, value));
+                    if is_signed_type(ty) {
+                        self.signed_vars.insert(name.clone());
                     }
                     self.constants.insert(name.clone(), *value);
                 }
                 ASTNode::Func { name, params, ret_ty, .. } => {
-                    let param_tys: Vec<String> = params.iter().map(|(_, ty)| ty.clone()).collect();
-                    self.functions.insert(name.clone(), (param_tys, ret_ty.clone()));
+                    for (_, pty) in params {
+                        validate_type(pty)?;
+                    }
+                    validate_type(ret_ty)?;
+                    if is_signed_type(ret_ty) {
+                        self.signed_funcs.insert(name.clone());
+                    }
+                    if let Some(f) = fixed_frac_of_type(ret_ty) {
+                        self.fixed_funcs.insert(name.clone(), f);
+                    }
+                    if let Some(rest) = ret_ty.strip_prefix("ptr ") {
+                        let mut parts = rest.splitn(2, ' ');
+                        let space = parts.next().unwrap_or("ram").to_string();
+                        let pointee = parts.next().unwrap_or("u8").to_string();
+                        self.ptr_funcs.insert(name.clone(), (space, pointee));
+                    }
+                    if let Some(space) = ret_ty.strip_prefix("str ") {
+                        self.str_funcs.insert(name.clone(), space.to_string());
+                    }
+                    let param_tys: Vec<String> = params.iter().map(|(_, ty)| normalize_width_type(ty)).collect();
+                    self.functions.insert(name.clone(), (param_tys, normalize_width_type(ret_ty)));
                 }
             }
         }
@@ -568,14 +676,17 @@ impl CodeGenerator {
         }
 
         // 2. Collect all variable declarations and their types
+        // Types are normalized to their width-equivalent (i16/r16 -> u16, i8/r8 -> u8) so that
+        // register allocation and SRAM sizing treat signed/fixed-point vars at the correct width
+        // (16-bit vars must receive register *pairs*).
         let mut decl_types: HashMap<String, String> = HashMap::new();
         for (pn, pt) in params {
-            decl_types.insert(pn.clone(), pt.clone());
+            decl_types.insert(pn.clone(), normalize_width_type(pt));
         }
         let mut decls_list = Vec::new();
         collect_decls(body, &mut decls_list);
         for (nm, ty) in decls_list {
-            decl_types.insert(nm, ty);
+            decl_types.insert(nm, normalize_width_type(&ty));
         }
 
         // 3. Construct CFG and Liveness Analysis
@@ -596,10 +707,32 @@ impl CodeGenerator {
         let (colors, coloring_saves) = color_graph(&graph, &decl_types, &reserved_regs);
         self.var_homes = colors;
 
+        // Variables whose address is taken must be in SRAM (a register home has no address).
+        let mut address_taken = std::collections::HashSet::new();
+        collect_address_taken_stmts(body, &mut address_taken);
+        for name in &address_taken {
+            self.var_homes.remove(name);
+        }
+
+        // Pointer operands used by dereference expressions are forced to SRAM as well. Keeping
+        // pointer values in memory avoids subtle register-home aliasing across nested expression
+        // evaluation and makes `*ptr` semantics stable.
+        let mut pointer_operands = std::collections::HashSet::new();
+        collect_pointer_operand_vars(body, &mut pointer_operands);
+        for name in &pointer_operands {
+            self.var_homes.remove(name);
+        }
+        let has_pointer_ops = !pointer_operands.is_empty();
+        if has_pointer_ops {
+            self.var_homes.clear();
+        }
+
         // Combine loop bounds and coloring registers to preserve callee-saved registers
-        for r in coloring_saves {
-            if !saves.contains(&r) {
-                saves.push(r);
+        if !has_pointer_ops {
+            for r in coloring_saves {
+                if !saves.contains(&r) {
+                    saves.push(r);
+                }
             }
         }
 
@@ -683,6 +816,23 @@ impl CodeGenerator {
         // Move incoming parameters from the argument registers into their homes.
         let mut reg_idx = 24u8;
         for (param_name, param_ty) in params {
+            if is_signed_type(param_ty) {
+                self.signed_vars.insert(param_name.clone());
+            }
+            if let Some(f) = fixed_frac_of_type(param_ty) {
+                self.fixed_vars.insert(param_name.clone(), f);
+            }
+            if let Some(rest) = param_ty.strip_prefix("ptr ") {
+                let mut parts = rest.splitn(2, ' ');
+                let space = parts.next().unwrap_or("ram").to_string();
+                let pointee = parts.next().unwrap_or("u8").to_string();
+                self.ptr_vars.insert(param_name.clone(), (space, pointee));
+            }
+            if let Some(space) = param_ty.strip_prefix("str ") {
+                self.str_vars.insert(param_name.clone(), space.to_string());
+            }
+            let norm_param = normalize_width_type(param_ty);
+            let param_ty: &str = &norm_param;
             let addr = self.allocate_var(param_name, param_ty, true)?;
             let home = self.var_homes.get(param_name).copied();
             if param_ty == "u8" {
@@ -730,6 +880,389 @@ impl CodeGenerator {
     /// Precondition:
     /// - Variable was already declared and registered in `self.variables`.
     ///
+    /// Negates an 8-bit two's-complement value in `r`.
+    fn emit_neg8(&mut self, r: u8) {
+        self.emit(Pass1Inst::Op(0x9401 | ((r as u16) << 4))); // NEG r
+    }
+
+    /// Negates a 16-bit two's-complement value held in `lo:hi` (requires hi in r16..r31).
+    fn emit_neg16(&mut self, lo: u8, hi: u8) {
+        self.emit(Pass1Inst::Op(0x9400 | ((hi as u16) << 4)));       // COM hi
+        self.emit(Pass1Inst::Op(0x9401 | ((lo as u16) << 4)));       // NEG lo
+        self.emit(Pass1Inst::Op(0x4F0F | (((hi - 16) as u16) << 4))); // SBCI hi, 0xFF
+    }
+
+    /// Replaces an 8-bit value in `r` with its absolute value (negate only when bit 7 is set).
+    fn emit_abs8(&mut self, r: u8) {
+        self.emit(Pass1Inst::Op(0xFC00 | ((r as u16) << 4) | 7)); // SBRC r, 7  (skip NEG if positive)
+        self.emit_neg8(r);
+    }
+
+    /// Conditionally negates the 8-bit value in `r` when bit 7 of register `sign` is set.
+    fn emit_cond_neg8(&mut self, r: u8, sign: u8) {
+        let skip = self.new_label("cneg8_skip");
+        self.emit(Pass1Inst::Op(0xFE00 | ((sign as u16) << 4) | 7)); // SBRS sign, 7
+        self.emit(Pass1Inst::RJumpL(skip.clone()));
+        self.emit_neg8(r);
+        self.emit(Pass1Inst::Label(skip));
+    }
+
+    /// Replaces a 16-bit value in `lo:hi` with its absolute value (negate only when hi bit 7 set).
+    fn emit_abs16(&mut self, lo: u8, hi: u8) {
+        let skip = self.new_label("abs16_skip");
+        self.emit(Pass1Inst::Op(0xFE00 | ((hi as u16) << 4) | 7)); // SBRS hi, 7 (skip RJMP if negative)
+        self.emit(Pass1Inst::RJumpL(skip.clone()));
+        self.emit_neg16(lo, hi);
+        self.emit(Pass1Inst::Label(skip));
+    }
+
+    /// Emits a fixed-point multiply `left * right` (both fixed-point, `frac` fractional bits),
+    /// leaving the scaled result in `target` (and `target+1` for r16). Requires a hardware
+    /// multiplier. r8 is Q4.4 (8x8 signed product, arithmetic `>>4`); r16 is Q8.8 (magnitudes
+    /// multiplied to a 32-bit product, `>>8`, sign reapplied).
+    fn emit_fixed_mul(&mut self, left: &Expr, right: &Expr, target: u8, ty: &str, frac: u8) -> Result<(), String> {
+        if !self.has_hw_mul() {
+            return Err("Memory Error: fixed-point multiply requires a hardware multiplier (unavailable on this core)".to_string());
+        }
+        let is16 = ty == "u16";
+        self.compile_expr(left, target, ty)?;
+        self.compile_expr(right, target + 2, ty)?;
+        if !is16 {
+            // r8 / Q4.4: signed 8x8 -> 16-bit product in R1:R0, arithmetic shift right by frac.
+            let d = (target - 16) as u16;
+            let r = (target + 2 - 16) as u16;
+            self.emit(Pass1Inst::Op(0x0200 | (d << 4) | r)); // MULS target, target+2
+            for _ in 0..frac {
+                self.emit(Pass1Inst::Op(0x9415)); // ASR R1
+                self.emit(Pass1Inst::Op(0x9407)); // ROR R0
+            }
+            self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, target, 0))); // MOV target, R0
+            self.emit(Pass1Inst::Op(0x2411));                               // EOR R1, R1
+            return Ok(());
+        }
+        // r16 / Q8.8. Capture result sign, take magnitudes, do an unsigned 16x16 -> 32 multiply,
+        // then >>8 keeps bytes 1..2 of the 32-bit product as the 16-bit result.
+        let (a0, a1, b0, b1) = (target, target + 1, target + 2, target + 3);
+        let (p0, p1, p2, p3) = (target + 4, target + 5, target + 6, target + 7);
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, p0, a1))); // MOV scr, a_hi  (scr = p0)
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2400, p0, b1))); // EOR scr, b_hi
+        self.emit(Pass1Inst::Op(0x920F | ((p0 as u16) << 4)));       // PUSH scr
+        self.emit_abs16(a0, a1);
+        self.emit_abs16(b0, b1);
+        // Unsigned 16x16 -> 32: product p3:p2:p1:p0.
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x9C00, a0, b0))); // MUL a0,b0
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, p0, 0)));  // MOV p0,R0
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, p1, 1)));  // MOV p1,R1
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x9C00, a1, b1))); // MUL a1,b1
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, p2, 0)));  // MOV p2,R0
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, p3, 1)));  // MOV p3,R1
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x9C00, a0, b1))); // MUL a0,b1
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0C00, p1, 0)));  // ADD p1,R0
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, p2, 1)));  // ADC p2,R1
+        self.emit(Pass1Inst::Op(0x2400));                            // CLR R0
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, p3, 0)));  // ADC p3,R0
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x9C00, a1, b0))); // MUL a1,b0
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0C00, p1, 0)));  // ADD p1,R0
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, p2, 1)));  // ADC p2,R1
+        self.emit(Pass1Inst::Op(0x2400));                            // CLR R0
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, p3, 0)));  // ADC p3,R0
+        self.emit(Pass1Inst::Op(0x2411));                            // EOR R1,R1
+        // >>8: result low = p1, result high = p2.
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, target, p1)));
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, target + 1, p2)));
+        self.emit(Pass1Inst::Op(0x900F | ((p0 as u16) << 4)));       // POP scr
+        self.emit_cond_neg16(target, target + 1, p0);
+        Ok(())
+    }
+
+    /// Emits fixed-point division `left / right` for signed fixed-point values.
+    ///
+    /// Math:
+    /// - Q4.4 (`r8`):  result = (left << 4) / right
+    /// - Q8.8 (`r16`): result = (left << 8) / right
+    ///
+    /// Implementation:
+    /// - `r8`: promote to 16-bit magnitudes, run restoring 16/16 division, keep low byte.
+    /// - `r16`: run restoring 24/16 division over magnitudes, keep low 16 bits.
+    /// - Sign is reapplied with two's-complement negation when needed.
+    fn emit_fixed_div(&mut self, left: &Expr, right: &Expr, target: u8, ty: &str, frac: u8) -> Result<(), String> {
+        let is16 = ty == "u16";
+        self.compile_expr(left, target, ty)?;
+        self.compile_expr(right, target + 2, ty)?;
+
+        if is16 {
+            // q0:q1:q2 is the dividend/quotient register window (24 bits), divisor is d0:d1.
+            let q0 = target;
+            let q1 = target + 1;
+            let d0 = target + 2;
+            let d1 = target + 3;
+            let q2 = target + 4;
+            let rem0 = target + 5;
+            let rem1 = target + 6;
+            let cnt = target + 7;
+
+            // Preserve quotient sign source across clobbering loop.
+            self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, q2, q1))); // MOV q2, left_hi
+            self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2400, q2, d1))); // EOR q2, right_hi
+            self.emit(Pass1Inst::Op(0x920F | ((q2 as u16) << 4)));       // PUSH sign
+
+            // Divide magnitudes.
+            self.emit_abs16(q0, q1);
+            self.emit_abs16(d0, d1);
+
+            // Build (left << frac) into q0:q1:q2. For Q8.8 we only use frac=8.
+            self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, q2, q1))); // MOV q2, q1
+            self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, q1, q0))); // MOV q1, q0
+            self.emit(Pass1Inst::Op(0xE000 | (((q0 - 16) as u16) << 4))); // LDI q0, 0
+            if frac > 8 {
+                for _ in 0..(frac - 8) {
+                    self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0C00, q0, q0))); // LSL q0
+                    self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, q1, q1))); // ROL q1
+                    self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, q2, q2))); // ROL q2
+                }
+            }
+
+            // Unsigned restoring 24/16 division (24 iterations).
+            self.emit(Pass1Inst::Op(0xE000 | (((rem0 - 16) as u16) << 4))); // LDI rem0, 0
+            self.emit(Pass1Inst::Op(0xE000 | (((rem1 - 16) as u16) << 4))); // LDI rem1, 0
+            self.emit(Pass1Inst::Op(0xE000 | 0x0108 | (((cnt - 16) as u16) << 4))); // LDI cnt, 24
+            let loop_start = self.new_label("fixdiv16_loop");
+            let skip_sub = self.new_label("fixdiv16_skip");
+            self.emit(Pass1Inst::Label(loop_start.clone()));
+            self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0C00, q0, q0)));   // LSL q0
+            self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, q1, q1)));   // ROL q1
+            self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, q2, q2)));   // ROL q2
+            self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, rem0, rem0))); // ROL rem0
+            self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, rem1, rem1))); // ROL rem1
+            self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1400, rem0, d0))); // CP rem0, d0
+            self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0400, rem1, d1))); // CPC rem1, d1
+            self.emit(Pass1Inst::BrbsL(0, skip_sub.clone()));              // BRCS skip
+            self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1800, rem0, d0))); // SUB rem0, d0
+            self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0800, rem1, d1))); // SBC rem1, d1
+            self.emit(Pass1Inst::Op(0x6001 | (((q0 - 16) as u16) << 4)));  // ORI q0, 1
+            self.emit(Pass1Inst::Label(skip_sub));
+            self.emit(Pass1Inst::Op(0x940A | ((cnt as u16) << 4)));        // DEC cnt
+            self.emit(Pass1Inst::BrbcL(1, loop_start));                    // BRNE loop
+
+            // Reapply sign on 16-bit result.
+            self.emit(Pass1Inst::Op(0x900F | ((q2 as u16) << 4))); // POP sign
+            self.emit_cond_neg16(q0, q1, q2);
+            return Ok(());
+        }
+
+        // r8/Q4.4 path using promoted 16-bit restoring division.
+        let q0 = target;
+        let q1 = target + 1;
+        let d0 = target + 2;
+        let d1 = target + 3;
+        let rem0 = target + 4;
+        let rem1 = target + 5;
+        let cnt = target + 6;
+
+        // Preserve quotient sign source.
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, d1, q0))); // MOV d1, left
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2400, d1, d0))); // EOR d1, right
+        self.emit(Pass1Inst::Op(0x920F | ((d1 as u16) << 4)));       // PUSH sign
+
+        // Divide magnitudes.
+        self.emit_abs8(q0);
+        self.emit_abs8(d0);
+
+        // Promote and scale: q1:q0 = (abs(left) << frac), d1:d0 = abs(right).
+        self.emit(Pass1Inst::Op(0xE000 | (((q1 - 16) as u16) << 4))); // LDI q1, 0
+        self.emit(Pass1Inst::Op(0xE000 | (((d1 - 16) as u16) << 4))); // LDI d1, 0
+        for _ in 0..frac {
+            self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0C00, q0, q0))); // LSL q0
+            self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, q1, q1))); // ROL q1
+        }
+
+        // Unsigned restoring 16/16 division (16 iterations).
+        self.emit(Pass1Inst::Op(0xE000 | (((rem0 - 16) as u16) << 4))); // LDI rem0, 0
+        self.emit(Pass1Inst::Op(0xE000 | (((rem1 - 16) as u16) << 4))); // LDI rem1, 0
+        self.emit(Pass1Inst::Op(0xE000 | 0x0100 | (((cnt - 16) as u16) << 4))); // LDI cnt, 16
+        let loop_start = self.new_label("fixdiv8_loop");
+        let skip_sub = self.new_label("fixdiv8_skip");
+        self.emit(Pass1Inst::Label(loop_start.clone()));
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0C00, q0, q0)));   // LSL q0
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, q1, q1)));   // ROL q1
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, rem0, rem0))); // ROL rem0
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, rem1, rem1))); // ROL rem1
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1400, rem0, d0))); // CP rem0, d0
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0400, rem1, d1))); // CPC rem1, d1
+        self.emit(Pass1Inst::BrbsL(0, skip_sub.clone()));              // BRCS skip
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1800, rem0, d0))); // SUB rem0, d0
+        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0800, rem1, d1))); // SBC rem1, d1
+        self.emit(Pass1Inst::Op(0x6001 | (((q0 - 16) as u16) << 4)));  // ORI q0, 1
+        self.emit(Pass1Inst::Label(skip_sub));
+        self.emit(Pass1Inst::Op(0x940A | ((cnt as u16) << 4)));        // DEC cnt
+        self.emit(Pass1Inst::BrbcL(1, loop_start));                    // BRNE loop
+
+        // Reapply sign on low byte.
+        self.emit(Pass1Inst::Op(0x900F | ((d1 as u16) << 4))); // POP sign
+        self.emit_cond_neg8(q0, d1);
+        Ok(())
+    }
+
+    /// Conditionally negates the 16-bit value in `lo:hi` when bit 7 of register `sign` is set.
+    fn emit_cond_neg16(&mut self, lo: u8, hi: u8, sign: u8) {
+        let skip = self.new_label("cneg16_skip");
+        self.emit(Pass1Inst::Op(0xFE00 | ((sign as u16) << 4) | 7)); // SBRS sign, 7
+        self.emit(Pass1Inst::RJumpL(skip.clone()));
+        self.emit_neg16(lo, hi);
+        self.emit(Pass1Inst::Label(skip));
+    }
+
+    /// Loads a 16-bit immediate into `target:target+1` (both registers must be in r16..r31).
+    fn emit_ldi16(&mut self, target: u8, val: u16) {
+        let lo = (val & 0xFF) as u8;
+        let hi = (val >> 8) as u8;
+        let d = (target - 16) as u16;
+        self.emit(Pass1Inst::Op(0xE000 | (((lo >> 4) & 0x0F) as u16) << 8 | (d << 4) | ((lo & 0x0F) as u16)));
+        let d2 = (target + 1 - 16) as u16;
+        self.emit(Pass1Inst::Op(0xE000 | (((hi >> 4) & 0x0F) as u16) << 8 | (d2 << 4) | ((hi & 0x0F) as u16)));
+    }
+
+    /// Returns pointer metadata `(space, pointee_type)` for expressions that preserve pointer
+    /// identity (variable refs, grouped/unary forms, and +/- integer arithmetic on pointers).
+    fn expr_pointer_info(&self, expr: &Expr) -> Option<(String, String)> {
+        match expr {
+            Expr::VarRef(name) => {
+                if let Some((space, pointee)) = self.ptr_vars.get(name) {
+                    Some((space.clone(), pointee.clone()))
+                } else if let Some(space) = self.str_vars.get(name) {
+                    Some((space.clone(), "u8".to_string()))
+                } else {
+                    None
+                }
+            }
+            Expr::UnaryOp { expr, .. } => self.expr_pointer_info(expr),
+            Expr::AddrOf(inner) => {
+                match &**inner {
+                    Expr::VarRef(name) => {
+                        let (_, ty, _) = self.variables.get(name)?;
+                        let space = if ty.starts_with("eeprom ") {
+                            "eeprom".to_string()
+                        } else if ty.starts_with("flash ") {
+                            "flash".to_string()
+                        } else {
+                            "ram".to_string()
+                        };
+                        let ty_clean = if let Some(rest) = ty.strip_prefix("eeprom ") {
+                            rest
+                        } else if let Some(rest) = ty.strip_prefix("flash ") {
+                            rest
+                        } else {
+                            ty.as_str()
+                        };
+                        let width16 = ty_clean.starts_with("u16");
+                        let pointee = if let Some(frac) = self.fixed_vars.get(name).copied() {
+                            if frac == 8 { "r16".to_string() } else { "r8".to_string() }
+                        } else if self.signed_vars.contains(name) {
+                            if width16 { "i16".to_string() } else { "i8".to_string() }
+                        } else if width16 {
+                            "u16".to_string()
+                        } else {
+                            "u8".to_string()
+                        };
+                        Some((space, pointee))
+                    }
+                    Expr::BinOp { left, op, .. } if op == "[]" => {
+                        if let Expr::VarRef(name) = &**left {
+                            let (_, ty, _) = self.variables.get(name)?;
+                            let space = if ty.starts_with("eeprom ") {
+                                "eeprom".to_string()
+                            } else if ty.starts_with("flash ") {
+                                "flash".to_string()
+                            } else {
+                                "ram".to_string()
+                            };
+                            let ty_clean = if let Some(rest) = ty.strip_prefix("eeprom ") {
+                                rest
+                            } else if let Some(rest) = ty.strip_prefix("flash ") {
+                                rest
+                            } else {
+                                ty.as_str()
+                            };
+                            let width16 = ty_clean.starts_with("u16");
+                            let pointee = if let Some(frac) = self.fixed_vars.get(name).copied() {
+                                if frac == 8 { "r16".to_string() } else { "r8".to_string() }
+                            } else if self.signed_vars.contains(name) {
+                                if width16 { "i16".to_string() } else { "i8".to_string() }
+                            } else if width16 {
+                                "u16".to_string()
+                            } else {
+                                "u8".to_string()
+                            };
+                            Some((space, pointee))
+                        } else {
+                            None
+                        }
+                    }
+                    _ => None,
+                }
+            }
+            Expr::BinOp { left, op, right } if op == "+" || op == "-" => {
+                match (self.expr_pointer_info(left), self.expr_pointer_info(right)) {
+                    (Some(p), None) => Some(p),
+                    (None, Some(p)) => Some(p),
+                    _ => None,
+                }
+            }
+            Expr::Call { name, .. } => {
+                if let Some((space, pointee)) = self.ptr_funcs.get(name) {
+                    Some((space.clone(), pointee.clone()))
+                } else if let Some(space) = self.str_funcs.get(name) {
+                    Some((space.clone(), "u8".to_string()))
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
+
+    /// Resolves the target memory space and pointee type of a dereference operand.
+    fn deref_target_info(&self, ptr_expr: &Expr) -> Result<(String, String), String> {
+        self.expr_pointer_info(ptr_expr).ok_or_else(|| {
+            "Cannot dereference expression: expected a pointer/string value".to_string()
+        })
+    }
+
+    /// Materializes a string literal as a NUL-terminated byte array in SRAM and returns its base
+    /// address. Reuses an existing allocation when the same literal appears again.
+    fn materialize_ram_string_literal(&mut self, lit: &str) -> Result<u16, String> {
+        if let Some(addr) = self.string_pool.get(lit).copied() {
+            return Ok(addr);
+        }
+
+        let bytes = lit.as_bytes();
+        let len_with_nul = bytes.len() + 1;
+        let backing_name = format!("$__strlit_{}", self.new_label("data"));
+        let backing_ty = format!("u8[{}]", len_with_nul);
+        let base = self.allocate_var(&backing_name, &backing_ty, true)?;
+
+        for (i, b) in bytes.iter().enumerate() {
+            self.compile_expr(&Expr::Literal(*b as i32), 16, "u8")?;
+            self.emit_sts_abs(base + i as u16, 16);
+        }
+        self.compile_expr(&Expr::Literal(0), 16, "u8")?;
+        self.emit_sts_abs(base + (len_with_nul as u16 - 1), 16);
+
+        self.string_pool.insert(lit.to_string(), base);
+        Ok(base)
+    }
+
+    /// Fills `target+1` when an 8-bit value is read into a 16-bit context. Unsigned values
+    /// zero-extend (`LDI 0`); signed values sign-extend by replicating bit 7 of the low byte.
+    fn emit_widen_high(&mut self, target: u8, signed: bool) {
+        let d = (target + 1 - 16) as u16;
+        self.emit(Pass1Inst::Op(0xE000 | (d << 4))); // LDI target+1, 0
+        if signed {
+            self.emit(Pass1Inst::Op(0xFC00 | ((target as u16) << 4) | 7)); // SBRC target, 7
+            self.emit(Pass1Inst::Op(0xEF0F | (d << 4)));                    // LDI target+1, 0xFF
+        }
+    }
+
     /// Postcondition:
     /// - `target` contains low byte; `target+1` is valid when `ctx_ty == "u16"`.
     fn read_var(&mut self, name: &str, target: u8, ctx_ty: &str) -> Result<(), String> {
@@ -737,11 +1270,12 @@ impl CodeGenerator {
             let ty_clean = if ctx_ty.starts_with("flash ") { &ctx_ty[6..] } else if ctx_ty.starts_with("eeprom ") { &ctx_ty[7..] } else { ctx_ty };
             return self.compile_expr(&Expr::Literal(val as i32), target, ty_clean);
         }
+        let signed = self.signed_vars.contains(name);
         let (addr, var_ty, _) = self.variables.get(name)
             .ok_or_else(|| format!("Undefined variable: {}", name))?;
         let addr = *addr;
         let var_ty = var_ty.clone();
-        
+
         if var_ty.starts_with("eeprom ") {
             let actual_ty = &var_ty[7..];
             if actual_ty == "u16" {
@@ -750,7 +1284,7 @@ impl CodeGenerator {
             } else {
                 self.emit_eeprom_read(addr, target)?;
                 if ctx_ty == "u16" {
-                    self.emit(Pass1Inst::Op(0xE000 | (((target + 1 - 16) as u16) << 4))); // LDI target+1, 0
+                    self.emit_widen_high(target, signed);
                 }
             }
             return Ok(());
@@ -766,7 +1300,7 @@ impl CodeGenerator {
                 let hi = self.encode_rd_rr(0x2C00, target + 1, h + 1);
                 self.emit(Pass1Inst::Op(hi));
             } else if ctx_ty == "u16" {
-                self.emit(Pass1Inst::Op(0xE000 | (((target + 1 - 16) as u16) << 4))); // LDI target+1, 0
+                self.emit_widen_high(target, signed);
             }
         } else if var_ty_clean == "u16" {
             self.emit_lds(target, addr)?;
@@ -774,7 +1308,7 @@ impl CodeGenerator {
         } else {
             self.emit_lds(target, addr)?;
             if ctx_ty == "u16" {
-                self.emit(Pass1Inst::Op(0xE000 | (((target + 1 - 16) as u16) << 4))); // LDI target+1, 0
+                self.emit_widen_high(target, signed);
             }
         }
         Ok(())
@@ -833,6 +1367,9 @@ impl CodeGenerator {
     /// - `self.variables[name]` is populated even for register-homed scalars (address 0 sentinel).
     fn allocate_var(&mut self, name: &str, ty: &str, is_mut: bool) -> Result<u16, String> {
         if ty.starts_with("eeprom ") {
+            if matches!(self.target_core, TargetCore::AVRxt | TargetCore::AVRxm | TargetCore::AVRrc) {
+                return Err("Memory Error: EEPROM storage is not supported on this core".to_string());
+            }
             let actual_ty = &ty[7..];
             let addr = self.eeprom_free_ptr;
             let size = if actual_ty.contains('[') && actual_ty.contains(']') {
@@ -977,6 +1514,13 @@ impl CodeGenerator {
         Ok(())
     }
 
+    /// Always emits an absolute STS store (2 words), bypassing OUT/STD-Y addressing modes.
+    /// Used for compiler-internal writes that must not depend on Y setup.
+    fn emit_sts_abs(&mut self, addr: u16, reg: u8) {
+        self.emit(Pass1Inst::Op(0x9200 | ((reg as u16) << 4)));
+        self.emit(Pass1Inst::Op(addr));
+    }
+
     // Load selection policy mirrors `emit_sts`:
     // 1) I/O space [0x20, 0x5F]  -> IN (1 word)
     // 2) Y-displacement window   -> LDD Y+q (1 word)
@@ -1013,18 +1557,40 @@ impl CodeGenerator {
     fn compile_stmt(&mut self, stmt: &Stmt) -> Result<(), String> {
         match stmt {
             Stmt::VarDecl { name, ty, expr, is_mut } => {
+                validate_type(ty)?;
+                let signed = is_signed_type(ty);
+                if signed {
+                    self.signed_vars.insert(name.clone());
+                }
+                if let Some(f) = fixed_frac_of_type(ty) {
+                    self.fixed_vars.insert(name.clone(), f);
+                }
+                if let Some(rest) = ty.strip_prefix("ptr ") {
+                    let mut parts = rest.splitn(2, ' ');
+                    let space = parts.next().unwrap_or("ram").to_string();
+                    let pointee = parts.next().unwrap_or("u8").to_string();
+                    self.ptr_vars.insert(name.clone(), (space, pointee));
+                }
+                if let Some(space) = ty.strip_prefix("str ") {
+                    self.str_vars.insert(name.clone(), space.to_string());
+                    if space == "flash" {
+                        return Err("Type Error: flash str variables are not yet supported by the code generator".to_string());
+                    }
+                }
+                let norm_ty = normalize_width_type(ty);
+                let ty: &str = &norm_ty;
                 let is_scalar_imut = !*is_mut && !ty.contains('[') && !ty.starts_with("eeprom");
                 let mut const_val = None;
                 if is_scalar_imut {
                     let ty_clean = if ty.starts_with("flash ") { &ty[6..] } else { ty };
-                    if let Some(v) = eval_const(expr, ty_clean, &self.imut_constants) {
+                    if let Some(v) = eval_const(expr, ty_clean, signed, &self.imut_constants) {
                         const_val = Some(v);
                     }
                 }
 
                 if let Some(v) = const_val {
                     self.imut_constants.insert(name.clone(), v);
-                    self.variables.insert(name.clone(), (0, ty.clone(), false));
+                    self.variables.insert(name.clone(), (0, ty.to_string(), false));
                 } else {
                     let addr = self.allocate_var(name, ty, *is_mut)?;
                     if ty.contains('[') {
@@ -1251,6 +1817,39 @@ impl CodeGenerator {
                             }
                         }
                     }
+                } else if let Expr::Deref(ref ptr_expr) = *target {
+                    // Write through a pointer: `value -> *$p`.
+                    if op != "->" {
+                        return Err("Compound assignment through a pointer is not supported".to_string());
+                    }
+                    let (space, pointee) = self.deref_target_info(ptr_expr)?;
+                    let pointee_u16 = pointee.starts_with("u16") || pointee.starts_with("i16") || pointee.starts_with("r16");
+                    let w = if pointee_u16 { "u16" } else { "u8" };
+                    self.compile_expr(expr, 16, w)?;                 // value in R16(:R17)
+                    self.compile_expr(ptr_expr, 30, "u16")?;         // address in Z
+                    match space.as_str() {
+                        "ram" => {
+                            if pointee_u16 {
+                                self.emit(Pass1Inst::Op(0x9201 | (16 << 4))); // ST Z+, R16
+                                self.emit(Pass1Inst::Op(0x8200 | (17 << 4))); // ST Z, R17
+                            } else {
+                                self.emit(Pass1Inst::Op(0x8200 | (16 << 4))); // ST Z, R16
+                            }
+                        }
+                        "eeprom" => {
+                            if pointee_u16 {
+                                self.emit_eeprom_write_z(16)?;
+                                self.emit_add_u16_imm(30, 1);
+                                self.emit_eeprom_write_z(17)?;
+                            } else {
+                                self.emit_eeprom_write_z(16)?;
+                            }
+                        }
+                        "flash" => {
+                            return Err("Cannot write through a flash pointer: program memory is read-only".to_string());
+                        }
+                        _ => return Err(format!("Unknown pointer space '{}'", space)),
+                    }
                 } else {
                     return Err("Invalid assignment target expression.".to_string());
                 }
@@ -1470,6 +2069,17 @@ impl CodeGenerator {
     fn infer_type(&self, expr: &Expr) -> String {
         match expr {
             Expr::Literal(v) => if *v > 255 || *v < 0 { "u16".to_string() } else { "u8".to_string() },
+            Expr::FloatLiteral(_) => "u16".to_string(),
+            // An address and a string handle are both 16-bit; a dereference has the pointee's width.
+            Expr::AddrOf(_) | Expr::StringLit(_) => "u16".to_string(),
+            Expr::Deref(inner) => {
+                if let Some((_, pointee)) = self.expr_pointer_info(inner) {
+                    if pointee.starts_with("u16") || pointee.starts_with("i16") || pointee.starts_with("r16") {
+                        return "u16".to_string();
+                    }
+                }
+                "u8".to_string()
+            }
             Expr::VarRef(name) => {
                 if name.starts_with('$') {
                     if let Some((_, t, _)) = self.variables.get(name) {
@@ -1508,14 +2118,85 @@ impl CodeGenerator {
         }
     }
 
-    /// Emits an unsigned comparison of `left <op> right`, leaving the result only in flags.
+    /// Structurally determines whether an expression evaluates to a signed value, so that the
+    /// backend can pick signed instruction variants (S-flag branches, signed division) without
+    /// threading sign through the width-typed `ty` string. An operation is signed if any operand
+    /// is signed (a signed variable, a signed array element, or a call to a signed-returning
+    /// function). Literals and hardware-register reads are unsigned.
+    fn expr_is_signed(&self, expr: &Expr) -> bool {
+        match expr {
+            Expr::VarRef(name) => name.starts_with('$') && self.signed_vars.contains(name),
+            Expr::UnaryOp { expr, .. } => self.expr_is_signed(expr),
+            Expr::BinOp { left, op, right } => {
+                if op == "[]" {
+                    if let Expr::VarRef(arr) = &**left {
+                        self.signed_vars.contains(arr)
+                    } else {
+                        false
+                    }
+                } else {
+                    self.expr_is_signed(left) || self.expr_is_signed(right)
+                }
+            }
+            Expr::Call { name, .. } => self.signed_funcs.contains(name),
+            Expr::Deref(inner) => {
+                if let Some((_, pointee)) = self.expr_pointer_info(inner) {
+                    return is_signed_type(&pointee);
+                }
+                false
+            }
+            _ => false,
+        }
+    }
+
+    /// Returns the fractional-bit count if an expression evaluates to a fixed-point value.
+    /// `+`/`-` preserve the operands' scale; `*`/`/` of two fixed operands also produce that scale
+    /// (the backend inserts the corresponding shift). A non-fixed operand makes the result non-fixed
+    /// for `+`/`-`, but `*`/`/` of fixed-by-scalar keeps the fixed scale.
+    fn expr_fixed_bits(&self, expr: &Expr) -> Option<u8> {
+        match expr {
+            Expr::VarRef(name) => self.fixed_vars.get(name).copied(),
+            Expr::Call { name, .. } => self.fixed_funcs.get(name).copied(),
+            Expr::Deref(inner) => {
+                if let Some((_, pointee)) = self.expr_pointer_info(inner) {
+                    return fixed_frac_of_type(&pointee);
+                }
+                None
+            }
+            Expr::UnaryOp { expr, .. } => self.expr_fixed_bits(expr),
+            Expr::BinOp { left, op, right } => {
+                if op == "[]" {
+                    if let Expr::VarRef(arr) = &**left {
+                        self.fixed_vars.get(arr).copied()
+                    } else {
+                        None
+                    }
+                } else if op == "*" || op == "/" {
+                    // fixed*fixed / fixed/fixed keep the scale; fixed-by-scalar also keeps it.
+                    self.expr_fixed_bits(left).or_else(|| self.expr_fixed_bits(right))
+                } else {
+                    // +, -, etc.: only fixed if both sides agree (use either side's scale).
+                    self.expr_fixed_bits(left).or_else(|| self.expr_fixed_bits(right))
+                }
+            }
+            _ => None,
+        }
+    }
+
+    /// Emits a comparison of `left <op> right`, leaving the result only in flags.
     /// Returns `(sreg_bit, true_when_set)`: branching when that SREG bit equals `true_when_set`
     /// is taken exactly when the comparison is TRUE. Operands are evaluated into r16/r18.
+    /// Relational operators select the unsigned carry flag (bit 0) or the signed flag
+    /// (bit 4, `N xor V`) depending on operand signedness.
     ///
     /// Postcondition:
     /// - No boolean value is materialized in general-purpose registers.
     /// - Caller may branch immediately using the returned `(bit,set)` pair.
     fn emit_comparison(&mut self, left: &Expr, op: &str, right: &Expr, ty: &str) -> Result<(u8, bool), String> {
+        // Relational ops branch on the carry flag (bit 0) for unsigned operands or the signed
+        // flag (bit 4, N xor V) for signed operands. Equality (==/!=) uses the zero flag either way.
+        let signed = self.expr_is_signed(left) || self.expr_is_signed(right);
+        let rel_bit = if signed { 4u8 } else { 0u8 };
         // Fast-path zero-comparison for u16: == 0 and != 0
         if ty == "u16" && matches!(op, "==" | "!=") {
             if let Expr::Literal(0) = right {
@@ -1547,10 +2228,10 @@ impl CodeGenerator {
                     let k = (*val & 0xFF) as u8;
                     self.emit(Pass1Inst::Op(0x3000 | (((k >> 4) & 0x0F) as u16) << 8 | (k & 0x0F) as u16)); // CPI r16, k
                     return Ok(match op {
-                        "==" => (1, true),   // BREQ
-                        "!=" => (1, false),  // BRNE
-                        "<"  => (0, true),   // BRLO/BRCS (C=1)
-                        ">=" => (0, false),  // BRSH/BRCC (C=0)
+                        "==" => (1, true),         // BREQ
+                        "!=" => (1, false),        // BRNE
+                        "<"  => (rel_bit, true),   // BRLO/BRCS (unsigned) or BRLT (signed)
+                        ">=" => (rel_bit, false),  // BRSH/BRCC (unsigned) or BRGE (signed)
                         _ => unreachable!(),
                     });
                 }
@@ -1578,8 +2259,8 @@ impl CodeGenerator {
         Ok(match base_op {
             "==" => (1, true),
             "!=" => (1, false),
-            "<"  => (0, true),
-            ">=" => (0, false),
+            "<"  => (rel_bit, true),
+            ">=" => (rel_bit, false),
             _ => return Err(format!("Unsupported comparison operator: {}", op)),
         })
     }
@@ -1684,7 +2365,7 @@ impl CodeGenerator {
     ///
     /// Arithmetic semantics:
     /// - Unsigned wrapping arithmetic (u8/u16) is preserved by construction.
-    /// - Constant folding mirrors runtime width masking via `mask_ty`.
+    /// - Constant folding mirrors runtime width masking via `fit_ty`.
     ///
     /// Register contract:
     /// - Result low byte is in `target`.
@@ -1694,15 +2375,104 @@ impl CodeGenerator {
         // Constant folding: collapse a fully literal arithmetic/bitwise subtree into a
         // single immediate, matching the runtime's type-width wrapping semantics.
         if !matches!(expr, Expr::Literal(_)) {
-            if let Some(v) = eval_const(expr, ty, &self.imut_constants) {
+            let signed = self.expr_is_signed(expr);
+            if let Some(v) = eval_const(expr, ty, signed, &self.imut_constants) {
                 return self.compile_expr(&Expr::Literal(v as i32), target, ty);
             }
         }
         match expr {
+            Expr::FloatLiteral(_) => {
+                return Err("Type Error: fractional literal is only valid as a fixed-point (r8/r16) initializer, assignment value, or comparison operand".to_string());
+            }
+            Expr::StringLit(lit) => {
+                if ty != "u16" {
+                    return Err("Type Error: string literal requires a 16-bit address context (u16/pointer/string handle)".to_string());
+                }
+                let addr = self.materialize_ram_string_literal(lit)?;
+                self.emit_ldi16(target, addr);
+                return Ok(());
+            }
+            Expr::AddrOf(inner) => {
+                // Materialize the 16-bit SRAM address of a scalar variable or array element.
+                match &**inner {
+                    Expr::VarRef(name) => {
+                        let (addr, _, _) = self.variables.get(name)
+                            .ok_or_else(|| format!("Cannot take address of unknown variable: {}", name))?;
+                        if self.var_homes.contains_key(name) {
+                            return Err(format!("Internal error: address-taken variable {} was register-homed", name));
+                        }
+                        let addr = *addr;
+                        self.emit_ldi16(target, addr);
+                    }
+                    Expr::BinOp { left, op, right } if op == "[]" => {
+                        if let Expr::VarRef(arr) = &**left {
+                            let (base, aty, _) = self.variables.get(arr)
+                                .ok_or_else(|| format!("Cannot take address of unknown array: {}", arr))?;
+                            let base = *base;
+                            let item_sz = if aty.starts_with("u16") { 2u16 } else { 1u16 };
+                            self.compile_expr(right, target, "u16")?;       // index in target:target+1
+                            if item_sz == 2 {
+                                self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0C00, target, target)));         // LSL lo
+                                self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, target + 1, target + 1))); // ROL hi
+                            }
+                            self.emit_add_u16_imm(target, base);
+                        } else {
+                            return Err("Address-of array indexing is only supported on direct array variables".to_string());
+                        }
+                    }
+                    _ => return Err("'&' (address-of) requires a variable or array element".to_string()),
+                }
+                return Ok(());
+            }
+            Expr::Deref(inner) => {
+                let (space, pointee) = self.deref_target_info(inner)?;
+                let pointee_u16 = pointee.starts_with("u16") || pointee.starts_with("i16") || pointee.starts_with("r16");
+                let pointee_signed = is_signed_type(&pointee);
+                // Load the pointer's 16-bit address into Z (R30:R31).
+                self.compile_expr(inner, 30, "u16")?;
+                match space.as_str() {
+                    "ram" => {
+                        if pointee_u16 {
+                            self.emit(Pass1Inst::Op(0x9001 | ((target as u16) << 4)));       // LD target, Z+
+                            self.emit(Pass1Inst::Op(0x8000 | (((target + 1) as u16) << 4))); // LD target+1, Z
+                        } else {
+                            self.emit(Pass1Inst::Op(0x8000 | ((target as u16) << 4)));        // LD target, Z
+                            if ty == "u16" {
+                                self.emit_widen_high(target, pointee_signed);
+                            }
+                        }
+                    }
+                    "flash" => {
+                        if pointee_u16 {
+                            self.emit(Pass1Inst::Op(0x9005 | ((target as u16) << 4)));       // LPM target, Z+
+                            self.emit(Pass1Inst::Op(0x9004 | (((target + 1) as u16) << 4))); // LPM target+1, Z
+                        } else {
+                            self.emit(Pass1Inst::Op(0x9004 | ((target as u16) << 4)));        // LPM target, Z
+                            if ty == "u16" {
+                                self.emit_widen_high(target, pointee_signed);
+                            }
+                        }
+                    }
+                    "eeprom" => {
+                        if pointee_u16 {
+                            self.emit_eeprom_read_z(target)?;
+                            self.emit_add_u16_imm(30, 1);
+                            self.emit_eeprom_read_z(target + 1)?;
+                        } else {
+                            self.emit_eeprom_read_z(target)?;
+                            if ty == "u16" {
+                                self.emit_widen_high(target, pointee_signed);
+                            }
+                        }
+                    }
+                    _ => return Err(format!("Unknown pointer space '{}'", space)),
+                }
+                return Ok(());
+            }
             Expr::Literal(val) => {
                 let val_lo = (val & 0xFF) as u8;
                 let val_hi = ((val >> 8) & 0xFF) as u8;
-                
+
                 let k_hi = (val_lo >> 4) & 0x0F;
                 let k_lo = val_lo & 0x0F;
                 let d = target - 16;
@@ -1734,10 +2504,8 @@ impl CodeGenerator {
                         if ty == "u8" {
                             self.emit(Pass1Inst::Op(0x9401 | ((target as u16) << 4))); // NEG target
                         } else if ty == "u16" {
-                            // In-place 16-bit negation: COM target+1, NEG target, SBCI target+1, 0xFF (3 cycles, 0 registers)
-                            self.emit(Pass1Inst::Op(0x9400 | (((target + 1) as u16) << 4))); // COM target+1
-                            self.emit(Pass1Inst::Op(0x9401 | ((target as u16) << 4)));       // NEG target
-                            self.emit(Pass1Inst::Op(0x40FF | (((target + 1 - 16) as u16) << 4))); // SBCI target+1, 0xFF
+                            // In-place 16-bit negation: COM target+1, NEG target, SBCI target+1, 0xFF.
+                            self.emit_neg16(target, target + 1);
                         }
                     }
                     "~" => {
@@ -1882,6 +2650,30 @@ impl CodeGenerator {
                     return Ok(());
                 }
 
+                // Signedness of this operation, used to select signed division/comparison forms.
+                let signed = self.expr_is_signed(left) || self.expr_is_signed(right);
+                let rel_bit = if signed { 4u8 } else { 0u8 };
+
+                // Fixed-point: a `*`/`/` between two fixed-point operands carries a scale correction
+                // (>>frac after multiply, <<frac before divide). Fixed-by-scalar is plain arithmetic.
+                let fixed_scale: Option<u8> = if op == "*" || op == "/" {
+                    match (self.expr_fixed_bits(left), self.expr_fixed_bits(right)) {
+                        (Some(f), Some(_)) => Some(f),
+                        _ => None,
+                    }
+                } else {
+                    None
+                };
+                if let Some(frac) = fixed_scale {
+                    if op == "*" {
+                        self.emit_fixed_mul(left, right, target, ty, frac)?;
+                        return Ok(());
+                    } else {
+                        self.emit_fixed_div(left, right, target, ty, frac)?;
+                        return Ok(());
+                    }
+                }
+
                 if let Expr::Literal(val) = **right {
                     if op == "+" {
                         self.compile_expr(left, target, ty)?;
@@ -1996,7 +2788,7 @@ impl CodeGenerator {
                                 return Ok(());
                             }
                         }
-                    } else if op == "/" {
+                    } else if op == "/" && !signed {
                         let uv = if ty == "u16" { (val as i64) & 0xFFFF } else { (val as i64) & 0xFF };
                         if uv == 1 {
                             self.compile_expr(left, target, ty)?;
@@ -2014,7 +2806,7 @@ impl CodeGenerator {
                             }
                             return Ok(());
                         }
-                    } else if op == "%" {
+                    } else if op == "%" && !signed {
                         let uv = if ty == "u16" { (val as i64) & 0xFFFF } else { (val as i64) & 0xFF };
                         if uv == 1 {
                             self.compile_expr(left, target, ty)?;
@@ -2034,7 +2826,7 @@ impl CodeGenerator {
                             }
                             return Ok(());
                         }
-                    } else if ["==", "!=", "<", ">", "<=", ">="].contains(&op.as_str()) && ty == "u8" {
+                    } else if ["==", "!=", "<", ">", "<=", ">="].contains(&op.as_str()) && ty == "u8" && !signed {
                         self.compile_expr(left, target, ty)?;
                         let k = (val & 0xFF) as u8;
                         self.emit(Pass1Inst::Op(0x3000 | (((k >> 4) & 0x0F) as u16) << 8 | ((target - 16) as u16) << 4 | (k & 0x0F) as u16)); // CPI target, val
@@ -2216,7 +3008,19 @@ impl CodeGenerator {
                         self.emit(Pass1Inst::Op(opc_mov));
                     }
                 } else if (op == "/" || op == "%") && ty == "u16" {
-                    // Restoring division, 16-bit unsigned.
+                    // Restoring division, 16-bit. For signed operands the magnitudes are divided
+                    // and the result sign is fixed up: quotient sign = sign(a) xor sign(b),
+                    // remainder sign = sign(a). The sign source is preserved on the stack across
+                    // the division because all scratch registers are clobbered.
+                    if signed {
+                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, target + 4, target + 1))); // MOV scr, a_hi
+                        if op == "/" {
+                            self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2400, target + 4, target + 3))); // EOR scr, b_hi
+                        }
+                        self.emit(Pass1Inst::Op(0x920F | (((target + 4) as u16) << 4))); // PUSH scr
+                        self.emit_abs16(target, target + 1);
+                        self.emit_abs16(target + 2, target + 3);
+                    }
                     // numerator a = target:target+1, denominator b = target+2:target+3.
                     let loop_start_label = self.new_label("div16_loop");
                     let skip_sub_label = self.new_label("div16_skip");
@@ -2244,8 +3048,22 @@ impl CodeGenerator {
                         self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, target, rem_lo)));     // MOV target, rem_lo
                         self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, target + 1, rem_hi))); // MOV target+1, rem_hi
                     }
+                    if signed {
+                        self.emit(Pass1Inst::Op(0x900F | (((target + 4) as u16) << 4))); // POP scr
+                        self.emit_cond_neg16(target, target + 1, target + 4);
+                    }
                 } else if op == "/" || op == "%" {
-                    // Restoring Division 8-bit Software Loop
+                    // Restoring Division 8-bit Software Loop. For signed operands, divide the
+                    // magnitudes and fix the result sign. The sign source lives in target+3, which
+                    // the unsigned loop (scratch target+4/target+5) leaves untouched.
+                    if signed {
+                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, target + 3, target))); // MOV scr, a
+                        if op == "/" {
+                            self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2400, target + 3, target + 2))); // EOR scr, b
+                        }
+                        self.emit_abs8(target);
+                        self.emit_abs8(target + 2);
+                    }
                     let loop_start_label = self.new_label("div_loop");
                     let skip_sub_label = self.new_label("div_skip");
 
@@ -2288,6 +3106,10 @@ impl CodeGenerator {
                         // MOV target, rem_reg (move remainder to target register)
                         let opc_mov = self.encode_rd_rr(0x2C00, target, rem_reg);
                         self.emit(Pass1Inst::Op(opc_mov));
+                    }
+                    if signed {
+                        self.emit(Pass1Inst::Op(0xFC00 | (((target + 3) as u16) << 4) | 7)); // SBRC scr, 7
+                        self.emit_neg8(target);                                              // NEG result
                     }
                 } else if op == "&" {
                     if ty == "u8" {
@@ -2339,10 +3161,10 @@ impl CodeGenerator {
                     };
 
                     match br_op {
-                        "==" => self.emit(Pass1Inst::BrbsL(1, true_label.clone())), // BREQ
-                        "!=" => self.emit(Pass1Inst::BrbcL(1, true_label.clone())), // BRNE
-                        "<" => self.emit(Pass1Inst::BrbsL(0, true_label.clone())),  // BRLO/BRCS
-                        ">=" => self.emit(Pass1Inst::BrbcL(0, true_label.clone())), // BRSH/BRCC
+                        "==" => self.emit(Pass1Inst::BrbsL(1, true_label.clone())),       // BREQ
+                        "!=" => self.emit(Pass1Inst::BrbcL(1, true_label.clone())),       // BRNE
+                        "<" => self.emit(Pass1Inst::BrbsL(rel_bit, true_label.clone())),  // BRLO/BRCS or BRLT
+                        ">=" => self.emit(Pass1Inst::BrbcL(rel_bit, true_label.clone())), // BRSH/BRCC or BRGE
                         _ => unreachable!(),
                     }
 
@@ -2354,7 +3176,7 @@ impl CodeGenerator {
                         self.emit(Pass1Inst::Op(0xE000 | ((d as u16) << 4))); // LDI target+1, 0
                     }
                     self.emit(Pass1Inst::RJumpL(end_label.clone()));
-                    
+
                     // True case
                     self.emit(Pass1Inst::Label(true_label));
                     let d = target - 16;
@@ -2604,22 +3426,135 @@ impl CodeGenerator {
 // -------------------------------------------------------------------------------------------------
 // Phase 2: Post-Lowering Utilities
 // -------------------------------------------------------------------------------------------------
-/// Masks a signed intermediate value to target unsigned width semantics.
+/// Validates that a declared type is something the code generator can actually lower.
 ///
-/// Postcondition:
-/// - Return is in `[0,255]` for `u8` and `[0,65535]` for `u16`.
-fn mask_ty(v: i64, ty: &str) -> i64 {
-    let ty_clean = if ty.starts_with("eeprom ") { &ty[7..] } else if ty.starts_with("flash ") { &ty[6..] } else { ty };
-    if ty_clean == "u16" { v & 0xFFFF } else { v & 0xFF }
+/// Supported families:
+/// - integer: `u8`, `u16`, `i8`, `i16`
+/// - fixed-point: `r8`, `r16`
+/// - aliases: `bool`, `char` (byte-wide; lowered as `u8`)
+/// - pointer/string wrappers: `ptr <space> <type>`, `str ram`
+///
+/// Storage qualifiers (`flash `/`eeprom `) and array suffixes (`[N]`) are stripped before
+/// inspecting the underlying base type.
+fn validate_type(ty: &str) -> Result<(), String> {
+    // Pointer types: "ptr <space> <pointee>"; string types: "str <space>".
+    if let Some(rest) = ty.strip_prefix("ptr ") {
+        let mut parts = rest.splitn(2, ' ');
+        let space = parts.next().unwrap_or("");
+        let pointee = parts.next().unwrap_or("");
+        if !matches!(space, "ram" | "flash" | "eeprom") {
+            return Err(format!("Type Error: pointer space must be ram/flash/eeprom, got '{}'", space));
+        }
+        return validate_type(pointee);
+    }
+    if let Some(space) = ty.strip_prefix("str ") {
+        if !matches!(space, "ram") {
+            return Err(format!("Type Error: string space must be ram, got '{}'", space));
+        }
+        return Ok(());
+    }
+    let base = if let Some(rest) = ty.strip_prefix("flash ") {
+        rest
+    } else if let Some(rest) = ty.strip_prefix("eeprom ") {
+        rest
+    } else {
+        ty
+    };
+    let base = base.split('[').next().unwrap_or(base).trim();
+    match base {
+        "u8" | "u16" | "bool" | "char" | "void" | "i8" | "i16" | "r8" | "r16" => Ok(()),
+        other => Err(format!("Type Error: unknown or unsupported type '{}'", other)),
+    }
 }
+
+/// Returns the number of fractional bits of a fixed-point type (`r8` -> Q4.4 -> 4,
+/// `r16` -> Q8.8 -> 8), or `None` for non-fixed-point types. Storage qualifiers and array
+/// suffixes are ignored.
+fn fixed_frac_of_type(ty: &str) -> Option<u8> {
+    let core = if let Some(r) = ty.strip_prefix("flash ") {
+        r
+    } else if let Some(r) = ty.strip_prefix("eeprom ") {
+        r
+    } else {
+        ty
+    };
+    match core.split('[').next().unwrap_or(core).trim() {
+        "r8" => Some(4),
+        "r16" => Some(8),
+        _ => None,
+    }
+}
+
+/// True when the declared type is a signed type (signed integer or signed fixed-point).
+/// Storage qualifiers and array suffixes are ignored. Width is irrelevant here.
+fn is_signed_type(ty: &str) -> bool {
+    let core = if let Some(r) = ty.strip_prefix("flash ") {
+        r
+    } else if let Some(r) = ty.strip_prefix("eeprom ") {
+        r
+    } else {
+        ty
+    };
+    let base = core.split('[').next().unwrap_or(core).trim();
+    matches!(base, "i8" | "i16" | "r8" | "r16")
+}
+
+/// Maps a declared type to the width-equivalent unsigned integer type used throughout the
+/// backend's storage/load/store logic. The bit patterns of signed and fixed-point values are
+/// identical to their unsigned-integer counterparts for move/add/sub/and/or operations, so the
+/// whole width layer can treat `i16`/`r16` as `u16` and `i8`/`r8` as `u8`. Storage qualifiers
+/// (`flash `/`eeprom `) and array suffixes (`[N]`) are preserved.
+fn normalize_width_type(ty: &str) -> String {
+    // Pointers and string handles are 16-bit addresses regardless of pointee/space.
+    if ty.starts_with("ptr ") || ty.starts_with("str ") {
+        return "u16".to_string();
+    }
+    let (prefix, core) = if let Some(r) = ty.strip_prefix("flash ") {
+        ("flash ", r)
+    } else if let Some(r) = ty.strip_prefix("eeprom ") {
+        ("eeprom ", r)
+    } else {
+        ("", ty)
+    };
+    let normalized = if let Some(rest) = core.strip_prefix("i16") {
+        format!("u16{}", rest)
+    } else if let Some(rest) = core.strip_prefix("r16") {
+        format!("u16{}", rest)
+    } else if let Some(rest) = core.strip_prefix("i8") {
+        format!("u8{}", rest)
+    } else if let Some(rest) = core.strip_prefix("r8") {
+        format!("u8{}", rest)
+    } else {
+        core.to_string()
+    };
+    format!("{}{}", prefix, normalized)
+}
+
 
 /// Evaluates an expression to a compile-time constant, but only when the entire subtree
 /// is literal-computable (no variable, hardware, or call leaves). Wrapping mirrors the
 /// runtime's per-type-width unsigned arithmetic. Comparisons and logical operators are
 /// intentionally not folded here to avoid the backend's signed-branch semantics.
-fn eval_const(expr: &Expr, ty: &str, imut_constants: &HashMap<String, i64>) -> Option<i64> {
+/// Wraps an intermediate value to the target width. Unsigned types mask to `[0,2^w)`; signed
+/// types reduce modulo 2^w with sign extension (an `i8`/`i16` cast), so that folded `/` and `%`
+/// match the runtime's signed division semantics.
+fn fit_ty(v: i64, ty: &str, signed: bool) -> i64 {
+    let ty_clean = if ty.starts_with("eeprom ") { &ty[7..] } else if ty.starts_with("flash ") { &ty[6..] } else { ty };
+    // This may run before width normalization (the AST pre-pass sees raw i16/r16), so recognize
+    // every 16-bit-wide spelling here, not just u16.
+    let w16 = matches!(ty_clean, "u16" | "i16" | "r16");
+    if signed {
+        if w16 { v as i16 as i64 } else { v as i8 as i64 }
+    } else if w16 {
+        v & 0xFFFF
+    } else {
+        v & 0xFF
+    }
+}
+
+fn eval_const(expr: &Expr, ty: &str, signed: bool, imut_constants: &HashMap<String, i64>) -> Option<i64> {
     match expr {
-        Expr::Literal(v) => Some(mask_ty(*v as i64, ty)),
+        Expr::Literal(v) => Some(fit_ty(*v as i64, ty, signed)),
         Expr::VarRef(ref name) => {
             if name.starts_with('$') {
                 imut_constants.get(name).copied()
@@ -2628,16 +3563,16 @@ fn eval_const(expr: &Expr, ty: &str, imut_constants: &HashMap<String, i64>) -> O
             }
         }
         Expr::UnaryOp { op, expr } => {
-            let x = eval_const(expr, ty, imut_constants)?;
+            let x = eval_const(expr, ty, signed, imut_constants)?;
             match op.as_str() {
-                "-" => Some(mask_ty(x.wrapping_neg(), ty)),
-                "~" => Some(mask_ty(!x, ty)),
+                "-" => Some(fit_ty(x.wrapping_neg(), ty, signed)),
+                "~" => Some(fit_ty(!x, ty, signed)),
                 _ => None,
             }
         }
         Expr::BinOp { left, op, right } => {
-            let l = eval_const(left, ty, imut_constants)?;
-            let r = eval_const(right, ty, imut_constants)?;
+            let l = eval_const(left, ty, signed, imut_constants)?;
+            let r = eval_const(right, ty, signed, imut_constants)?;
             let res = match op.as_str() {
                 "+" => l.wrapping_add(r),
                 "-" => l.wrapping_sub(r),
@@ -2649,7 +3584,7 @@ fn eval_const(expr: &Expr, ty: &str, imut_constants: &HashMap<String, i64>) -> O
                 "^" => l ^ r,
                 _ => return None,
             };
-            Some(mask_ty(res, ty))
+            Some(fit_ty(res, ty, signed))
         }
         _ => None,
     }
@@ -3076,6 +4011,9 @@ fn collect_decls(body: &[Stmt], out: &mut Vec<(String, String)>) {
 fn collect_calls_expr(expr: &Expr, calls: &mut std::collections::HashSet<String>) {
     match expr {
         Expr::Literal(_) => {}
+        Expr::FloatLiteral(_) => {}
+        Expr::StringLit(_) => {}
+        Expr::AddrOf(e) | Expr::Deref(e) => collect_calls_expr(e, calls),
         Expr::VarRef(_) => {}
         Expr::BinOp { left, right, .. } => {
             collect_calls_expr(left, calls);
@@ -3449,9 +4387,164 @@ fn construct_cfg(flat_stmts: &[FlatStmt]) -> Vec<BasicBlock> {
     blocks
 }
 
+/// Collects names of scalar variables whose address is taken (`&$x`). Such variables must live in
+/// SRAM (not a register home) so that `&$x` has a real address to materialize.
+fn collect_address_taken_expr(expr: &Expr, set: &mut std::collections::HashSet<String>) {
+    match expr {
+        Expr::AddrOf(inner) => {
+            if let Expr::VarRef(n) = &**inner {
+                set.insert(n.clone());
+            }
+            collect_address_taken_expr(inner, set);
+        }
+        Expr::Deref(e) | Expr::UnaryOp { expr: e, .. } => collect_address_taken_expr(e, set),
+        Expr::BinOp { left, right, .. } => {
+            collect_address_taken_expr(left, set);
+            collect_address_taken_expr(right, set);
+        }
+        Expr::Call { args, .. } => {
+            for a in args {
+                collect_address_taken_expr(a, set);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn collect_address_taken_stmts(stmts: &[Stmt], set: &mut std::collections::HashSet<String>) {
+    for stmt in stmts {
+        match stmt {
+            Stmt::VarDecl { expr, .. } => collect_address_taken_expr(expr, set),
+            Stmt::Assign { expr, target, .. } => {
+                collect_address_taken_expr(expr, set);
+                collect_address_taken_expr(target, set);
+            }
+            Stmt::LoopInfinite { body } => collect_address_taken_stmts(body, set),
+            Stmt::LoopRange { start, end, body, .. } => {
+                collect_address_taken_expr(start, set);
+                collect_address_taken_expr(end, set);
+                collect_address_taken_stmts(body, set);
+            }
+            Stmt::Conditional { cond, then_block, else_block } => {
+                collect_address_taken_expr(cond, set);
+                collect_address_taken_stmts(then_block, set);
+                if let Some(eb) = else_block {
+                    collect_address_taken_stmts(eb, set);
+                }
+            }
+            Stmt::Switch { expr, cases, default } => {
+                collect_address_taken_expr(expr, set);
+                for (ce, b) in cases {
+                    collect_address_taken_expr(ce, set);
+                    collect_address_taken_stmts(b, set);
+                }
+                if let Some(db) = default {
+                    collect_address_taken_stmts(db, set);
+                }
+            }
+            Stmt::Return { val } => {
+                if let Some(v) = val {
+                    collect_address_taken_expr(v, set);
+                }
+            }
+            Stmt::ExprStmt { expr } => collect_address_taken_expr(expr, set),
+            Stmt::Goto(_) | Stmt::Label(_) => {}
+        }
+    }
+}
+
+fn collect_var_refs(expr: &Expr, out: &mut std::collections::HashSet<String>) {
+    match expr {
+        Expr::VarRef(n) => {
+            if n.starts_with('$') {
+                out.insert(n.clone());
+            }
+        }
+        Expr::UnaryOp { expr, .. } | Expr::AddrOf(expr) | Expr::Deref(expr) => {
+            collect_var_refs(expr, out);
+        }
+        Expr::BinOp { left, right, .. } => {
+            collect_var_refs(left, out);
+            collect_var_refs(right, out);
+        }
+        Expr::Call { args, .. } => {
+            for a in args {
+                collect_var_refs(a, out);
+            }
+        }
+        Expr::Literal(_) | Expr::FloatLiteral(_) | Expr::StringLit(_) => {}
+    }
+}
+
+/// Collects variables used as operands inside dereference expressions (`*expr`).
+fn collect_pointer_operand_expr(expr: &Expr, out: &mut std::collections::HashSet<String>) {
+    match expr {
+        Expr::Deref(inner) => {
+            collect_var_refs(inner, out);
+            collect_pointer_operand_expr(inner, out);
+        }
+        Expr::UnaryOp { expr, .. } | Expr::AddrOf(expr) => collect_pointer_operand_expr(expr, out),
+        Expr::BinOp { left, right, .. } => {
+            collect_pointer_operand_expr(left, out);
+            collect_pointer_operand_expr(right, out);
+        }
+        Expr::Call { args, .. } => {
+            for a in args {
+                collect_pointer_operand_expr(a, out);
+            }
+        }
+        Expr::Literal(_) | Expr::FloatLiteral(_) | Expr::StringLit(_) | Expr::VarRef(_) => {}
+    }
+}
+
+fn collect_pointer_operand_vars(stmts: &[Stmt], out: &mut std::collections::HashSet<String>) {
+    for stmt in stmts {
+        match stmt {
+            Stmt::VarDecl { expr, .. } => collect_pointer_operand_expr(expr, out),
+            Stmt::Assign { expr, target, .. } => {
+                collect_pointer_operand_expr(expr, out);
+                collect_pointer_operand_expr(target, out);
+            }
+            Stmt::LoopInfinite { body } => collect_pointer_operand_vars(body, out),
+            Stmt::LoopRange { start, end, body, .. } => {
+                collect_pointer_operand_expr(start, out);
+                collect_pointer_operand_expr(end, out);
+                collect_pointer_operand_vars(body, out);
+            }
+            Stmt::Conditional { cond, then_block, else_block } => {
+                collect_pointer_operand_expr(cond, out);
+                collect_pointer_operand_vars(then_block, out);
+                if let Some(eb) = else_block {
+                    collect_pointer_operand_vars(eb, out);
+                }
+            }
+            Stmt::Switch { expr, cases, default } => {
+                collect_pointer_operand_expr(expr, out);
+                for (ce, b) in cases {
+                    collect_pointer_operand_expr(ce, out);
+                    collect_pointer_operand_vars(b, out);
+                }
+                if let Some(db) = default {
+                    collect_pointer_operand_vars(db, out);
+                }
+            }
+            Stmt::Return { val } => {
+                if let Some(v) = val {
+                    collect_pointer_operand_expr(v, out);
+                }
+            }
+            Stmt::ExprStmt { expr } => collect_pointer_operand_expr(expr, out),
+            Stmt::Goto(_) | Stmt::Label(_) => {}
+        }
+    }
+}
+
 fn collect_expr_uses(expr: &Expr, uses: &mut std::collections::HashSet<String>) {
     match expr {
         Expr::Literal(_) => {}
+        Expr::FloatLiteral(_) => {}
+        Expr::StringLit(_) => {}
+        Expr::AddrOf(e) | Expr::Deref(e) => collect_expr_uses(e, uses),
         Expr::VarRef(name) => {
             if name.starts_with('$') {
                 uses.insert(name.clone());
@@ -3951,6 +5044,205 @@ fn propagate_constants_expr(expr: &mut Expr, known: &std::collections::HashMap<S
     }
 }
 
+/// Replaces every fractional literal in `expr` with its scaled fixed-point integer for the given
+/// fractional-bit count. A fractional literal may not be a direct operand of `*`/`/` (that would be
+/// fixed-by-fixed and require a scale correction the literal cannot carry); the user must name it.
+fn scale_floats(expr: &mut Expr, frac: u8) -> Result<(), String> {
+    match expr {
+        Expr::FloatLiteral(v) => {
+            let scaled = (*v * f64::from(1u32 << frac)).round() as i64;
+            *expr = Expr::Literal(scaled as i32);
+            Ok(())
+        }
+        Expr::Literal(_) | Expr::VarRef(_) => Ok(()),
+        Expr::UnaryOp { expr, .. } => scale_floats(expr, frac),
+        Expr::BinOp { left, op, right } => {
+            if (op == "*" || op == "/")
+                && (matches!(**left, Expr::FloatLiteral(_)) || matches!(**right, Expr::FloatLiteral(_)))
+            {
+                return Err(format!(
+                    "Type Error: a fractional literal cannot be a direct operand of '{}'; assign it to a fixed-point variable first",
+                    op
+                ));
+            }
+            scale_floats(left, frac)?;
+            scale_floats(right, frac)
+        }
+        Expr::Call { args, .. } => {
+            for a in args.iter() {
+                forbid_floats(a)?;
+            }
+            Ok(())
+        }
+        Expr::StringLit(_) => Ok(()),
+        Expr::AddrOf(e) | Expr::Deref(e) => scale_floats(e, frac),
+    }
+}
+
+/// Errors if any fractional literal appears in a non-fixed-point context.
+fn forbid_floats(expr: &Expr) -> Result<(), String> {
+    match expr {
+        Expr::FloatLiteral(_) => Err(
+            "Type Error: fractional literal used outside a fixed-point (r8/r16) context".to_string(),
+        ),
+        Expr::Literal(_) | Expr::VarRef(_) | Expr::StringLit(_) => Ok(()),
+        Expr::UnaryOp { expr, .. } => forbid_floats(expr),
+        Expr::AddrOf(e) | Expr::Deref(e) => forbid_floats(e),
+        Expr::BinOp { left, right, .. } => {
+            forbid_floats(left)?;
+            forbid_floats(right)
+        }
+        Expr::Call { args, .. } => {
+            for a in args {
+                forbid_floats(a)?;
+            }
+            Ok(())
+        }
+    }
+}
+
+/// Static (pre-codegen) variant of `expr_fixed_bits` over an explicit fixed-var map.
+fn expr_fixed_frac_static(expr: &Expr, fixed: &HashMap<String, u8>) -> Option<u8> {
+    match expr {
+        Expr::VarRef(n) => fixed.get(n).copied(),
+        Expr::UnaryOp { expr, .. } => expr_fixed_frac_static(expr, fixed),
+        Expr::BinOp { left, op, right } => {
+            if op == "[]" {
+                if let Expr::VarRef(arr) = &**left {
+                    fixed.get(arr).copied()
+                } else {
+                    None
+                }
+            } else {
+                expr_fixed_frac_static(left, fixed).or_else(|| expr_fixed_frac_static(right, fixed))
+            }
+        }
+        _ => None,
+    }
+}
+
+/// Resolves fractional literals inside a boolean condition, scaling them to match a fixed-point
+/// operand of the same comparison.
+fn resolve_cond_floats(cond: &mut Expr, fixed: &HashMap<String, u8>) -> Result<(), String> {
+    match cond {
+        Expr::BinOp { left, op, right }
+            if matches!(op.as_str(), "==" | "!=" | "<" | ">" | "<=" | ">=") =>
+        {
+            let f = expr_fixed_frac_static(left, fixed).or_else(|| expr_fixed_frac_static(right, fixed));
+            if let Some(fr) = f {
+                scale_floats(left, fr)?;
+                scale_floats(right, fr)
+            } else {
+                forbid_floats(left)?;
+                forbid_floats(right)
+            }
+        }
+        Expr::BinOp { left, op, right } if op == "&&" || op == "||" => {
+            resolve_cond_floats(left, fixed)?;
+            resolve_cond_floats(right, fixed)
+        }
+        Expr::UnaryOp { op, expr } if op == "!" => resolve_cond_floats(expr, fixed),
+        _ => forbid_floats(cond),
+    }
+}
+
+/// Per-function pass that lowers fractional literals to fixed-point integers using the declared
+/// r8/r16 types of variables, parameters, and the return value.
+fn resolve_fixed_literals_func(
+    params: &[(String, String)],
+    ret_ty: &str,
+    body: &mut [Stmt],
+) -> Result<(), String> {
+    let mut fixed: HashMap<String, u8> = HashMap::new();
+    for (pn, pt) in params {
+        if let Some(f) = fixed_frac_of_type(pt) {
+            fixed.insert(pn.clone(), f);
+        }
+    }
+    let ret_frac = fixed_frac_of_type(ret_ty);
+    resolve_fixed_literals_stmts(body, &mut fixed, ret_frac)
+}
+
+fn resolve_fixed_literals_stmts(
+    stmts: &mut [Stmt],
+    fixed: &mut HashMap<String, u8>,
+    ret_frac: Option<u8>,
+) -> Result<(), String> {
+    for stmt in stmts {
+        match stmt {
+            Stmt::VarDecl { name, ty, expr, .. } => {
+                if let Some(f) = fixed_frac_of_type(ty) {
+                    scale_floats(expr, f)?;
+                    fixed.insert(name.clone(), f);
+                } else {
+                    forbid_floats(expr)?;
+                }
+            }
+            Stmt::Assign { expr, target, .. } => {
+                let tf = match &*target {
+                    Expr::VarRef(n) => fixed.get(n).copied(),
+                    Expr::BinOp { left, op, .. } if op == "[]" => {
+                        if let Expr::VarRef(arr) = &**left {
+                            fixed.get(arr).copied()
+                        } else {
+                            None
+                        }
+                    }
+                    _ => None,
+                };
+                if let Some(f) = tf {
+                    scale_floats(expr, f)?;
+                } else {
+                    forbid_floats(expr)?;
+                    forbid_floats(target)?;
+                }
+            }
+            Stmt::LoopInfinite { body } => resolve_fixed_literals_stmts(body, fixed, ret_frac)?,
+            Stmt::LoopRange { start, end, body, .. } => {
+                forbid_floats(start)?;
+                forbid_floats(end)?;
+                resolve_fixed_literals_stmts(body, fixed, ret_frac)?;
+            }
+            Stmt::Conditional { cond, then_block, else_block } => {
+                resolve_cond_floats(cond, fixed)?;
+                resolve_fixed_literals_stmts(then_block, fixed, ret_frac)?;
+                if let Some(eb) = else_block {
+                    resolve_fixed_literals_stmts(eb, fixed, ret_frac)?;
+                }
+            }
+            Stmt::Switch { expr, cases, default } => {
+                let sf = expr_fixed_frac_static(expr, fixed);
+                for (ce, b) in cases.iter_mut() {
+                    if let Some(f) = sf {
+                        scale_floats(ce, f)?;
+                    } else {
+                        forbid_floats(ce)?;
+                    }
+                    resolve_fixed_literals_stmts(b, fixed, ret_frac)?;
+                }
+                if sf.is_none() {
+                    forbid_floats(expr)?;
+                }
+                if let Some(db) = default {
+                    resolve_fixed_literals_stmts(db, fixed, ret_frac)?;
+                }
+            }
+            Stmt::Return { val } => {
+                if let Some(v) = val {
+                    if let Some(f) = ret_frac {
+                        scale_floats(v, f)?;
+                    } else {
+                        forbid_floats(v)?;
+                    }
+                }
+            }
+            Stmt::ExprStmt { expr } => forbid_floats(expr)?,
+            Stmt::Goto(_) | Stmt::Label(_) => {}
+        }
+    }
+    Ok(())
+}
+
 /// Propagates constant literals through statement lists using a conservative known-value map.
 ///
 /// Contract:
@@ -3968,9 +5260,13 @@ fn propagate_constants_stmts(
             Stmt::VarDecl { name, ty, expr, .. } => {
                 propagate_constants_expr(expr, known);
                 if !ty.contains('[') {
-                    if let Some(v) = eval_const(expr, ty, &HashMap::new()) {
+                    if let Some(v) = eval_const(expr, ty, is_signed_type(ty), &HashMap::new()) {
                         *expr = Expr::Literal(v as i32);
-                        if !reassigned.contains(name) {
+                        // Do not propagate signed variables as bare literals: a substituted literal
+                        // loses its signedness, so later comparisons/divisions would be lowered as
+                        // unsigned. Keep them as variable reads to preserve signed instruction
+                        // selection (they remain in `imut_constants` folding at codegen instead).
+                        if !reassigned.contains(name) && !is_signed_type(ty) {
                             known.insert(name.clone(), v as i32);
                         }
                     }
@@ -3979,6 +5275,24 @@ fn propagate_constants_stmts(
             Stmt::Assign { expr, target, .. } => {
                 propagate_constants_expr(expr, known);
                 propagate_constants_expr(target, known);
+                match target {
+                    Expr::VarRef(name) => {
+                        known.remove(name);
+                    }
+                    Expr::Deref(_) => {
+                        // Unknown alias write through pointer: invalidate all known values.
+                        known.clear();
+                    }
+                    Expr::BinOp { left, op, .. } if op == "[]" => {
+                        if let Expr::VarRef(name) = &**left {
+                            known.remove(name);
+                        } else {
+                            // Non-trivial index target: be conservative.
+                            known.clear();
+                        }
+                    }
+                    _ => {}
+                }
             }
             Stmt::LoopInfinite { body } => {
                 propagate_constants_stmts(body, reassigned, known);

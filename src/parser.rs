@@ -54,6 +54,14 @@ pub enum Stmt {
 pub enum Expr {
     /// Integer literal.
     Literal(i32),
+    /// Fractional literal (e.g. `3.14`); resolved to a scaled fixed-point integer in the backend.
+    FloatLiteral(f64),
+    /// String literal (e.g. `"hi"`); lowered to NUL-terminated byte data.
+    StringLit(String),
+    /// Address-of a variable/element (prefix `&`); yields a 16-bit address.
+    AddrOf(Box<Expr>),
+    /// Pointer dereference (prefix `*`); reads through a pointer in its target memory space.
+    Deref(Box<Expr>),
     /// Variable or constant reference.
     VarRef(String),
     /// Binary operator expression (e.g. additions, comparisons, bitwise ops).
@@ -107,6 +115,67 @@ impl Parser {
         }
         self.idx += 1;
         Ok(tok)
+    }
+
+    /// True when the next token is on the same source line as the previously consumed token.
+    /// Used to prevent an expression from accidentally consuming the next statement in a
+    /// semicolon-free grammar.
+    fn can_take_infix_here(&self) -> bool {
+        if self.idx == 0 {
+            return true;
+        }
+        let prev_line = self.tokens[self.idx - 1].line;
+        match self.peek(0) {
+            Some(tok) => tok.line == prev_line,
+            None => false,
+        }
+    }
+
+    /// Parses a type specification used by function parameters/returns.
+    /// Supports primitive types plus `ptr <space> <pointee>` and `str <space>`, with optional
+    /// array suffix `[N]`.
+    fn parse_type_spec(&mut self) -> Result<String, String> {
+        let tok = self.consume(None)?;
+        let mut ty = match tok.kind {
+            TokenKind::Type(t) => Ok(t),
+            TokenKind::Keyword(ref kw) if kw == "ptr" => {
+                let space_tok = self.consume(None)?;
+                let space = match space_tok.kind {
+                    TokenKind::Keyword(ref s) if s == "ram" || s == "flash" || s == "eeprom" => s.clone(),
+                    _ => return Err(format!("Expected pointer space (ram/flash/eeprom) after 'ptr': {:?} at line {}", space_tok, space_tok.line)),
+                };
+                let pointee = self.parse_type_spec()?;
+                Ok(format!("ptr {} {}", space, pointee))
+            }
+            TokenKind::Keyword(ref kw) if kw == "str" => {
+                let space_tok = self.consume(None)?;
+                let space = match space_tok.kind {
+                    TokenKind::Keyword(ref s) if s == "ram" => s.clone(),
+                    _ => return Err(format!("Expected string space 'ram' after 'str': {:?} at line {}", space_tok, space_tok.line)),
+                };
+                Ok(format!("str {}", space))
+            }
+            _ => Err(format!("Expected type specifier, got {:?} at line {}", tok, tok.line)),
+        }?;
+
+        if let Some(next_tok) = self.peek(0) {
+            if self.can_take_infix_here() {
+                if let TokenKind::Symbol(ref sym) = next_tok.kind {
+                    if sym == "[" {
+                        self.consume(None)?;
+                        let size_tok = self.consume(None)?;
+                        let size = match size_tok.kind {
+                            TokenKind::Number(n) => n,
+                            _ => return Err(format!("Expected array size number: {:?} at line {}", size_tok, size_tok.line)),
+                        };
+                        self.consume(Some(TokenKind::Symbol("]".to_string())))?;
+                        ty = format!("{}[{}]", ty, size);
+                    }
+                }
+            }
+        }
+
+        Ok(ty)
     }
 
     /// Top-level parse loop. Scans through the token stream and parses all import,
@@ -313,11 +382,7 @@ impl Parser {
                             _ => return Err(format!("Parameter must start with $: {:?} at line {}", param_tok, param_tok.line)),
                         };
                         self.consume(Some(TokenKind::Symbol(":".to_string())))?;
-                        let ty_tok = self.consume(None)?;
-                        let param_ty = match ty_tok.kind {
-                            TokenKind::Type(ref ty) => ty.clone(),
-                            _ => return Err(format!("Expected parameter type: {:?} at line {}", ty_tok, ty_tok.line)),
-                        };
+                        let param_ty = self.parse_type_spec()?;
                         params.push((param_name, param_ty));
                         
                         if let Some(next_t) = self.peek(0) {
@@ -337,11 +402,7 @@ impl Parser {
         if let Some(tok) = self.peek(0) {
             if let TokenKind::Arrow = tok.kind {
                 self.consume(Some(TokenKind::Arrow))?;
-                let ty_tok = self.consume(None)?;
-                ret_ty = match ty_tok.kind {
-                    TokenKind::Type(ref t) => t.clone(),
-                    _ => return Err(format!("Expected return type: {:?} at line {}", ty_tok, ty_tok.line)),
-                };
+                ret_ty = self.parse_type_spec()?;
             }
         }
 
@@ -374,7 +435,40 @@ impl Parser {
             TokenKind::Keyword(ref kw) if kw == "ram" || kw == "eeprom" || kw == "flash" => {
                 let storage = kw.as_str();
                 self.consume(None)?;
-                
+
+                // Pointer declaration: `<space> ptr <T> $name = <init>`. The leading space is the
+                // pointed-to memory space; the pointer variable itself is a 16-bit value in SRAM.
+                if matches!(self.peek(0).map(|t| &t.kind), Some(TokenKind::Keyword(k)) if k == "ptr") {
+                    self.consume(None)?; // ptr
+                    let inner = self.parse_type_spec()?;
+                    let name_tok = self.consume(None)?;
+                    let name = match name_tok.kind {
+                        TokenKind::Identifier(ref n) if n.starts_with('$') => n.clone(),
+                        _ => return Err(format!("Pointer variable must start with $: {:?} at line {}", name_tok, name_tok.line)),
+                    };
+                    self.consume(Some(TokenKind::Symbol("=".to_string())))?;
+                    let expr = self.parse_expr()?;
+                    let ty = format!("ptr {} {}", storage, inner);
+                    return Ok(Stmt::VarDecl { name, ty, expr, is_mut: true });
+                }
+
+                // String declaration: `ram str $name = "..."`.
+                if matches!(self.peek(0).map(|t| &t.kind), Some(TokenKind::Keyword(k)) if k == "str") {
+                    self.consume(None)?; // str
+                    if storage != "ram" {
+                        return Err(format!("String variables currently support only RAM storage (got '{}') at line {}", storage, tok.line));
+                    }
+                    let name_tok = self.consume(None)?;
+                    let name = match name_tok.kind {
+                        TokenKind::Identifier(ref n) if n.starts_with('$') => n.clone(),
+                        _ => return Err(format!("String variable must start with $: {:?} at line {}", name_tok, name_tok.line)),
+                    };
+                    self.consume(Some(TokenKind::Symbol("=".to_string())))?;
+                    let expr = self.parse_expr()?;
+                    let ty = format!("str {}", storage);
+                    return Ok(Stmt::VarDecl { name, ty, expr, is_mut: storage != "flash" });
+                }
+
                 let next_tok = self.peek(0).ok_or_else(|| format!("Expected mutability specifier after {}", kw))?.clone();
                 let is_mut = match next_tok.kind {
                     TokenKind::Keyword(ref k) if k == "mut" || k == "imut" => {
@@ -544,6 +638,9 @@ impl Parser {
     fn parse_logical_or(&mut self) -> Result<Expr, String> {
         let mut left = self.parse_logical_and()?;
         while let Some(tok) = self.peek(0) {
+            if !self.can_take_infix_here() {
+                break;
+            }
             if let TokenKind::Symbol(ref op) = tok.kind {
                 if op == "||" {
                     let op_str = op.clone();
@@ -566,6 +663,9 @@ impl Parser {
     fn parse_logical_and(&mut self) -> Result<Expr, String> {
         let mut left = self.parse_bitwise_or()?;
         while let Some(tok) = self.peek(0) {
+            if !self.can_take_infix_here() {
+                break;
+            }
             if let TokenKind::Symbol(ref op) = tok.kind {
                 if op == "&&" {
                     let op_str = op.clone();
@@ -588,6 +688,9 @@ impl Parser {
     fn parse_bitwise_or(&mut self) -> Result<Expr, String> {
         let mut left = self.parse_bitwise_xor()?;
         while let Some(tok) = self.peek(0) {
+            if !self.can_take_infix_here() {
+                break;
+            }
             if let TokenKind::Symbol(ref op) = tok.kind {
                 if op == "|" {
                     let op_str = op.clone();
@@ -610,6 +713,9 @@ impl Parser {
     fn parse_bitwise_xor(&mut self) -> Result<Expr, String> {
         let mut left = self.parse_bitwise_and()?;
         while let Some(tok) = self.peek(0) {
+            if !self.can_take_infix_here() {
+                break;
+            }
             if let TokenKind::Symbol(ref op) = tok.kind {
                 if op == "^" {
                     let op_str = op.clone();
@@ -631,6 +737,9 @@ impl Parser {
     fn parse_bitwise_and(&mut self) -> Result<Expr, String> {
         let mut left = self.parse_equality()?;
         while let Some(tok) = self.peek(0) {
+            if !self.can_take_infix_here() {
+                break;
+            }
             if let TokenKind::Symbol(ref op) = tok.kind {
                 if op == "&" {
                     let op_str = op.clone();
@@ -652,6 +761,9 @@ impl Parser {
     fn parse_equality(&mut self) -> Result<Expr, String> {
         let mut left = self.parse_relational()?;
         while let Some(tok) = self.peek(0) {
+            if !self.can_take_infix_here() {
+                break;
+            }
             if let TokenKind::Symbol(ref op) = tok.kind {
                 if op == "==" || op == "!=" {
                     let op_str = op.clone();
@@ -673,6 +785,9 @@ impl Parser {
     fn parse_relational(&mut self) -> Result<Expr, String> {
         let mut left = self.parse_additive()?;
         while let Some(tok) = self.peek(0) {
+            if !self.can_take_infix_here() {
+                break;
+            }
             if let TokenKind::Symbol(ref op) = tok.kind {
                 if op == "<" || op == ">" || op == "<=" || op == ">=" {
                     let op_str = op.clone();
@@ -694,6 +809,9 @@ impl Parser {
     fn parse_additive(&mut self) -> Result<Expr, String> {
         let mut left = self.parse_multiplicative()?;
         while let Some(tok) = self.peek(0) {
+            if !self.can_take_infix_here() {
+                break;
+            }
             if let TokenKind::Symbol(ref op) = tok.kind {
                 if op == "+" || op == "-" {
                     let op_str = op.clone();
@@ -715,6 +833,9 @@ impl Parser {
     fn parse_multiplicative(&mut self) -> Result<Expr, String> {
         let mut left = self.parse_unary()?;
         while let Some(tok) = self.peek(0) {
+            if !self.can_take_infix_here() {
+                break;
+            }
             if let TokenKind::Symbol(ref op) = tok.kind {
                 if op == "*" || op == "/" || op == "%" {
                     let op_str = op.clone();
@@ -742,6 +863,18 @@ impl Parser {
                     let expr = self.parse_unary()?;
                     return Ok(Expr::UnaryOp { op: op_str, expr: Box::new(expr) });
                 }
+                // In operand position, `&` is address-of and `*` is dereference (distinct from the
+                // infix bitwise-AND / multiply consumed by the binary-precedence parsers).
+                if sym == "&" {
+                    self.consume(None)?;
+                    let expr = self.parse_unary()?;
+                    return Ok(Expr::AddrOf(Box::new(expr)));
+                }
+                if sym == "*" {
+                    self.consume(None)?;
+                    let expr = self.parse_unary()?;
+                    return Ok(Expr::Deref(Box::new(expr)));
+                }
             }
         }
         self.parse_primary()
@@ -754,11 +887,23 @@ impl Parser {
                 self.consume(None)?;
                 Ok(Expr::Literal(val))
             }
+            TokenKind::Float(val) => {
+                self.consume(None)?;
+                Ok(Expr::FloatLiteral(val))
+            }
+            TokenKind::Str(ref s) => {
+                let s = s.clone();
+                self.consume(None)?;
+                Ok(Expr::StringLit(s))
+            }
             TokenKind::Identifier(ref name) => {
                 let name_str = name.clone();
                 self.consume(None)?;
                 if name_str.starts_with('@') {
                     if let Some(next_tok) = self.peek(0) {
+                        if !self.can_take_infix_here() {
+                            return Ok(Expr::VarRef(name_str));
+                        }
                         if let TokenKind::Symbol(ref sym) = next_tok.kind {
                             if sym == "(" {
                                 self.consume(Some(TokenKind::Symbol("(".to_string())))?;
@@ -785,6 +930,9 @@ impl Parser {
                     }
                 } else {
                     if let Some(next_tok) = self.peek(0) {
+                        if !self.can_take_infix_here() {
+                            return Ok(Expr::VarRef(name_str));
+                        }
                         if let TokenKind::Symbol(ref sym) = next_tok.kind {
                             if sym == "[" {
                                 self.consume(Some(TokenKind::Symbol("[".to_string())))?;
@@ -869,4 +1017,3 @@ mod tests {
         assert!(err_msg2.contains("Syntax Error: Variable declarations must explicitly specify a storage location"));
     }
 }
-

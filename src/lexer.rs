@@ -23,6 +23,10 @@ pub enum TokenKind {
     Identifier(String),
     /// Integer numeric literals (decimal, hexadecimal) or character literals evaluated to ASCII codes.
     Number(i32),
+    /// Fractional numeric literals (e.g. `3.14`), scaled to fixed-point at the declaration site.
+    Float(f64),
+    /// String literals (e.g. `"hello"`), lowered to NUL-terminated byte data in flash or SRAM.
+    Str(String),
     /// The standard assignment symbol `->`.
     Arrow,
     /// Compound assignment and modification operators (e.g. `->+`, `->-`, `->&`, `->|`, `->^`).
@@ -150,6 +154,45 @@ impl Lexer {
                 }
                 self.idx += 1;
                 tokens.push(Token { kind: TokenKind::Number(char_val), line: self.line });
+            } else if c == '"' {
+                // String literals enclosed in double quotes (e.g. "hello\n"), with the same escape
+                // set as character literals. The closing NUL terminator is added by the backend.
+                self.idx += 1;
+                let mut s = String::new();
+                loop {
+                    if self.idx >= self.source.len() {
+                        return Err(format!("Unterminated string literal at line {}", self.line));
+                    }
+                    let ch = self.source[self.idx];
+                    if ch == '"' {
+                        self.idx += 1;
+                        break;
+                    } else if ch == '\\' {
+                        self.idx += 1;
+                        if self.idx >= self.source.len() {
+                            return Err(format!("Unterminated escape sequence in string literal at line {}", self.line));
+                        }
+                        let e = self.source[self.idx];
+                        self.idx += 1;
+                        let mapped = match e {
+                            'n' => '\n',
+                            'r' => '\r',
+                            't' => '\t',
+                            '0' => '\0',
+                            '\\' => '\\',
+                            '"' => '"',
+                            _ => return Err(format!("Invalid escape character '\\{}' at line {}", e, self.line)),
+                        };
+                        s.push(mapped);
+                    } else {
+                        if ch == '\n' {
+                            self.line += 1;
+                        }
+                        s.push(ch);
+                        self.idx += 1;
+                    }
+                }
+                tokens.push(Token { kind: TokenKind::Str(s), line: self.line });
             } else if c.is_digit(10) || (c == '-' && self.idx + 1 < self.source.len() && self.source[self.idx+1].is_digit(10)) {
                 // Numeric Literals: matches base-10 decimals or base-16 hexadecimals (starting with 0x)
                 let mut val_str = String::new();
@@ -169,8 +212,24 @@ impl Lexer {
                         val_str.push(self.source[self.idx]);
                         self.idx += 1;
                     }
+                    // Fractional part: a '.' immediately followed by at least one digit produces a
+                    // floating literal (resolved to fixed-point at the declaration site).
+                    if self.idx + 1 < self.source.len()
+                        && self.source[self.idx] == '.'
+                        && self.source[self.idx + 1].is_digit(10)
+                    {
+                        val_str.push('.');
+                        self.idx += 1;
+                        while self.idx < self.source.len() && self.source[self.idx].is_digit(10) {
+                            val_str.push(self.source[self.idx]);
+                            self.idx += 1;
+                        }
+                        let fval = val_str.parse::<f64>().map_err(|e| e.to_string())?;
+                        tokens.push(Token { kind: TokenKind::Float(fval), line: self.line });
+                        continue;
+                    }
                 }
-                
+
                 let val = if val_str.starts_with("0x") {
                     i32::from_str_radix(&val_str[2..], 16).map_err(|e| e.to_string())?
                 } else {
@@ -189,10 +248,10 @@ impl Lexer {
                     tokens.push(Token { kind: TokenKind::Symbol("%".to_string()), line: self.line });
                 } else {
                     match ident.as_str() {
-                        "mut" | "loop" | "return" | "import" | "switch" | "namespace" | "imut" | "ram" | "eeprom" | "flash" | "const" => {
+                        "mut" | "loop" | "return" | "import" | "switch" | "namespace" | "imut" | "ram" | "eeprom" | "flash" | "const" | "ptr" | "str" => {
                             tokens.push(Token { kind: TokenKind::Keyword(ident), line: self.line });
                         }
-                        "u8" | "u16" | "void" => {
+                        "u8" | "u16" | "void" | "i8" | "i16" | "bool" | "char" | "r8" | "r16" => {
                             tokens.push(Token { kind: TokenKind::Type(ident), line: self.line });
                         }
                         "true" => {

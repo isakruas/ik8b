@@ -29,6 +29,7 @@ overall_fail=0
 for mcu in "${MCUS[@]}"; do
     printf "MCU Profile: %-15s ... " "$mcu"
     mcu_fail=0
+    mcu_skip=0
 
     for f in tests/test_*.ik; do
         name=$(basename "$f" .ik)
@@ -40,11 +41,26 @@ for mcu in "${MCUS[@]}"; do
         {
             echo "namespace $mcu"
             echo
-            cat "$f"
+            awk '!/^[[:space:]]*namespace[[:space:]]+[A-Za-z0-9_]+[[:space:]]*$/' "$f"
         } > "$tmp"
 
-        ./ik8b "$tmp" -o "tests/$name.hex" > /dev/null || true
+        set +e
+        compile_out=$(./ik8b "$tmp" -o "tests/$name.hex" 2>&1)
+        compile_rc=$?
+        set -e
         rm -f "$tmp"
+
+        if [ $compile_rc -ne 0 ]; then
+            if echo "$compile_out" | grep -q "Memory Error:"; then
+                mcu_skip=$((mcu_skip+1))
+                continue
+            fi
+            mcu_fail=$((mcu_fail+1))
+            overall_fail=$((overall_fail+1))
+            echo ""
+            echo "  -> [FAIL] Compile error in test '$name' on MCU '$mcu'"
+            continue
+        fi
 
         out=$($VM_BIN "tests/$name.hex" -mmcu="$mcu" -n 8000 -d 2>&1 || true)
         r16=$(echo "$out" | grep -o 'R16 = 0x[0-9A-Fa-f]*' | awk '{print $3}' || true)
@@ -58,9 +74,13 @@ for mcu in "${MCUS[@]}"; do
     done
 
     if [ $mcu_fail -eq 0 ]; then
-        echo "PASS"
+        if [ $mcu_skip -eq 0 ]; then
+            echo "PASS"
+        else
+            echo "PASS ($mcu_skip skipped)"
+        fi
     else
-        echo "FAIL ($mcu_fail tests failed)"
+        echo "FAIL ($mcu_fail tests failed, $mcu_skip skipped)"
     fi
 done
 
