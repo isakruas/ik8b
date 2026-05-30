@@ -1,0 +1,114 @@
+(* ============================================================================
+   ik8b Formal Grammar (EBNF)
+   Version: 1.0
+   Strongly-Typed Embedded Programming Language with Context Sigils
+   ============================================================================ *)
+
+Program              ::= { TopLevelStatement }
+
+TopLevelStatement    ::= ImportStatement
+                       | NamespaceStatement
+                       | CompileTimeCondition
+                       | ConstDeclaration
+                       | FunctionDeclaration
+
+ImportStatement      ::= "import" Identifier
+
+NamespaceStatement    ::= "namespace" Identifier
+
+CompileTimeCondition ::= "?" "namespace" "==" Identifier "{" { TopLevelStatement } "}"
+
+ConstDeclaration     ::= "const" RegisterIdentifier ":" Type "=" Number
+
+FunctionDeclaration  ::= FunctionIdentifier [ "(" [ ParameterList ] ")" ] [ "->" Type ] Block
+
+ParameterList        ::= Parameter { "," Parameter }
+Parameter            ::= VariableIdentifier ":" Type
+
+Block                ::= "{" { Statement } "}"
+
+Statement            ::= VariableDeclaration
+                       | Assignment
+                       | LoopStatement
+                       | ConditionalStatement
+                       | SwitchStatement
+                       | ReturnStatement
+                       | ExpressionStatement
+
+VariableDeclaration  ::= ("val" | "mut") VariableIdentifier ":" Type [ "[" Number "]" ] "=" Expression
+
+Assignment           ::= Expression ( "->" | "->+" | "->-" | "->&" | "->|" | "->^" ) TargetExpression
+
+LoopStatement        ::= InfiniteLoop | RangeLoop
+
+InfiniteLoop         ::= "loop" "*" Block
+
+RangeLoop            ::= "loop" Expression ".." Expression "->" VariableIdentifier Block
+
+ConditionalStatement ::= "?" Expression Block [ ":" Block ]
+
+SwitchStatement      ::= "switch" Expression "{" { CaseBranch } [ DefaultBranch ] "}"
+CaseBranch           ::= Expression "->" Block
+DefaultBranch        ::= "*" "->" Block
+
+ReturnStatement      ::= "return" [ Expression ]
+
+ExpressionStatement  ::= Expression
+
+Expression           ::= LogicalOr
+
+LogicalOr            ::= LogicalAnd { "||" LogicalAnd }
+
+LogicalAnd           ::= BitwiseOr { "&&" BitwiseOr }
+
+BitwiseOr            ::= BitwiseXor { "|" BitwiseXor }
+
+BitwiseXor           ::= BitwiseAnd { "^" BitwiseAnd }
+
+BitwiseAnd           ::= Equality { "&" Equality }
+
+Equality             ::= Relational [ ( "==" | "!=" ) Relational ]
+
+Relational           ::= Additive [ ( "<" | ">" | "<=" | ">=" ) Additive ]
+
+Additive             ::= Multiplicative { ( "+" | "-" ) Multiplicative }
+
+Multiplicative       ::= Unary { ( "*" | "/" | "%" ) Unary }
+
+Unary                ::= [ "!" | "~" | "-" ] Unary
+                       | Primary
+
+Primary              ::= Number
+                       | BooleanLiteral
+                       | CharacterLiteral
+                       | TargetExpression
+                       | FunctionIdentifier "(" [ ArgumentList ] ")"
+                       | "(" Expression ")"
+
+ArgumentList         ::= Expression { "," Expression }
+
+TargetExpression     ::= TargetIdentifier [ "[" Expression "]" ]
+
+TargetIdentifier     ::= VariableIdentifier | RegisterIdentifier
+
+VariableIdentifier   ::= "$" Identifier
+FunctionIdentifier   ::= "@" Identifier
+RegisterIdentifier   ::= "%" Identifier
+
+Type                 ::= "u8" | "u16" | "void"
+
+Identifier           ::= ( Letter | "_" ) { Letter | Digit | "_" | "/" | "." }
+
+Number               ::= DecimalNumber | HexNumber
+DecimalNumber        ::= [ "-" ] Digit { Digit }
+HexNumber            ::= "0x" HexDigit { HexDigit }
+
+BooleanLiteral       ::= "true" | "false"
+
+CharacterLiteral     ::= "'" ( PrintableChar | EscapeSequence ) "'"
+EscapeSequence       ::= "\" ( "n" | "r" | "t" | "0" | "\" | "'" )
+
+Letter               ::= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
+Digit                ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+HexDigit             ::= Digit | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F"
+PrintableChar        ::= any ASCII character except single quote or backslash

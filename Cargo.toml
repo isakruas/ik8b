@@ -1,0 +1,8 @@
+[package]
+name = "ik8b"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "AVR-8 source compiler that emits Intel HEX"
+
+[dependencies]

@@ -1,0 +1,3381 @@
+// Copyright 2026 The ik8b Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+use std::collections::HashMap;
+use crate::parser::{ASTNode, Stmt, Expr};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TargetCore {
+    Generic,
+    AVRe,
+    AVRePlus,
+    AVRrc,
+    AVRxm,
+    AVRxt,
+}
+
+impl TargetCore {
+    pub fn supports_mul(self) -> bool {
+        !matches!(self, TargetCore::AVRe | TargetCore::AVRrc)
+    }
+
+    pub fn supports_adiw_sbiw(self) -> bool {
+        !matches!(self, TargetCore::AVRrc)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum Pass1Inst {
+    Op(u16),
+    Label(String),
+    RJumpL(String),
+    RCallL(String),
+    BrbsL(u8, String),
+    BrbcL(u8, String),
+}
+
+pub struct CodeGenerator {
+    instructions: Vec<Pass1Inst>,
+    constants: HashMap<String, i32>,
+    variables: HashMap<String, (u16, String, bool)>, // name -> (address, type, is_mut)
+    var_homes: HashMap<String, u8>,                  // scalar $var -> resident register (low byte)
+    loop_bound_regs: Vec<u8>,                        // callee-saved reg pairs reserved for loop bounds (by nesting depth)
+    loop_depth: usize,                               // current loop nesting depth
+    current_saves: Vec<u8>,                          // callee-saved regs to push/pop in this function
+    sram_free_ptr: u16,
+    sram_start: u16,
+    label_counter: usize,
+    functions: HashMap<String, (Vec<String>, String)>,
+    pub target_core: TargetCore,
+    
+    // Inlining state
+    inline_return_labels: Vec<String>,
+    inline_prefixes: Vec<String>,
+    leaf_functions: std::collections::HashSet<String>,
+    func_bodies: std::collections::HashMap<String, (Vec<(String, String)>, String, Vec<Stmt>)>,
+}
+
+impl CodeGenerator {
+    pub fn new() -> Self {
+        Self {
+            instructions: Vec::new(),
+            constants: HashMap::new(),
+            variables: HashMap::new(),
+            var_homes: HashMap::new(),
+            loop_bound_regs: Vec::new(),
+            loop_depth: 0,
+            current_saves: Vec::new(),
+            sram_free_ptr: 0x0100,
+            sram_start: 0x0100,
+            label_counter: 0,
+            functions: HashMap::new(),
+            target_core: TargetCore::Generic,
+            inline_return_labels: Vec::new(),
+            inline_prefixes: Vec::new(),
+            leaf_functions: std::collections::HashSet::new(),
+            func_bodies: std::collections::HashMap::new(),
+        }
+    }
+
+    pub fn set_sram_start(&mut self, addr: u16) {
+        self.sram_start = addr;
+        self.sram_free_ptr = addr;
+    }
+
+    fn has_hw_mul(&self) -> bool {
+        self.target_core.supports_mul()
+    }
+
+    fn new_label(&mut self, prefix: &str) -> String {
+        self.label_counter += 1;
+        format!("{}_{}", prefix, self.label_counter)
+    }
+
+    /// Bytes of SRAM allocated for variables (everything not held in registers), measured
+    /// from the sram_start base. Lets the build pick which MCUs have enough SRAM for a program.
+    pub fn sram_used(&self) -> u16 {
+        if self.sram_free_ptr >= self.sram_start {
+            self.sram_free_ptr - self.sram_start
+        } else {
+            0
+        }
+    }
+
+    fn encode_rd_rr(&self, op: u16, d: u8, r: u8) -> u16 {
+        let d_bits = (d as u16) << 4;
+        let r_bit9 = ((r & 0x10) as u16) << 5;
+        let r_bits3_0 = (r & 0x0F) as u16;
+        op | d_bits | r_bit9 | r_bits3_0
+    }
+
+    fn emit(&mut self, inst: Pass1Inst) {
+        self.instructions.push(inst);
+    }
+
+    fn is_adiw_pair(reg: u8) -> bool {
+        matches!(reg, 24 | 26 | 28 | 30)
+    }
+
+    fn emit_add_u16_imm(&mut self, target: u8, imm: u16) {
+        if imm == 0 {
+            return;
+        }
+        if self.target_core.supports_adiw_sbiw() && Self::is_adiw_pair(target) && imm <= 63 {
+            let dd = ((target - 24) / 2) as u16;
+            let k = imm as u16;
+            let op = 0x9600 | ((k & 0x30) << 2) | (dd << 4) | (k & 0x0F);
+            self.emit(Pass1Inst::Op(op)); // ADIW
+            return;
+        }
+        let neg = (0u16).wrapping_sub(imm);
+        let k_lo = (neg & 0xFF) as u8;
+        let k_hi = ((neg >> 8) & 0xFF) as u8;
+        self.emit(Pass1Inst::Op(
+            0x5000 | (((k_lo >> 4) & 0x0F) as u16) << 8
+                | ((target - 16) as u16) << 4
+                | (k_lo & 0x0F) as u16,
+        )); // SUBI low, -k_lo
+        self.emit(Pass1Inst::Op(
+            0x4000 | (((k_hi >> 4) & 0x0F) as u16) << 8
+                | ((target + 1 - 16) as u16) << 4
+                | (k_hi & 0x0F) as u16,
+        )); // SBCI high, -k_hi
+    }
+
+    fn emit_sub_u16_imm(&mut self, target: u8, imm: u16) {
+        if imm == 0 {
+            return;
+        }
+        if self.target_core.supports_adiw_sbiw() && Self::is_adiw_pair(target) && imm <= 63 {
+            let dd = ((target - 24) / 2) as u16;
+            let k = imm as u16;
+            let op = 0x9700 | ((k & 0x30) << 2) | (dd << 4) | (k & 0x0F);
+            self.emit(Pass1Inst::Op(op)); // SBIW
+            return;
+        }
+        let k_lo = (imm & 0xFF) as u8;
+        let k_hi = ((imm >> 8) & 0xFF) as u8;
+        self.emit(Pass1Inst::Op(
+            0x5000 | (((k_lo >> 4) & 0x0F) as u16) << 8 | ((target - 16) as u16) << 4 | (k_lo & 0x0F) as u16,
+        )); // SUBI low, k_lo
+        self.emit(Pass1Inst::Op(
+            0x4000 | (((k_hi >> 4) & 0x0F) as u16) << 8 | ((target + 1 - 16) as u16) << 4 | (k_hi & 0x0F) as u16,
+        )); // SBCI high, k_hi
+    }
+
+    pub fn compile(&mut self, ast: &[ASTNode]) -> Result<Vec<Pass1Inst>, String> {
+        let mut ast = ast.to_vec();
+
+        // Pre-compute user functions and collect func bodies
+        let mut user_funcs = std::collections::HashSet::new();
+        for node in &ast {
+            if let ASTNode::Func { name, params, ret_ty, body } = node {
+                user_funcs.insert(name.clone());
+                self.func_bodies.insert(name.clone(), (params.clone(), ret_ty.clone(), body.clone()));
+            }
+        }
+
+        // Identify leaf functions iteratively
+        let mut leaf_functions = std::collections::HashSet::new();
+        loop {
+            let mut added = false;
+            for node in &ast {
+                if let ASTNode::Func { name, body, .. } = node {
+                    if name != "@main" && !leaf_functions.contains(name) {
+                        let mut calls = std::collections::HashSet::new();
+                        for stmt in body {
+                            collect_calls_stmt(stmt, &mut calls);
+                        }
+                        let is_leaf = calls.iter().all(|c| {
+                            !user_funcs.contains(c) || leaf_functions.contains(c) || c == name
+                        });
+                        if is_leaf {
+                            leaf_functions.insert(name.clone());
+                            added = true;
+                        }
+                    }
+                }
+            }
+            if !added {
+                break;
+            }
+        }
+        self.leaf_functions = leaf_functions.clone();
+
+        // 0. AST-to-AST Inlining Pass
+        let mut inline_counter = 0;
+        for node in &mut ast {
+            if let ASTNode::Func { body, .. } = node {
+                inline_block(body, &leaf_functions, &self.func_bodies, &mut inline_counter);
+            }
+        }
+
+        // 1. AST Constant Propagation on the rewritten/inlined AST!
+        for node in &mut ast {
+            if let ASTNode::Func { body, .. } = node {
+                let mut reassigned = std::collections::HashSet::new();
+                collect_reassigned_vars(body, &mut reassigned);
+                let mut known = std::collections::HashMap::new();
+                propagate_constants_stmts(body, &reassigned, &mut known);
+            }
+        }
+
+        // 1. First register all constants and functions
+        for node in &ast {
+            match node {
+                ASTNode::Const { name, ty, value } => {
+                    if ty == "u8" && (*value < 0 || *value > 255) {
+                        return Err(format!("Constant {} value {} overflows type u8 (0..255)", name, value));
+                    }
+                    if ty == "u16" && (*value < 0 || *value > 65535) {
+                        return Err(format!("Constant {} value {} overflows type u16 (0..65535)", name, value));
+                    }
+                    self.constants.insert(name.clone(), *value);
+                }
+                ASTNode::Func { name, params, ret_ty, .. } => {
+                    let param_tys: Vec<String> = params.iter().map(|(_, ty)| ty.clone()).collect();
+                    self.functions.insert(name.clone(), (param_tys, ret_ty.clone()));
+                }
+            }
+        }
+
+        // 2. Emit call to @main, followed by HALT (opcode 0xFFFF)
+        self.emit(Pass1Inst::RCallL("@main".to_string()));
+        self.emit(Pass1Inst::Op(0xFFFF));
+
+        // 3. Identify all reachable functions starting from @main (Dead Code Elimination)
+        let mut call_map = std::collections::HashMap::new();
+        for node in &ast {
+            if let ASTNode::Func { name, body, .. } = node {
+                let mut calls = std::collections::HashSet::new();
+                for stmt in body {
+                    collect_calls_stmt(stmt, &mut calls);
+                }
+                call_map.insert(name.clone(), calls);
+            }
+        }
+
+        let mut reachable = std::collections::HashSet::new();
+        reachable.insert("@main".to_string());
+        let mut queue = vec!["@main".to_string()];
+        while let Some(current) = queue.pop() {
+            if let Some(calls) = call_map.get(&current) {
+                for call in calls {
+                    if !reachable.contains(call) {
+                        reachable.insert(call.clone());
+                        queue.push(call.clone());
+                    }
+                }
+            }
+        }
+
+        // 4. Compile only reachable functions (compile @main first to prevent branch offset overflow)
+        for node in &ast {
+            if let ASTNode::Func { name, params, ret_ty, body } = node {
+                if name == "@main" && reachable.contains(name) {
+                    self.compile_function(name, params, ret_ty, body)?;
+                }
+            }
+        }
+        for node in &ast {
+            if let ASTNode::Func { name, params, ret_ty, body } = node {
+                if name != "@main" && reachable.contains(name) {
+                    self.compile_function(name, params, ret_ty, body)?;
+                }
+            }
+        }
+
+        // 5. Validate hardware constants to prevent overlap with allocated variables
+        for (name, val) in &self.constants {
+            if name.starts_with('%') {
+                let addr = *val as u16;
+                if addr >= self.sram_start && addr < self.sram_free_ptr {
+                    return Err(format!(
+                        "Hardware conflict: Constant '{}' points to address 0x{:04X}, which overlaps with the compiler-allocated SRAM variable space [0x{:04X}, 0x{:04X})",
+                        name, addr, self.sram_start, self.sram_free_ptr
+                    ));
+                }
+            }
+        }
+
+        Ok(self.instructions.clone())
+    }
+
+    /// Assigns scalar `$` variables (params + locals at any depth) to callee-saved registers
+    /// r2..r15, in declaration order, until the pool is exhausted; the rest fall back to SRAM.
+    /// Returns the set of registers used (for prologue/epilogue save/restore).
+    fn plan_function_registers(&mut self, params: &[(String, String)], body: &[Stmt]) -> Vec<u8> {
+        self.var_homes.clear();
+        self.loop_bound_regs.clear();
+        self.loop_depth = 0;
+
+        let mut saves: Vec<u8> = Vec::new();
+        let mut reg_free_at = [0usize; 16];
+
+        // 1. Allocate loop bound registers first from R2..R15
+        let depth = max_loop_depth(body);
+        let mut cursor: u8 = 2;
+        let limit: u8 = 16;
+        for _ in 0..depth {
+            if cursor + 1 < limit {
+                self.loop_bound_regs.push(cursor);
+                saves.push(cursor);
+                saves.push(cursor + 1);
+                reg_free_at[cursor as usize] = usize::MAX;
+                reg_free_at[(cursor + 1) as usize] = usize::MAX;
+                cursor += 2;
+            }
+        }
+
+        // 2. Collect all variable declarations and their types
+        let mut decl_types: HashMap<String, String> = HashMap::new();
+        for (pn, pt) in params {
+            decl_types.insert(pn.clone(), pt.clone());
+        }
+        let mut decls_list = Vec::new();
+        collect_decls(body, &mut decls_list);
+        for (nm, ty) in decls_list {
+            decl_types.insert(nm, ty);
+        }
+
+        // 3. Perform Liveness Analysis
+        let mut analyzer = LivenessAnalyzer::new();
+        analyzer.analyze(body);
+
+        // Compute base intervals
+        let mut intervals: HashMap<String, (usize, usize)> = HashMap::new();
+        for (i, name) in analyzer.uses.iter().enumerate() {
+            intervals.entry(name.clone())
+                .and_modify(|range| range.1 = i)
+                .or_insert((i, i));
+        }
+
+        // Extend intervals for loops
+        for &(l_start, l_end) in &analyzer.loop_intervals {
+            for (i, name) in analyzer.uses.iter().enumerate() {
+                if i >= l_start && i < l_end {
+                    if let Some(range) = intervals.get_mut(name) {
+                        range.0 = std::cmp::min(range.0, l_start);
+                        range.1 = std::cmp::max(range.1, l_end);
+                    }
+                }
+            }
+        }
+
+        // Set parameters start to 0
+        for (pn, _) in params {
+            if let Some(range) = intervals.get_mut(pn) {
+                range.0 = 0;
+            } else {
+                intervals.insert(pn.clone(), (0, 0));
+            }
+        }
+
+        // 4. Linear Scan Register Allocation
+        // Sort variables by their start point
+        let mut sorted_vars: Vec<String> = decl_types.keys()
+            .filter(|name| !decl_types[*name].contains('[')) // skip arrays
+            .cloned()
+            .collect();
+        sorted_vars.sort_by_key(|name| intervals.get(name).map(|r| r.0).unwrap_or(0));
+
+        for name in &sorted_vars {
+            let ty = &decl_types[name];
+            let (start, end) = intervals.get(name).copied().unwrap_or((0, 0));
+
+            // Allocate a register
+            if ty == "u8" {
+                // Find a free register in R2..R15 (i.e. reg_free_at[reg] <= start)
+                for reg in 2..16 {
+                    if reg_free_at[reg] <= start {
+                        self.var_homes.insert(name.clone(), reg as u8);
+                        reg_free_at[reg] = end + 1; // busy until end + 1 (exclusive)
+                        if !saves.contains(&(reg as u8)) {
+                            saves.push(reg as u8);
+                        }
+                        break;
+                    }
+                }
+            } else if ty == "u16" {
+                // Find a free adjacent register pair: reg and reg+1 must be free in R2..R15
+                let mut allocated = false;
+                for reg in (2..15).step_by(2) { // Try aligned first
+                    if reg_free_at[reg] <= start && reg_free_at[reg+1] <= start {
+                        self.var_homes.insert(name.clone(), reg as u8);
+                        reg_free_at[reg] = end + 1;
+                        reg_free_at[reg+1] = end + 1;
+                        if !saves.contains(&(reg as u8)) {
+                            saves.push(reg as u8);
+                        }
+                        if !saves.contains(&((reg + 1) as u8)) {
+                            saves.push((reg + 1) as u8);
+                        }
+                        allocated = true;
+                        break;
+                    }
+                }
+                if !allocated {
+                    // Try unaligned pair
+                    for reg in 2..15 {
+                        if reg_free_at[reg] <= start && reg_free_at[reg+1] <= start {
+                            self.var_homes.insert(name.clone(), reg as u8);
+                            reg_free_at[reg] = end + 1;
+                            reg_free_at[reg+1] = end + 1;
+                            if !saves.contains(&(reg as u8)) {
+                                saves.push(reg as u8);
+                            }
+                            if !saves.contains(&((reg + 1) as u8)) {
+                                saves.push((reg + 1) as u8);
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        let mut has_sram_var_in_range = false;
+        if self.target_core != TargetCore::AVRrc {
+            let mut sim_ptr = self.sram_free_ptr;
+            for (name, ty) in &decl_types {
+                if ty.contains('[') || !self.var_homes.contains_key(name) {
+                    let size = if ty.contains('[') && ty.contains(']') {
+                        let parts: Vec<&str> = ty.split('[').collect();
+                        let base_ty = parts[0];
+                        let size_str = parts[1].trim_end_matches(']');
+                        let item_count = size_str.parse::<u16>().unwrap_or(1);
+                        let item_sz = if base_ty == "u16" { 2 } else { 1 };
+                        item_count * item_sz
+                    } else if ty == "u8" {
+                        1
+                    } else if ty == "u16" {
+                        2
+                    } else {
+                        1
+                    };
+
+                    let addr = sim_ptr;
+                    sim_ptr += size;
+
+                    if addr < self.sram_start + 64 {
+                        has_sram_var_in_range = true;
+                    }
+                }
+            }
+        }
+
+        if has_sram_var_in_range {
+            if !saves.contains(&28) {
+                saves.push(28);
+            }
+            if !saves.contains(&29) {
+                saves.push(29);
+            }
+        }
+
+        saves.sort_unstable();
+        saves
+    }
+
+    fn compile_function(&mut self, name: &str, params: &[(String, String)], _ret_ty: &str, body: &[Stmt]) -> Result<(), String> {
+        let saves = self.plan_function_registers(params, body);
+        // @main is the root: nothing relies on it preserving registers, and it never returns,
+        // so it uses register homes without the save/restore overhead.
+        self.current_saves = if name == "@main" { Vec::new() } else { saves.clone() };
+
+        self.emit(Pass1Inst::Label(name.to_string()));
+
+        // Prologue: preserve callee-saved registers this function will reuse.
+        for &reg in self.current_saves.clone().iter() {
+            self.emit(Pass1Inst::Op(0x920F | ((reg as u16) << 4))); // PUSH reg
+        }
+
+        if saves.contains(&28) {
+            let sram_lo = (self.sram_start & 0xFF) as u8;
+            let sram_hi = ((self.sram_start >> 8) & 0xFF) as u8;
+            let op_lo = 0xE000 | (((sram_lo >> 4) as u16) << 8) | (12 << 4) | ((sram_lo & 0x0F) as u16);
+            let op_hi = 0xE000 | (((sram_hi >> 4) as u16) << 8) | (13 << 4) | ((sram_hi & 0x0F) as u16);
+            self.emit(Pass1Inst::Op(op_lo)); // LDI R28, sram_start_lo
+            self.emit(Pass1Inst::Op(op_hi)); // LDI R29, sram_start_hi
+        }
+
+        // Move incoming parameters from the argument registers into their homes.
+        let mut reg_idx = 24u8;
+        for (param_name, param_ty) in params {
+            let addr = self.allocate_var(param_name, param_ty, true)?;
+            let home = self.var_homes.get(param_name).copied();
+            if param_ty == "u8" {
+                if let Some(h) = home {
+                    let op = self.encode_rd_rr(0x2C00, h, reg_idx);
+                    self.emit(Pass1Inst::Op(op)); // MOV home, arg
+                } else {
+                    self.emit_sts(addr, reg_idx)?;
+                }
+            } else if param_ty == "u16" {
+                if let Some(h) = home {
+                    let lo = self.encode_rd_rr(0x2C00, h, reg_idx);
+                    let hi = self.encode_rd_rr(0x2C00, h + 1, reg_idx + 1);
+                    self.emit(Pass1Inst::Op(lo));
+                    self.emit(Pass1Inst::Op(hi));
+                } else {
+                    self.emit_sts(addr, reg_idx)?;
+                    self.emit_sts(addr + 1, reg_idx + 1)?;
+                }
+            }
+            if reg_idx >= 18 {
+                reg_idx -= 2;
+            }
+        }
+
+        self.compile_block(body)?;
+
+        self.emit_return();
+        Ok(())
+    }
+
+    /// Emits the function epilogue (restore callee-saved registers in reverse order) and RET.
+    fn emit_return(&mut self) {
+        for &reg in self.current_saves.clone().iter().rev() {
+            self.emit(Pass1Inst::Op(0x900F | ((reg as u16) << 4))); // POP reg
+        }
+        self.emit(Pass1Inst::Op(0x9508)); // RET
+    }
+
+    /// Reads scalar `$` variable `name` into `target`, widening a u8 source to `ctx_ty`.
+    fn read_var(&mut self, name: &str, target: u8, ctx_ty: &str) -> Result<(), String> {
+        let (addr, var_ty, _) = self.variables.get(name)
+            .ok_or_else(|| format!("Undefined variable: {}", name))?;
+        let addr = *addr;
+        let var_ty = var_ty.clone();
+        let home = self.var_homes.get(name).copied();
+        if let Some(h) = home {
+            let lo = self.encode_rd_rr(0x2C00, target, h);
+            self.emit(Pass1Inst::Op(lo));
+            if var_ty == "u16" {
+                let hi = self.encode_rd_rr(0x2C00, target + 1, h + 1);
+                self.emit(Pass1Inst::Op(hi));
+            } else if ctx_ty == "u16" {
+                self.emit(Pass1Inst::Op(0xE000 | (((target + 1 - 16) as u16) << 4))); // LDI target+1, 0
+            }
+        } else if var_ty == "u16" {
+            self.emit_lds(target, addr)?;
+            self.emit_lds(target + 1, addr + 1)?;
+        } else {
+            self.emit_lds(target, addr)?;
+            if ctx_ty == "u16" {
+                self.emit(Pass1Inst::Op(0xE000 | (((target + 1 - 16) as u16) << 4))); // LDI target+1, 0
+            }
+        }
+        Ok(())
+    }
+
+    /// Stores `src` (and src+1 for u16) into scalar `$` variable `name`.
+    fn write_var(&mut self, name: &str, src: u8) -> Result<(), String> {
+        let (addr, var_ty, _) = self.variables.get(name)
+            .ok_or_else(|| format!("Undefined variable: {}", name))?;
+        let addr = *addr;
+        let var_ty = var_ty.clone();
+        let home = self.var_homes.get(name).copied();
+        if let Some(h) = home {
+            let lo = self.encode_rd_rr(0x2C00, h, src);
+            self.emit(Pass1Inst::Op(lo));
+            if var_ty == "u16" {
+                let hi = self.encode_rd_rr(0x2C00, h + 1, src + 1);
+                self.emit(Pass1Inst::Op(hi));
+            }
+        } else if var_ty == "u16" {
+            self.emit_sts(addr, src)?;
+            self.emit_sts(addr + 1, src + 1)?;
+        } else {
+            self.emit_sts(addr, src)?;
+        }
+        Ok(())
+    }
+
+    /// Allocates a general-purpose or array variable in the SRAM unified memory space.
+    /// Allocations start at `0x0100` and grow upwards.
+    ///
+    /// # Safety and Bounds Checking
+    /// At compile-time, we track the total allocated memory via `self.sram_free_ptr`.
+    /// To prevent stack-heap collision (since the hardware Stack grows downwards from `0x08FF`),
+    /// we enforce a strict 64-byte safety margin at the top of SRAM. If variable allocations
+    /// exceed `0x08FF - 64` (i.e. `0x08BF`), the compilation fails with an explicit SRAM Overflow error.
+    fn allocate_var(&mut self, name: &str, ty: &str, is_mut: bool) -> Result<u16, String> {
+        // Register-resident scalars do not occupy SRAM; record only their type/mutability.
+        if self.var_homes.contains_key(name) {
+            self.variables.insert(name.to_string(), (0, ty.to_string(), is_mut));
+            return Ok(0);
+        }
+
+        let addr = self.sram_free_ptr;
+
+        let size = if ty.contains('[') && ty.contains(']') {
+            let parts: Vec<&str> = ty.split('[').collect();
+            let base_ty = parts[0];
+            let size_str = parts[1].trim_end_matches(']');
+            let item_count = size_str.parse::<u16>().unwrap_or(1);
+            let item_sz = if base_ty == "u16" { 2 } else { 1 };
+            item_count * item_sz
+        } else if ty == "u8" {
+            1
+        } else if ty == "u16" {
+            2
+        } else {
+            1
+        };
+
+        let limit = if self.sram_start == 0x0100 { 0x08FF - 64 } else { 0xFFFF - 64 };
+        if self.sram_free_ptr + size > limit {
+            return Err(format!(
+                "SRAM Overflow: Allocating variable '{}' of size {} bytes would exceed the maximum safe SRAM limit (0x{:04X}) leaving insufficient space for stack",
+                name, size, limit
+            ));
+        }
+
+        self.sram_free_ptr += size;
+        self.variables.insert(name.to_string(), (addr, ty.to_string(), is_mut));
+        Ok(addr)
+    }
+
+    /// Spills the value in a register pair/word or byte by pushing it onto the hardware stack.
+    ///
+    /// # Rationale
+    /// We use the AVR hardware stack (`PUSH`) rather than static SRAM addresses because it automatically
+    /// handles nested subroutine frames and deep recursion at runtime with zero risk of variable overlap.
+    /// Opcode format: `1001 001r rrrr 1111` (binary). We shift the 5-bit register index left by 4 to map
+    /// R0-R31 to bits 8..4 of the instruction word.
+    fn spill_push(&mut self, reg: u8, ty: &str) -> Result<u16, String> {
+        if ty == "u8" {
+            let op = 0x920F | (((reg & 0x1F) as u16) << 4);
+            self.emit(Pass1Inst::Op(op));
+        } else {
+            // Push low byte first, then high byte
+            let op1 = 0x920F | (((reg & 0x1F) as u16) << 4);
+            let op2 = 0x920F | ((((reg + 1) & 0x1F) as u16) << 4);
+            self.emit(Pass1Inst::Op(op1));
+            self.emit(Pass1Inst::Op(op2));
+        }
+        Ok(0)
+    }
+
+    /// Recovers a spilled value from the hardware stack back into a target register.
+    ///
+    /// # Mechanics
+    /// Since the stack is Last-In First-Out (LIFO), for 16-bit values we pop the high byte (`reg + 1`)
+    /// first, followed by the low byte (`reg`).
+    /// Opcode format: `1001 000d dddd 1111` (binary). We shift the target register index left by 4.
+    fn spill_pop(&mut self, target_reg: u8, _addr: u16, ty: &str) -> Result<(), String> {
+        if ty == "u8" {
+            let op = 0x900F | (((target_reg & 0x1F) as u16) << 4);
+            self.emit(Pass1Inst::Op(op));
+        } else {
+            // Pop high byte first, then low byte (LIFO order!)
+            let op2 = 0x900F | ((((target_reg + 1) & 0x1F) as u16) << 4);
+            let op1 = 0x900F | (((target_reg & 0x1F) as u16) << 4);
+            self.emit(Pass1Inst::Op(op2));
+            self.emit(Pass1Inst::Op(op1));
+        }
+        Ok(())
+    }
+
+    fn compile_block(&mut self, block: &[Stmt]) -> Result<(), String> {
+        for stmt in block {
+            self.compile_stmt(stmt)?;
+        }
+        Ok(())
+    }
+
+    // Helper to automatically optimize STS (2 words) to OUT (1 word) if address is in I/O space [0x20, 0x5F]
+    // Or to STD Y+q (1 word) if address is in displacement space [0x0100, 0x013F]
+    fn emit_sts(&mut self, addr: u16, reg: u8) -> Result<(), String> {
+        if addr >= 0x20 && addr < 0x60 {
+            // OUT A, reg -> 0xB800 | (((A & 0x30) as u16) << 5) | ((reg as u16) << 4) | ((A & 0x0F) as u16)
+            let io_addr = addr - 0x20;
+            let op = 0xB800 | (((io_addr & 0x30) as u16) << 5) | ((reg as u16) << 4) | ((io_addr & 0x0F) as u16);
+            self.emit(Pass1Inst::Op(op));
+        } else if self.target_core != TargetCore::AVRrc && addr >= self.sram_start && addr <= self.sram_start + 63 {
+            // STD Y+q, reg
+            let q = (addr - self.sram_start) as u8;
+            let op = 0x8208 | ((reg as u16) << 4) | encode_q(q);
+            self.emit(Pass1Inst::Op(op));
+        } else {
+            // Standard STS (2 words)
+            self.emit(Pass1Inst::Op(0x9200 | ((reg as u16) << 4)));
+            self.emit(Pass1Inst::Op(addr));
+        }
+        Ok(())
+    }
+
+    // Helper to automatically optimize LDS (2 words) to IN (1 word) if address is in I/O space [0x20, 0x5F]
+    // Or to LDD Rd, Y+q (1 word) if address is in displacement space [sram_start, sram_start+63]
+    fn emit_lds(&mut self, target: u8, addr: u16) -> Result<(), String> {
+        if addr >= 0x20 && addr < 0x60 {
+            // IN target, A -> 0xB000 | (((A & 0x30) as u16) << 5) | ((target as u16) << 4) | ((A & 0x0F) as u16)
+            let io_addr = addr - 0x20;
+            let op = 0xB000 | (((io_addr & 0x30) as u16) << 5) | ((target as u16) << 4) | ((io_addr & 0x0F) as u16);
+            self.emit(Pass1Inst::Op(op));
+        } else if self.target_core != TargetCore::AVRrc && addr >= self.sram_start && addr <= self.sram_start + 63 {
+            // LDD target, Y+q
+            let q = (addr - self.sram_start) as u8;
+            let op = 0x8008 | ((target as u16) << 4) | encode_q(q);
+            self.emit(Pass1Inst::Op(op));
+        } else {
+            // Standard LDS (2 words)
+            self.emit(Pass1Inst::Op(0x9000 | ((target as u16) << 4)));
+            self.emit(Pass1Inst::Op(addr));
+        }
+        Ok(())
+    }
+
+    fn compile_stmt(&mut self, stmt: &Stmt) -> Result<(), String> {
+        match stmt {
+            Stmt::VarDecl { name, ty, expr, is_mut } => {
+                let addr = self.allocate_var(name, ty, *is_mut)?;
+                if ty.contains('[') {
+                    let parts: Vec<&str> = ty.split('[').collect();
+                    let base_ty = parts[0];
+                    let size_str = parts[1].trim_end_matches(']');
+                    let size = size_str.parse::<u16>().unwrap_or(1);
+                    
+                    self.compile_expr(expr, 16, base_ty)?;
+                    
+                    let item_sz = if base_ty == "u16" { 2 } else { 1 };
+                    for i in 0..size {
+                        let offset = i * item_sz;
+                        if base_ty == "u8" {
+                            self.emit_sts(addr + offset, 16)?;
+                        } else {
+                            self.emit_sts(addr + offset, 16)?;
+                            self.emit_sts(addr + offset + 1, 17)?;
+                        }
+                    }
+                } else {
+                    self.compile_expr(expr, 16, ty)?;
+                    self.write_var(name, 16)?;
+                }
+            }
+            Stmt::Assign { expr, target, op } => {
+                if let Expr::VarRef(ref target_name) = *target {
+                    let is_hw = target_name.starts_with('%');
+                    let (addr, ty, is_mut) = if target_name.starts_with('$') {
+                        let (a, t, m) = self.variables.get(target_name).ok_or_else(|| format!("Undefined variable: {}", target_name))?;
+                        (*a, t.clone(), *m)
+                    } else if is_hw {
+                        let a = self.constants.get(target_name).ok_or_else(|| format!("Undefined hardware constant: {}", target_name))?;
+                        (*a as u16, "u8".to_string(), true)
+                    } else {
+                        return Err(format!("Invalid assignment target: {}", target_name));
+                    };
+
+                    if !is_mut {
+                        return Err(format!("Cannot assign to immutable variable: {}", target_name));
+                    }
+
+                    if op == "->" {
+                        self.compile_expr(expr, 16, &ty)?;
+                        if is_hw {
+                            self.emit_sts(addr, 16)?;
+                            if ty == "u16" {
+                                self.emit_sts(addr + 1, 17)?;
+                            }
+                        } else {
+                            self.write_var(target_name, 16)?;
+                        }
+                    } else {
+                        if is_hw {
+                            self.emit_lds(16, addr)?;
+                            if ty == "u16" {
+                                self.emit_lds(17, addr + 1)?;
+                            }
+                        } else {
+                            self.read_var(target_name, 16, &ty)?;
+                        }
+
+                        self.compile_expr(expr, 18, &ty)?;
+
+                        match op.as_str() {
+                            "->+" => {
+                                if ty == "u8" {
+                                    let opc = self.encode_rd_rr(0x0C00, 16, 18);
+                                    self.emit(Pass1Inst::Op(opc)); // ADD R16, R18
+                                } else if ty == "u16" {
+                                    let opc1 = self.encode_rd_rr(0x0C00, 16, 18);
+                                    let opc2 = self.encode_rd_rr(0x1C00, 17, 19);
+                                    self.emit(Pass1Inst::Op(opc1)); // ADD R16, R18
+                                    self.emit(Pass1Inst::Op(opc2)); // ADC R17, R19
+                                }
+                            }
+                            "->-" => {
+                                if ty == "u8" {
+                                    let opc = self.encode_rd_rr(0x1800, 16, 18);
+                                    self.emit(Pass1Inst::Op(opc)); // SUB R16, R18
+                                } else if ty == "u16" {
+                                    let opc1 = self.encode_rd_rr(0x1800, 16, 18);
+                                    let opc2 = self.encode_rd_rr(0x0800, 17, 19);
+                                    self.emit(Pass1Inst::Op(opc1)); // SUB R16, R18
+                                    self.emit(Pass1Inst::Op(opc2)); // SBC R17, R19
+                                }
+                            }
+                            "->&" => {
+                                let opc = self.encode_rd_rr(0x2000, 16, 18);
+                                self.emit(Pass1Inst::Op(opc)); // AND R16, R18
+                            }
+                            "->|" => {
+                                let opc = self.encode_rd_rr(0x2A00, 16, 18);
+                                self.emit(Pass1Inst::Op(opc)); // OR R16, R18
+                            }
+                            "->^" => {
+                                let opc = self.encode_rd_rr(0x2400, 16, 18);
+                                self.emit(Pass1Inst::Op(opc)); // EOR R16, R18
+                            }
+                            _ => return Err(format!("Unknown compound assignment operator: {}", op)),
+                        }
+
+                        if is_hw {
+                            self.emit_sts(addr, 16)?;
+                            if ty == "u16" {
+                                self.emit_sts(addr + 1, 17)?;
+                            }
+                        } else {
+                            self.write_var(target_name, 16)?;
+                        }
+                    }
+                } else if let Expr::BinOp { ref left, op: ref idx_op, ref right } = *target {
+                    if idx_op == "[]" {
+                        if let Expr::VarRef(ref array_name) = **left {
+                            let (base_addr, array_ty, is_mut) = self.variables.get(array_name)
+                                .ok_or_else(|| format!("Undefined array variable: {}", array_name))?;
+                            let base_addr = *base_addr;
+                            if !*is_mut {
+                                return Err(format!("Cannot assign to elements of immutable array: {}", array_name));
+                            }
+                            
+                            let item_ty = if array_ty.starts_with("u16") { "u16" } else { "u8" };
+                            self.compile_expr(expr, 16, item_ty)?;
+                            self.compile_expr(right, 18, "u16")?;
+                            
+                            if item_ty == "u16" {
+                                let opc_lsl = self.encode_rd_rr(0x0C00, 18, 18);
+                                let opc_rol = self.encode_rd_rr(0x1C00, 19, 19);
+                                self.emit(Pass1Inst::Op(opc_lsl)); // ADD R18, R18
+                                self.emit(Pass1Inst::Op(opc_rol)); // ADC R19, R19
+                            }
+                            
+                            let base_lo = (base_addr & 0xFF) as u8;
+                            let base_hi = ((base_addr >> 8) & 0xFF) as u8;
+                            
+                            let k_hi = (base_lo >> 4) & 0x0F;
+                            let k_lo = base_lo & 0x0F;
+                            let d = 30 - 16;
+                            self.emit(Pass1Inst::Op(0xE000 | ((k_hi as u16) << 8) | ((d as u16) << 4) | (k_lo as u16))); // LDI R30, base_lo
+                            
+                            let k_hi = (base_hi >> 4) & 0x0F;
+                            let k_lo = base_hi & 0x0F;
+                            let d = 31 - 16;
+                            self.emit(Pass1Inst::Op(0xE000 | ((k_hi as u16) << 8) | ((d as u16) << 4) | (k_lo as u16))); // LDI R31, base_hi
+                            
+                            let opc_add = self.encode_rd_rr(0x0C00, 30, 18);
+                            let opc_adc = self.encode_rd_rr(0x1C00, 31, 19);
+                            self.emit(Pass1Inst::Op(opc_add)); // ADD R30, R18
+                            self.emit(Pass1Inst::Op(opc_adc)); // ADC R31, R19
+                            
+                            if op == "->" {
+                                self.emit(Pass1Inst::Op(0x8200 | (16 << 4))); // ST Z, R16
+                                if item_ty == "u16" {
+                                    self.emit(Pass1Inst::Op(0x9201 | (16 << 4))); // ST Z+, R16
+                                    self.emit(Pass1Inst::Op(0x8200 | (17 << 4))); // ST Z, R17
+                                }
+                            } else {
+                                if item_ty == "u8" {
+                                    self.emit(Pass1Inst::Op(0x8000 | (20 << 4))); // LD R20, Z
+                                    match op.as_str() {
+                                        "->+" => {
+                                            let opc = self.encode_rd_rr(0x0C00, 20, 16);
+                                            self.emit(Pass1Inst::Op(opc)); // ADD R20, R16
+                                        }
+                                        "->-" => {
+                                            let opc = self.encode_rd_rr(0x1800, 20, 16);
+                                            self.emit(Pass1Inst::Op(opc)); // SUB R20, R16
+                                        }
+                                        "->&" => {
+                                            let opc = self.encode_rd_rr(0x2000, 20, 16);
+                                            self.emit(Pass1Inst::Op(opc)); // AND R20, R16
+                                        }
+                                        "->|" => {
+                                            let opc = self.encode_rd_rr(0x2A00, 20, 16);
+                                            self.emit(Pass1Inst::Op(opc)); // OR R20, R16
+                                        }
+                                        "->^" => {
+                                            let opc = self.encode_rd_rr(0x2400, 20, 16);
+                                            self.emit(Pass1Inst::Op(opc)); // EOR R20, R16
+                                        }
+                                        _ => return Err(format!("Unknown compound assignment operator: {}", op)),
+                                    }
+                                    self.emit(Pass1Inst::Op(0x8200 | (20 << 4))); // ST Z, R20
+                                } else {
+                                    self.emit(Pass1Inst::Op(0x9001 | (20 << 4))); // LD R20, Z+
+                                    self.emit(Pass1Inst::Op(0x8000 | (21 << 4))); // LD R21, Z
+                                    match op.as_str() {
+                                        "->+" => {
+                                            let opc1 = self.encode_rd_rr(0x0C00, 20, 16);
+                                            let opc2 = self.encode_rd_rr(0x1C00, 21, 17);
+                                            self.emit(Pass1Inst::Op(opc1)); // ADD R20, R16
+                                            self.emit(Pass1Inst::Op(opc2)); // ADC R21, R17
+                                        }
+                                        "->-" => {
+                                            let opc1 = self.encode_rd_rr(0x1800, 20, 16);
+                                            let opc2 = self.encode_rd_rr(0x0800, 21, 17);
+                                            self.emit(Pass1Inst::Op(opc1)); // SUB R20, R16
+                                            self.emit(Pass1Inst::Op(opc2)); // SBC R21, R17
+                                        }
+                                        "->&" => {
+                                            let opc1 = self.encode_rd_rr(0x2000, 20, 16);
+                                            let opc2 = self.encode_rd_rr(0x2000, 21, 17);
+                                            self.emit(Pass1Inst::Op(opc1)); // AND R20, R16
+                                            self.emit(Pass1Inst::Op(opc2)); // AND R21, R17
+                                        }
+                                        "->|" => {
+                                            let opc1 = self.encode_rd_rr(0x2A00, 20, 16);
+                                            let opc2 = self.encode_rd_rr(0x2A00, 21, 17);
+                                            self.emit(Pass1Inst::Op(opc1)); // OR R20, R16
+                                            self.emit(Pass1Inst::Op(opc2)); // OR R21, R17
+                                        }
+                                        "->^" => {
+                                            let opc1 = self.encode_rd_rr(0x2400, 20, 16);
+                                            let opc2 = self.encode_rd_rr(0x2400, 21, 17);
+                                            self.emit(Pass1Inst::Op(opc1)); // EOR R20, R16
+                                            self.emit(Pass1Inst::Op(opc2)); // EOR R21, R17
+                                        }
+                                        _ => return Err(format!("Unknown compound assignment operator: {}", op)),
+                                    }
+                                    self.emit(Pass1Inst::Op(0x8200 | (21 << 4))); // ST Z, R21
+                                    self.emit(Pass1Inst::Op(0x9202 | (20 << 4))); // ST -Z, R20
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    return Err("Invalid assignment target expression.".to_string());
+                }
+            }
+            Stmt::LoopInfinite { body } => {
+                let start_label = self.new_label("loop_start");
+                self.emit(Pass1Inst::Label(start_label.clone()));
+                self.compile_block(body)?;
+                self.emit(Pass1Inst::RJumpL(start_label));
+            }
+            Stmt::LoopRange { start, end, var_name, body } => {
+                let ty = "u16";
+                let _addr = self.allocate_var(var_name, ty, true)?;
+
+                // Prefer a reserved callee-saved register pair for the loop end bound so it is
+                // not reloaded from SRAM each iteration; fall back to an SRAM temp otherwise.
+                let bound = self.loop_bound_regs.get(self.loop_depth).copied();
+                let end_addr = if bound.is_none() {
+                    let end_var_name = format!("$loop_end_{}", self.label_counter);
+                    self.label_counter += 1;
+                    self.allocate_var(&end_var_name, ty, false)?
+                } else {
+                    0
+                };
+
+                // 1. Initialize loop variable
+                self.compile_expr(start, 16, ty)?;
+                self.write_var(var_name, 16)?;
+
+                // 2. Evaluate and store end bound ONCE before entering the loop
+                self.compile_expr(end, 16, ty)?;
+                if let Some(b) = bound {
+                    let lo = self.encode_rd_rr(0x2C00, b, 16);
+                    let hi = self.encode_rd_rr(0x2C00, b + 1, 17);
+                    self.emit(Pass1Inst::Op(lo)); // MOV bound_lo, r16
+                    self.emit(Pass1Inst::Op(hi)); // MOV bound_hi, r17
+                } else {
+                    self.emit_sts(end_addr, 16)?;
+                    self.emit_sts(end_addr + 1, 17)?;
+                }
+
+                let start_label = self.new_label("loop_start");
+                let end_label = self.new_label("loop_end");
+
+                // 3. Initial comparison check before executing body
+                self.read_var(var_name, 16, ty)?;
+                let (blo, bhi) = if let Some(b) = bound {
+                    (b, b + 1)
+                } else {
+                    self.emit_lds(18, end_addr)?;
+                    self.emit_lds(19, end_addr + 1)?;
+                    (18, 19)
+                };
+                let opc1 = self.encode_rd_rr(0x1400, 16, blo);
+                let opc2 = self.encode_rd_rr(0x0400, 17, bhi);
+                self.emit(Pass1Inst::Op(opc1)); // CP R16, bound_lo
+                self.emit(Pass1Inst::Op(opc2)); // CPC R17, bound_hi
+
+                // Skip + RJMP pattern to prevent branch overflow
+                let enter_body_label = self.new_label("enter_body");
+                self.emit(Pass1Inst::BrbsL(0, enter_body_label.clone())); // BRLO/BRCS to enter_body (unsigned <)
+                self.emit(Pass1Inst::RJumpL(end_label.clone())); // RJMP to end (12-bit safe jump)
+                self.emit(Pass1Inst::Label(enter_body_label));
+
+                self.emit(Pass1Inst::Label(start_label.clone()));
+
+                // 4. Compile loop body
+                self.loop_depth += 1;
+                self.compile_block(body)?;
+                self.loop_depth -= 1;
+
+                // 5. Increment loop variable
+                self.read_var(var_name, 16, ty)?;
+
+                self.emit_add_u16_imm(16, 1);
+
+                self.write_var(var_name, 16)?;
+
+                // 6. Compare with stored end bound and loop
+                let (blo, bhi) = if let Some(b) = bound {
+                    (b, b + 1)
+                } else {
+                    self.emit_lds(18, end_addr)?;
+                    self.emit_lds(19, end_addr + 1)?;
+                    (18, 19)
+                };
+                let opc1 = self.encode_rd_rr(0x1400, 16, blo);
+                let opc2 = self.encode_rd_rr(0x0400, 17, bhi);
+                self.emit(Pass1Inst::Op(opc1)); // CP R16, bound_lo
+                self.emit(Pass1Inst::Op(opc2)); // CPC R17, bound_hi
+
+                // Skip + RJMP pattern to prevent branch overflow back to start
+                let skip_rjmp_label = self.new_label("skip_rjmp");
+                self.emit(Pass1Inst::BrbcL(0, skip_rjmp_label.clone())); // BRSH/BRCC to skip_rjmp (unsigned >=)
+                self.emit(Pass1Inst::RJumpL(start_label)); // RJMP back to start (12-bit safe jump)
+                self.emit(Pass1Inst::Label(skip_rjmp_label));
+
+                self.emit(Pass1Inst::Label(end_label));
+            }
+            Stmt::Conditional { cond, then_block, else_block } => {
+                let end_label = self.new_label("cond_end");
+
+                // Branch directly off the condition's flags instead of materializing a 0/1
+                // value and re-testing it.
+                if let Some(ref block) = else_block {
+                    let else_label = self.new_label("else");
+                    self.compile_cond_jump_if_false(cond, &else_label)?;
+                    self.compile_block(then_block)?;
+                    self.emit(Pass1Inst::RJumpL(end_label.clone()));
+                    self.emit(Pass1Inst::Label(else_label));
+                    self.compile_block(block)?;
+                } else {
+                    self.compile_cond_jump_if_false(cond, &end_label)?;
+                    self.compile_block(then_block)?;
+                }
+                self.emit(Pass1Inst::Label(end_label));
+            }
+            Stmt::Switch { expr, cases, default } => {
+                let end_label = self.new_label("switch_end");
+                
+                let ty_str = if let Expr::VarRef(ref name) = expr {
+                    if let Some((_, var_ty, _)) = self.variables.get(name) {
+                        var_ty.clone()
+                    } else {
+                        "u8".to_string()
+                    }
+                } else {
+                    "u8".to_string()
+                };
+                let ty = ty_str.as_str();
+                
+                self.compile_expr(expr, 16, ty)?;
+                
+                let mut case_labels = Vec::new();
+                for i in 0..cases.len() {
+                    case_labels.push(self.new_label(&format!("switch_case_{}", i)));
+                }
+                let default_label = self.new_label("switch_default");
+                
+                for (i, (case_expr, _)) in cases.iter().enumerate() {
+                    self.compile_expr(case_expr, 18, ty)?;
+                    
+                    let opc1 = self.encode_rd_rr(0x1400, 16, 18);
+                    self.emit(Pass1Inst::Op(opc1)); // CP R16, R18
+                    if ty == "u16" {
+                        let opc2 = self.encode_rd_rr(0x0400, 17, 19);
+                        self.emit(Pass1Inst::Op(opc2)); // CPC R17, R19
+                    }
+                    
+                    // Skip + RJMP pattern to prevent branch overflow to potentially far case bodies
+                    let match_label = self.new_label("switch_match");
+                    self.emit(Pass1Inst::BrbcL(1, match_label.clone())); // BRNE match_label (Z flag clear)
+                    self.emit(Pass1Inst::RJumpL(case_labels[i].clone())); // RJMP to case (12-bit safe jump)
+                    self.emit(Pass1Inst::Label(match_label));
+                }
+                
+                if default.is_some() {
+                    self.emit(Pass1Inst::RJumpL(default_label.clone()));
+                } else {
+                    self.emit(Pass1Inst::RJumpL(end_label.clone()));
+                }
+                
+                for (i, (_, body)) in cases.iter().enumerate() {
+                    self.emit(Pass1Inst::Label(case_labels[i].clone()));
+                    self.compile_block(body)?;
+                    self.emit(Pass1Inst::RJumpL(end_label.clone()));
+                }
+                
+                if let Some(ref default_body) = default {
+                    self.emit(Pass1Inst::Label(default_label));
+                    self.compile_block(default_body)?;
+                    self.emit(Pass1Inst::RJumpL(end_label.clone()));
+                }
+                
+                self.emit(Pass1Inst::Label(end_label));
+            }
+            Stmt::Return { val } => {
+                if !self.inline_return_labels.is_empty() {
+                    let label = self.inline_return_labels.last().unwrap().clone();
+                    if let Some(ref expr) = val {
+                        self.compile_expr(expr, 16, "u16")?;
+                        let prefix = self.inline_prefixes.last().unwrap().clone();
+                        let unique_ret = format!("${}_ret", prefix);
+                        self.write_var(&unique_ret, 16)?;
+                    }
+                    self.emit(Pass1Inst::RJumpL(label));
+                } else {
+                    if let Some(ref expr) = val {
+                        // Evaluate return expressions in low scratch registers to avoid
+                        // expensive stack spilling when target is near the top register bank.
+                        self.compile_expr(expr, 16, "u16")?;
+                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, 24, 16))); // MOV R24, R16
+                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, 25, 17))); // MOV R25, R17
+                    }
+                    self.emit_return();
+                }
+            }
+            Stmt::ExprStmt { expr } => {
+                self.compile_expr(expr, 16, "u16")?;
+            }
+            Stmt::Goto(label) => {
+                self.emit(Pass1Inst::RJumpL(label.clone()));
+            }
+            Stmt::Label(label) => {
+                self.emit(Pass1Inst::Label(label.clone()));
+            }
+        }
+        Ok(())
+    }
+
+    /// Best-effort static type inference: returns "u16" if the expression's value width is
+    /// 16-bit (from a u16 variable, array element, function return, or wide literal), else "u8".
+    fn infer_type(&self, expr: &Expr) -> String {
+        match expr {
+            Expr::Literal(v) => if *v > 255 || *v < 0 { "u16".to_string() } else { "u8".to_string() },
+            Expr::VarRef(name) => {
+                if name.starts_with('$') {
+                    if let Some((_, t, _)) = self.variables.get(name) {
+                        if t.starts_with("u16") { return "u16".to_string(); }
+                    }
+                }
+                "u8".to_string()
+            }
+            Expr::BinOp { left, op, right } => {
+                if op == "[]" {
+                    if let Expr::VarRef(name) = &**left {
+                        if let Some((_, t, _)) = self.variables.get(name) {
+                            if t.starts_with("u16") { return "u16".to_string(); }
+                        }
+                    }
+                    return "u8".to_string();
+                }
+                if matches!(op.as_str(), "==" | "!=" | "<" | ">" | "<=" | ">=" | "&&" | "||") {
+                    return "u8".to_string();
+                }
+                if self.infer_type(left) == "u16" || self.infer_type(right) == "u16" {
+                    "u16".to_string()
+                } else {
+                    "u8".to_string()
+                }
+            }
+            Expr::UnaryOp { expr, .. } => self.infer_type(expr),
+            Expr::Call { name, .. } => {
+                if let Some((_, ret)) = self.functions.get(name) {
+                    if ret.starts_with("u16") { return "u16".to_string(); }
+                }
+                "u8".to_string()
+            }
+        }
+    }
+
+    /// Emits an unsigned comparison of `left <op> right`, leaving the result only in flags.
+    /// Returns `(sreg_bit, true_when_set)`: branching when that SREG bit equals `true_when_set`
+    /// is taken exactly when the comparison is TRUE. Operands are evaluated into r16/r18.
+    fn emit_comparison(&mut self, left: &Expr, op: &str, right: &Expr, ty: &str) -> Result<(u8, bool), String> {
+        // Fast-path zero-comparison for u16: == 0 and != 0
+        if ty == "u16" && matches!(op, "==" | "!=") {
+            if let Expr::Literal(0) = right {
+                self.compile_expr(left, 16, ty)?;
+                let opc = self.encode_rd_rr(0x2800, 16, 17);
+                self.emit(Pass1Inst::Op(opc)); // OR r16, r17 (sets Z flag)
+                return Ok(match op {
+                    "==" => (1, true),   // BREQ
+                    "!=" => (1, false),  // BRNE
+                    _ => unreachable!(),
+                });
+            } else if let Expr::Literal(0) = left {
+                self.compile_expr(right, 16, ty)?;
+                let opc = self.encode_rd_rr(0x2800, 16, 17);
+                self.emit(Pass1Inst::Op(opc)); // OR r16, r17 (sets Z flag)
+                return Ok(match op {
+                    "==" => (1, true),   // BREQ
+                    "!=" => (1, false),  // BRNE
+                    _ => unreachable!(),
+                });
+            }
+        }
+
+        // CPI fast path: u8, literal RHS, ops that need no operand swap.
+        if ty == "u8" {
+            if let Expr::Literal(val) = right {
+                if matches!(op, "==" | "!=" | "<" | ">=") {
+                    self.compile_expr(left, 16, ty)?;
+                    let k = (*val & 0xFF) as u8;
+                    self.emit(Pass1Inst::Op(0x3000 | (((k >> 4) & 0x0F) as u16) << 8 | (k & 0x0F) as u16)); // CPI r16, k
+                    return Ok(match op {
+                        "==" => (1, true),   // BREQ
+                        "!=" => (1, false),  // BRNE
+                        "<"  => (0, true),   // BRLO/BRCS (C=1)
+                        ">=" => (0, false),  // BRSH/BRCC (C=0)
+                        _ => unreachable!(),
+                    });
+                }
+            }
+        }
+        // General register/register path. `>` and `<=` are computed by swapping operands.
+        let (do_swap, base_op) = match op {
+            ">"  => (true, "<"),
+            "<=" => (true, ">="),
+            _    => (false, op),
+        };
+        if do_swap {
+            self.compile_expr(right, 16, ty)?;
+            self.compile_expr(left, 18, ty)?;
+        } else {
+            self.compile_expr(left, 16, ty)?;
+            self.compile_expr(right, 18, ty)?;
+        }
+        let opc1 = self.encode_rd_rr(0x1400, 16, 18);
+        self.emit(Pass1Inst::Op(opc1)); // CP r16, r18
+        if ty == "u16" {
+            let opc2 = self.encode_rd_rr(0x0400, 17, 19);
+            self.emit(Pass1Inst::Op(opc2)); // CPC r17, r19
+        }
+        Ok(match base_op {
+            "==" => (1, true),
+            "!=" => (1, false),
+            "<"  => (0, true),
+            ">=" => (0, false),
+            _ => return Err(format!("Unsupported comparison operator: {}", op)),
+        })
+    }
+
+    /// Emits a SREG-bit branch to `label` taken when `bit` equals `set`.
+    fn emit_flag_branch(&mut self, bit: u8, set: bool, label: &str) {
+        if set {
+            self.emit(Pass1Inst::BrbsL(bit, label.to_string()));
+        } else {
+            self.emit(Pass1Inst::BrbcL(bit, label.to_string()));
+        }
+    }
+
+    /// Generates control flow that jumps to `false_label` when `cond` is false and falls
+    /// through when it is true. Uses a short skip + long RJMP so the jump target may be far.
+    fn compile_cond_jump_if_false(&mut self, cond: &Expr, false_label: &str) -> Result<(), String> {
+        match cond {
+            Expr::BinOp { left, op, right } if matches!(op.as_str(), "==" | "!=" | "<" | ">" | "<=" | ">=") => {
+                let cty = if self.infer_type(left) == "u16" || self.infer_type(right) == "u16" { "u16" } else { "u8" };
+                let (bit, true_set) = self.emit_comparison(left, op, right, cty)?;
+                let skip = self.new_label("cskip");
+                self.emit_flag_branch(bit, true_set, &skip); // if TRUE, skip the jump
+                self.emit(Pass1Inst::RJumpL(false_label.to_string()));
+                self.emit(Pass1Inst::Label(skip));
+            }
+            Expr::BinOp { left, op, right } if op == "&&" => {
+                self.compile_cond_jump_if_false(left, false_label)?;
+                self.compile_cond_jump_if_false(right, false_label)?;
+            }
+            Expr::BinOp { left, op, right } if op == "||" => {
+                let true_label = self.new_label("ctrue");
+                self.compile_cond_jump_if_true(left, &true_label)?;
+                self.compile_cond_jump_if_false(right, false_label)?;
+                self.emit(Pass1Inst::Label(true_label));
+            }
+            Expr::UnaryOp { op, expr } if op == "!" => {
+                self.compile_cond_jump_if_true(expr, false_label)?;
+            }
+            _ => {
+                self.compile_expr(cond, 16, "u8")?;
+                let opc = self.encode_rd_rr(0x2000, 16, 16);
+                self.emit(Pass1Inst::Op(opc)); // TST r16
+                let skip = self.new_label("cskip");
+                self.emit(Pass1Inst::BrbcL(1, skip.clone())); // BRNE: if nonzero (true), skip
+                self.emit(Pass1Inst::RJumpL(false_label.to_string()));
+                self.emit(Pass1Inst::Label(skip));
+            }
+        }
+        Ok(())
+    }
+
+    /// Generates control flow that jumps to `true_label` when `cond` is true and falls
+    /// through when it is false.
+    fn compile_cond_jump_if_true(&mut self, cond: &Expr, true_label: &str) -> Result<(), String> {
+        match cond {
+            Expr::BinOp { left, op, right } if matches!(op.as_str(), "==" | "!=" | "<" | ">" | "<=" | ">=") => {
+                let cty = if self.infer_type(left) == "u16" || self.infer_type(right) == "u16" { "u16" } else { "u8" };
+                let (bit, true_set) = self.emit_comparison(left, op, right, cty)?;
+                let skip = self.new_label("cskip");
+                self.emit_flag_branch(bit, !true_set, &skip); // if FALSE, skip the jump
+                self.emit(Pass1Inst::RJumpL(true_label.to_string()));
+                self.emit(Pass1Inst::Label(skip));
+            }
+            Expr::BinOp { left, op, right } if op == "&&" => {
+                let skip = self.new_label("cskip");
+                self.compile_cond_jump_if_false(left, &skip)?;
+                self.compile_cond_jump_if_true(right, true_label)?;
+                self.emit(Pass1Inst::Label(skip));
+            }
+            Expr::BinOp { left, op, right } if op == "||" => {
+                self.compile_cond_jump_if_true(left, true_label)?;
+                self.compile_cond_jump_if_true(right, true_label)?;
+            }
+            Expr::UnaryOp { op, expr } if op == "!" => {
+                self.compile_cond_jump_if_false(expr, true_label)?;
+            }
+            _ => {
+                self.compile_expr(cond, 16, "u8")?;
+                let opc = self.encode_rd_rr(0x2000, 16, 16);
+                self.emit(Pass1Inst::Op(opc)); // TST r16
+                let skip = self.new_label("cskip");
+                self.emit(Pass1Inst::BrbsL(1, skip.clone())); // BREQ: if zero (false), skip
+                self.emit(Pass1Inst::RJumpL(true_label.to_string()));
+                self.emit(Pass1Inst::Label(skip));
+            }
+        }
+        Ok(())
+    }
+
+    fn compile_expr(&mut self, expr: &Expr, target: u8, ty: &str) -> Result<(), String> {
+        // Constant folding: collapse a fully literal arithmetic/bitwise subtree into a
+        // single immediate, matching the runtime's type-width wrapping semantics.
+        if !matches!(expr, Expr::Literal(_)) {
+            if let Some(v) = eval_const(expr, ty) {
+                return self.compile_expr(&Expr::Literal(v as i32), target, ty);
+            }
+        }
+        match expr {
+            Expr::Literal(val) => {
+                let val_lo = (val & 0xFF) as u8;
+                let val_hi = ((val >> 8) & 0xFF) as u8;
+                
+                let k_hi = (val_lo >> 4) & 0x0F;
+                let k_lo = val_lo & 0x0F;
+                let d = target - 16;
+                self.emit(Pass1Inst::Op(0xE000 | ((k_hi as u16) << 8) | ((d as u16) << 4) | (k_lo as u16)));
+                
+                if ty == "u16" {
+                    let k_hi = (val_hi >> 4) & 0x0F;
+                    let k_lo = val_hi & 0x0F;
+                    let d = (target + 1) - 16;
+                    self.emit(Pass1Inst::Op(0xE000 | ((k_hi as u16) << 8) | ((d as u16) << 4) | (k_lo as u16)));
+                }
+            }
+            Expr::VarRef(ref name) => {
+                if name.starts_with('$') {
+                    self.read_var(name, target, ty)?;
+                } else if name.starts_with('%') {
+                    let addr = *self.constants.get(name).ok_or_else(|| format!("Undefined hardware constant: {}", name))? as u16;
+                    self.emit_lds(target, addr)?;
+                    if ty == "u16" {
+                        let d = (target + 1) - 16;
+                        self.emit(Pass1Inst::Op(0xE000 | ((d as u16) << 4))); // LDI target+1, 0
+                    }
+                }
+            }
+            Expr::UnaryOp { op, expr } => {
+                self.compile_expr(expr, target, ty)?;
+                match op.as_str() {
+                    "-" => {
+                        if ty == "u8" {
+                            self.emit(Pass1Inst::Op(0x9401 | ((target as u16) << 4))); // NEG target
+                        } else if ty == "u16" {
+                            // In-place 16-bit negation: COM target+1, NEG target, SBCI target+1, 0xFF (3 cycles, 0 registers)
+                            self.emit(Pass1Inst::Op(0x9400 | (((target + 1) as u16) << 4))); // COM target+1
+                            self.emit(Pass1Inst::Op(0x9401 | ((target as u16) << 4)));       // NEG target
+                            self.emit(Pass1Inst::Op(0x40FF | (((target + 1 - 16) as u16) << 4))); // SBCI target+1, 0xFF
+                        }
+                    }
+                    "~" => {
+                        if ty == "u8" {
+                            self.emit(Pass1Inst::Op(0x9400 | ((target as u16) << 4))); // COM target
+                        } else if ty == "u16" {
+                            self.emit(Pass1Inst::Op(0x9400 | ((target as u16) << 4))); // COM target
+                            self.emit(Pass1Inst::Op(0x9400 | (((target + 1) as u16) << 4))); // COM target+1
+                        }
+                    }
+                    "!" => {
+                        let true_label = self.new_label("not_true");
+                        let end_label = self.new_label("not_end");
+                        
+                        // Compare target with 0 using CPI / SBCI for u8, or OR target, target+1 for u16
+                        if ty == "u16" {
+                            let opc = self.encode_rd_rr(0x2800, target, target + 1);
+                            self.emit(Pass1Inst::Op(opc)); // OR target, target+1 (1 cycle, sets Z flag)
+                        } else {
+                            self.emit(Pass1Inst::Op(0x3000 | (((target - 16) as u16) << 4))); // CPI target, 0
+                        }
+                        
+                        self.emit(Pass1Inst::BrbsL(1, true_label.clone())); // BREQ true_label (Z flag set)
+                        
+                        // False case (result of !non-zero is 0)
+                        let d = target - 16;
+                        self.emit(Pass1Inst::Op(0xE000 | ((d as u16) << 4))); // LDI target, 0
+                        if ty == "u16" {
+                            let d_hi = target + 1 - 16;
+                            self.emit(Pass1Inst::Op(0xE000 | ((d_hi as u16) << 4))); // LDI target+1, 0
+                        }
+                        self.emit(Pass1Inst::RJumpL(end_label.clone()));
+                        
+                        // True case (result of !zero is 1)
+                        self.emit(Pass1Inst::Label(true_label));
+                        let d = target - 16;
+                        self.emit(Pass1Inst::Op(0xE000 | ((d as u16) << 4) | 1)); // LDI target, 1
+                        if ty == "u16" {
+                            let d_hi = target + 1 - 16;
+                            self.emit(Pass1Inst::Op(0xE000 | ((d_hi as u16) << 4))); // LDI target+1, 0
+                        }
+                        
+                        self.emit(Pass1Inst::Label(end_label));
+                    }
+                    _ => return Err(format!("Unknown unary operator: {}", op)),
+                }
+            }
+            Expr::BinOp { left, op, right } => {
+                if op == "[]" {
+                    if let Expr::VarRef(ref array_name) = **left {
+                        let (base_addr, array_ty, _) = self.variables.get(array_name)
+                            .ok_or_else(|| format!("Undefined array variable: {}", array_name))?;
+                        let base_addr = *base_addr;
+                        
+                        let item_ty = if array_ty.starts_with("u16") { "u16" } else { "u8" };
+                        self.compile_expr(right, target, "u16")?;
+                        
+                        if item_ty == "u16" {
+                            let opc_lsl = self.encode_rd_rr(0x0C00, target, target);
+                            let opc_rol = self.encode_rd_rr(0x1C00, target + 1, target + 1);
+                            self.emit(Pass1Inst::Op(opc_lsl)); // ADD idx, idx
+                            self.emit(Pass1Inst::Op(opc_rol)); // ADC idx+1, idx+1
+                        }
+                        
+                        let base_lo = (base_addr & 0xFF) as u8;
+                        let base_hi = ((base_addr >> 8) & 0xFF) as u8;
+                        
+                        let k_hi = (base_lo >> 4) & 0x0F;
+                        let k_lo = base_lo & 0x0F;
+                        let d = 30 - 16;
+                        self.emit(Pass1Inst::Op(0xE000 | ((k_hi as u16) << 8) | ((d as u16) << 4) | (k_lo as u16))); // LDI R30, base_lo
+                        
+                        let k_hi = (base_hi >> 4) & 0x0F;
+                        let k_lo = base_hi & 0x0F;
+                        let d = 31 - 16;
+                        self.emit(Pass1Inst::Op(0xE000 | ((k_hi as u16) << 8) | ((d as u16) << 4) | (k_lo as u16))); // LDI R31, base_hi
+                        
+                        let opc_add = self.encode_rd_rr(0x0C00, 30, target);
+                        let opc_adc = self.encode_rd_rr(0x1C00, 31, target + 1);
+                        self.emit(Pass1Inst::Op(opc_add)); // ADD R30, idx
+                        self.emit(Pass1Inst::Op(opc_adc)); // ADC R31, idx+1
+                        
+                        self.emit(Pass1Inst::Op(0x8000 | ((target as u16) << 4))); // LD target, Z
+                        if ty == "u16" && item_ty == "u16" {
+                            self.emit(Pass1Inst::Op(0x9001 | ((target as u16) << 4))); // LD target, Z+
+                            self.emit(Pass1Inst::Op(0x8000 | (((target + 1) as u16) << 4))); // LD target+1, Z
+                        } else if ty == "u16" && item_ty == "u8" {
+                            let d = (target + 1) - 16;
+                            self.emit(Pass1Inst::Op(0xE000 | ((d as u16) << 4))); // LDI target+1, 0
+                        }
+                    } else {
+                        return Err("Array indexing is only supported on direct variables.".to_string());
+                    }
+                    return Ok(());
+                } else if op == "&&" {
+                    let false_label = self.new_label("and_false");
+                    let end_label = self.new_label("and_end");
+                    
+                    self.compile_expr(left, target, "u8")?;
+                    let opc_tst = self.encode_rd_rr(0x2000, target, target);
+                    self.emit(Pass1Inst::Op(opc_tst)); // TST target
+                    self.emit(Pass1Inst::BrbsL(1, false_label.clone())); // BREQ to false
+                    
+                    self.compile_expr(right, target, "u8")?;
+                    let opc_tst = self.encode_rd_rr(0x2000, target, target);
+                    self.emit(Pass1Inst::Op(opc_tst)); // TST target
+                    self.emit(Pass1Inst::BrbsL(1, false_label.clone())); // BREQ to false
+                    
+                    let d = target - 16;
+                    self.emit(Pass1Inst::Op(0xE000 | ((d as u16) << 4) | 1)); // LDI target, 1
+                    self.emit(Pass1Inst::RJumpL(end_label.clone()));
+                    
+                    self.emit(Pass1Inst::Label(false_label));
+                    let d = target - 16;
+                    self.emit(Pass1Inst::Op(0xE000 | ((d as u16) << 4))); // LDI target, 0
+                    
+                    self.emit(Pass1Inst::Label(end_label));
+                    return Ok(());
+                } else if op == "||" {
+                    let true_label = self.new_label("or_true");
+                    let end_label = self.new_label("or_end");
+                    
+                    self.compile_expr(left, target, "u8")?;
+                    let opc_tst = self.encode_rd_rr(0x2000, target, target);
+                    self.emit(Pass1Inst::Op(opc_tst)); // TST target
+                    self.emit(Pass1Inst::BrbcL(1, true_label.clone())); // BRNE to true
+                    
+                    self.compile_expr(right, target, "u8")?;
+                    let opc_tst = self.encode_rd_rr(0x2000, target, target);
+                    self.emit(Pass1Inst::Op(opc_tst)); // TST target
+                    self.emit(Pass1Inst::BrbcL(1, true_label.clone())); // BRNE to true
+                    
+                    let d = target - 16;
+                    self.emit(Pass1Inst::Op(0xE000 | ((d as u16) << 4))); // LDI target, 0
+                    self.emit(Pass1Inst::RJumpL(end_label.clone()));
+                    
+                    self.emit(Pass1Inst::Label(true_label));
+                    let d = target - 16;
+                    self.emit(Pass1Inst::Op(0xE000 | ((d as u16) << 4) | 1)); // LDI target, 1
+                    
+                    self.emit(Pass1Inst::Label(end_label));
+                    return Ok(());
+                }
+
+                if let Expr::Literal(val) = **right {
+                    if op == "+" {
+                        self.compile_expr(left, target, ty)?;
+                        if ty == "u8" {
+                            let k = (-(val & 0xFF)) as u8;
+                            self.emit(Pass1Inst::Op(0x5000 | (((k >> 4) & 0x0F) as u16) << 8 | ((target - 16) as u16) << 4 | (k & 0x0F) as u16)); // SUBI target, -val
+                        } else {
+                            let imm = (val as i64 & 0xFFFF) as u16;
+                            self.emit_add_u16_imm(target, imm);
+                        }
+                        return Ok(());
+                    } else if op == "-" {
+                        self.compile_expr(left, target, ty)?;
+                        if ty == "u8" {
+                            let k = (val & 0xFF) as u8;
+                            self.emit(Pass1Inst::Op(0x5000 | (((k >> 4) & 0x0F) as u16) << 8 | ((target - 16) as u16) << 4 | (k & 0x0F) as u16)); // SUBI target, val
+                        } else {
+                            let imm = (val as i64 & 0xFFFF) as u16;
+                            self.emit_sub_u16_imm(target, imm);
+                        }
+                        return Ok(());
+                    } else if op == "&" {
+                        self.compile_expr(left, target, ty)?;
+                        if ty == "u8" {
+                            let k = (val & 0xFF) as u8;
+                            self.emit(Pass1Inst::Op(0x7000 | (((k >> 4) & 0x0F) as u16) << 8 | ((target - 16) as u16) << 4 | (k & 0x0F) as u16)); // ANDI target, val
+                        } else {
+                            let k_lo = (val & 0xFF) as u8;
+                            let k_hi = ((val >> 8) & 0xFF) as u8;
+                            self.emit(Pass1Inst::Op(0x7000 | (((k_lo >> 4) & 0x0F) as u16) << 8 | ((target - 16) as u16) << 4 | (k_lo & 0x0F) as u16)); // ANDI target, val_lo
+                            self.emit(Pass1Inst::Op(0x7000 | (((k_hi >> 4) & 0x0F) as u16) << 8 | ((target + 1 - 16) as u16) << 4 | (k_hi & 0x0F) as u16)); // ANDI target+1, val_hi
+                        }
+                        return Ok(());
+                    } else if op == "|" {
+                        self.compile_expr(left, target, ty)?;
+                        if ty == "u8" {
+                            let k = (val & 0xFF) as u8;
+                            self.emit(Pass1Inst::Op(0x6000 | (((k >> 4) & 0x0F) as u16) << 8 | ((target - 16) as u16) << 4 | (k & 0x0F) as u16)); // ORI target, val
+                        } else {
+                            let k_lo = (val & 0xFF) as u8;
+                            let k_hi = ((val >> 8) & 0xFF) as u8;
+                            self.emit(Pass1Inst::Op(0x6000 | (((k_lo >> 4) & 0x0F) as u16) << 8 | ((target - 16) as u16) << 4 | (k_lo & 0x0F) as u16)); // ORI target, val_lo
+                            self.emit(Pass1Inst::Op(0x6000 | (((k_hi >> 4) & 0x0F) as u16) << 8 | ((target + 1 - 16) as u16) << 4 | (k_hi & 0x0F) as u16)); // ORI target+1, val_hi
+                        }
+                        return Ok(());
+                    } else if op == "*" {
+                        let uv = if ty == "u16" { (val as i64) & 0xFFFF } else { (val as i64) & 0xFF };
+                        if uv == 1 {
+                            self.compile_expr(left, target, ty)?;
+                            return Ok(());
+                        } else if uv == 0 {
+                            self.compile_expr(left, target, ty)?;
+                            self.emit(Pass1Inst::Op(0xE000 | (((target - 16) as u16) << 4))); // LDI target, 0
+                            if ty == "u16" {
+                                self.emit(Pass1Inst::Op(0xE000 | (((target + 1 - 16) as u16) << 4)));
+                            }
+                            return Ok(());
+                        } else if uv > 0 {
+                            let mut factor = uv;
+                            let shifts = factor.trailing_zeros();
+                            factor >>= shifts;
+                            if factor == 1 {
+                                // Power of 2
+                                self.compile_expr(left, target, ty)?;
+                                for _ in 0..shifts {
+                                    if ty == "u8" {
+                                        let opc = self.encode_rd_rr(0x0C00, target, target);
+                                        self.emit(Pass1Inst::Op(opc)); // LSL target
+                                    } else {
+                                        let opc1 = self.encode_rd_rr(0x0C00, target, target);
+                                        let opc2 = self.encode_rd_rr(0x1C00, target + 1, target + 1);
+                                        self.emit(Pass1Inst::Op(opc1)); // LSL low
+                                        self.emit(Pass1Inst::Op(opc2)); // ROL high
+                                    }
+                                }
+                                return Ok(());
+                            } else if matches!(factor, 3 | 5 | 9) {
+                                // Decomposable constant multiplication (e.g. 6 = 3*2, 10 = 5*2, 12 = 3*4, 18 = 9*2, 24 = 3*8, etc.)
+                                self.compile_expr(left, target, ty)?;
+                                if ty == "u8" {
+                                    let tmp = target + 2;
+                                    self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, tmp, target))); // MOV tmp, x
+                                    let f_shifts = if factor == 3 { 1 } else if factor == 5 { 2 } else { 3 };
+                                    for _ in 0..f_shifts {
+                                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0C00, target, target))); // LSL x
+                                    }
+                                    self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0C00, target, tmp))); // ADD x, tmp
+                                    
+                                    // Now apply the power of 2 shifts
+                                    for _ in 0..shifts {
+                                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0C00, target, target))); // LSL x
+                                    }
+                                } else {
+                                    let tmp_lo = target + 2;
+                                    let tmp_hi = target + 3;
+                                    self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, tmp_lo, target))); // MOV tmp_lo, x_lo
+                                    self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, tmp_hi, target + 1))); // MOV tmp_hi, x_hi
+                                    let f_shifts = if factor == 3 { 1 } else if factor == 5 { 2 } else { 3 };
+                                    for _ in 0..f_shifts {
+                                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0C00, target, target))); // LSL lo
+                                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, target + 1, target + 1))); // ROL hi
+                                    }
+                                    self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0C00, target, tmp_lo))); // ADD lo
+                                    self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, target + 1, tmp_hi))); // ADC hi
+                                    
+                                    // Now apply the power of 2 shifts
+                                    for _ in 0..shifts {
+                                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0C00, target, target))); // LSL lo
+                                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, target + 1, target + 1))); // ROL hi
+                                    }
+                                }
+                                return Ok(());
+                            }
+                        }
+                    } else if op == "/" {
+                        let uv = if ty == "u16" { (val as i64) & 0xFFFF } else { (val as i64) & 0xFF };
+                        if uv == 1 {
+                            self.compile_expr(left, target, ty)?;
+                            return Ok(());
+                        } else if uv > 0 && (uv & (uv - 1)) == 0 {
+                            let shifts = uv.trailing_zeros();
+                            self.compile_expr(left, target, ty)?;
+                            for _ in 0..shifts {
+                                if ty == "u8" {
+                                    self.emit(Pass1Inst::Op(0x9406 | ((target as u16) << 4))); // LSR target
+                                } else {
+                                    self.emit(Pass1Inst::Op(0x9406 | (((target + 1) as u16) << 4))); // LSR high
+                                    self.emit(Pass1Inst::Op(0x9407 | ((target as u16) << 4)));       // ROR low
+                                }
+                            }
+                            return Ok(());
+                        }
+                    } else if op == "%" {
+                        let uv = if ty == "u16" { (val as i64) & 0xFFFF } else { (val as i64) & 0xFF };
+                        if uv == 1 {
+                            self.compile_expr(left, target, ty)?;
+                            self.emit(Pass1Inst::Op(0xE000 | (((target - 16) as u16) << 4))); // LDI target, 0
+                            if ty == "u16" {
+                                self.emit(Pass1Inst::Op(0xE000 | (((target + 1 - 16) as u16) << 4)));
+                            }
+                            return Ok(());
+                        } else if uv > 0 && (uv & (uv - 1)) == 0 {
+                            let mask = (uv - 1) as u16;
+                            self.compile_expr(left, target, ty)?;
+                            let k_lo = (mask & 0xFF) as u8;
+                            self.emit(Pass1Inst::Op(0x7000 | (((k_lo >> 4) & 0x0F) as u16) << 8 | ((target - 16) as u16) << 4 | (k_lo & 0x0F) as u16)); // ANDI low
+                            if ty == "u16" {
+                                let k_hi = ((mask >> 8) & 0xFF) as u8;
+                                self.emit(Pass1Inst::Op(0x7000 | (((k_hi >> 4) & 0x0F) as u16) << 8 | ((target + 1 - 16) as u16) << 4 | (k_hi & 0x0F) as u16)); // ANDI high
+                            }
+                            return Ok(());
+                        }
+                    } else if ["==", "!=", "<", ">", "<=", ">="].contains(&op.as_str()) && ty == "u8" {
+                        self.compile_expr(left, target, ty)?;
+                        let k = (val & 0xFF) as u8;
+                        self.emit(Pass1Inst::Op(0x3000 | (((k >> 4) & 0x0F) as u16) << 8 | ((target - 16) as u16) << 4 | (k & 0x0F) as u16)); // CPI target, val
+
+                        let true_label = self.new_label("cmp_true");
+                        let end_label = self.new_label("cmp_end");
+                        
+                        let br_op = match op.as_str() {
+                            "==" => op.as_str(),
+                            "!=" => op.as_str(),
+                            "<" | ">" => "<",
+                            ">=" | "<=" => ">=",
+                            _ => unreachable!(),
+                        };
+
+                        match br_op {
+                            "==" => self.emit(Pass1Inst::BrbsL(1, true_label.clone())), // BREQ
+                            "!=" => self.emit(Pass1Inst::BrbcL(1, true_label.clone())), // BRNE
+                            "<" => self.emit(Pass1Inst::BrbsL(0, true_label.clone())),  // BRLO/BRCS
+                            ">=" => self.emit(Pass1Inst::BrbcL(0, true_label.clone())), // BRSH/BRCC
+                            _ => unreachable!(),
+                        }
+
+                        // False case
+                        let d = target - 16;
+                        self.emit(Pass1Inst::Op(0xE000 | ((d as u16) << 4))); // LDI target, 0
+                        self.emit(Pass1Inst::RJumpL(end_label.clone()));
+                        
+                        // True case
+                        self.emit(Pass1Inst::Label(true_label));
+                        let d = target - 16;
+                        self.emit(Pass1Inst::Op(0xE000 | ((d as u16) << 4) | 1)); // LDI target, 1
+                        
+                        self.emit(Pass1Inst::Label(end_label));
+                        return Ok(());
+                    }
+                }
+
+                // Spill only when the operation's temporary register footprint would exceed R31.
+                // For binary ops we need target..target+3 at most (u16 path).
+                let use_spill = target > 28;
+
+                if op == ">" || op == "<=" {
+                    if use_spill {
+                        self.compile_expr(right, target, ty)?;
+                        let addr = self.spill_push(target, ty)?;
+                        self.compile_expr(left, target, ty)?;
+                        self.spill_pop(target + 2, addr, ty)?;
+                    } else {
+                        self.compile_expr(right, target, ty)?;
+                        self.compile_expr(left, target + 2, ty)?;
+                    }
+                } else {
+                    if use_spill {
+                        self.compile_expr(left, target, ty)?;
+                        let addr = self.spill_push(target, ty)?;
+                        self.compile_expr(right, target, ty)?;
+                        if ty == "u8" {
+                            let opc = self.encode_rd_rr(0x2C00, target + 2, target);
+                            self.emit(Pass1Inst::Op(opc));
+                        } else {
+                            let opc1 = self.encode_rd_rr(0x2C00, target + 2, target);
+                            let opc2 = self.encode_rd_rr(0x2C00, target + 3, target + 1);
+                            self.emit(Pass1Inst::Op(opc1));
+                            self.emit(Pass1Inst::Op(opc2));
+                        }
+                        self.spill_pop(target, addr, ty)?;
+                    } else {
+                        self.compile_expr(left, target, ty)?;
+                        self.compile_expr(right, target + 2, ty)?;
+                    }
+                }
+                
+                if op == "+" {
+                    if ty == "u8" {
+                        let opc = self.encode_rd_rr(0x0C00, target, target + 2);
+                        self.emit(Pass1Inst::Op(opc));
+                    } else {
+                        let opc1 = self.encode_rd_rr(0x0C00, target, target + 2);
+                        let opc2 = self.encode_rd_rr(0x1C00, target + 1, target + 3);
+                        self.emit(Pass1Inst::Op(opc1));
+                        self.emit(Pass1Inst::Op(opc2));
+                    }
+                } else if op == "-" {
+                    if ty == "u8" {
+                        let opc = self.encode_rd_rr(0x1800, target, target + 2);
+                        self.emit(Pass1Inst::Op(opc));
+                    } else {
+                        let opc1 = self.encode_rd_rr(0x1800, target, target + 2);
+                        let opc2 = self.encode_rd_rr(0x0800, target + 1, target + 3);
+                        self.emit(Pass1Inst::Op(opc1));
+                        self.emit(Pass1Inst::Op(opc2));
+                    }
+                } else if op == "*" {
+                    if ty == "u16" && self.has_hw_mul() {
+                        // Hardware 16x16 -> low 16 bits.
+                        // a = target:target+1, b = target+2:target+3, tmp = target+4.
+                        let tmp = target + 4;
+                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x9C00, target + 1, target + 2))); // MUL a_hi, b_lo
+                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, tmp, 0)));                 // MOV tmp, R0
+                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x9C00, target, target + 3)));     // MUL a_lo, b_hi
+                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0C00, tmp, 0)));                 // ADD tmp, R0
+                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x9C00, target, target + 2)));     // MUL a_lo, b_lo
+                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, target, 0)));              // MOV res_lo, R0
+                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0C00, 1, tmp)));                 // ADD R1, tmp
+                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, target + 1, 1)));          // MOV res_hi, R1
+                        self.emit(Pass1Inst::Op(0x2411));                                            // EOR R1, R1
+                    } else if ty == "u16" {
+                        // Software 16x16 -> low 16 bits (shift-and-add, 16 iterations).
+                        let loop_label = self.new_label("mul16_loop");
+                        let skip_label = self.new_label("mul16_skip");
+                        let res_lo = target + 4;
+                        let res_hi = target + 5;
+                        let cnt = target + 6;
+                        self.emit(Pass1Inst::Op(0xE000 | (((res_lo - 16) as u16) << 4)));    // LDI res_lo, 0
+                        self.emit(Pass1Inst::Op(0xE000 | (((res_hi - 16) as u16) << 4)));    // LDI res_hi, 0
+                        self.emit(Pass1Inst::Op(0xE000 | 0x0100 | (((cnt - 16) as u16) << 4))); // LDI cnt, 16
+                        self.emit(Pass1Inst::Label(loop_label.clone()));
+                        self.emit(Pass1Inst::Op(0x9406 | (((target + 3) as u16) << 4)));     // LSR b_hi
+                        self.emit(Pass1Inst::Op(0x9407 | (((target + 2) as u16) << 4)));     // ROR b_lo (C = LSB of b)
+                        self.emit(Pass1Inst::BrbcL(0, skip_label.clone()));                  // BRCC skip
+                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0C00, res_lo, target))); // ADD res_lo, a_lo
+                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, res_hi, target + 1))); // ADC res_hi, a_hi
+                        self.emit(Pass1Inst::Label(skip_label));
+                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0C00, target, target))); // LSL a_lo
+                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, target + 1, target + 1))); // ROL a_hi
+                        self.emit(Pass1Inst::Op(0x940A | ((cnt as u16) << 4)));              // DEC cnt
+                        self.emit(Pass1Inst::BrbcL(1, loop_label));                          // BRNE loop
+                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, target, res_lo))); // MOV res
+                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, target + 1, res_hi)));
+                    } else if self.has_hw_mul() {
+                        // Hardware multiplication: target * target+2 -> R1:R0
+                        let opc_mul = 0x9C00 | ((((target + 2) & 0x10) as u16) << 5) | ((target as u16) << 4) | (((target + 2) & 0x0F) as u16);
+                        self.emit(Pass1Inst::Op(opc_mul));
+
+                        // Move R0 to target
+                        let opc_mov = self.encode_rd_rr(0x2C00, target, 0);
+                        self.emit(Pass1Inst::Op(opc_mov));
+
+                        // Clear R1
+                        self.emit(Pass1Inst::Op(0x2411)); // EOR R1, R1
+                    } else {
+                        // Optimized Universal Software Multiplier (8 opcodes)
+                        let loop_start_label = self.new_label("mul_loop");
+                        let skip_add_label = self.new_label("mul_skip");
+                        
+                        let res_reg = target + 4;
+                        let cnt_reg = target + 5;
+    
+                        // LDI res_reg, 0 (result)
+                        self.emit(Pass1Inst::Op(0xE000 | (((res_reg - 16) as u16) << 4)));
+                        // LDI cnt_reg, 8 (counter)
+                        self.emit(Pass1Inst::Op(0xE008 | (((cnt_reg - 16) as u16) << 4)));
+                        
+                        self.emit(Pass1Inst::Label(loop_start_label.clone()));
+                        // LSR target+2 -> shift right by 1 bit, moving LSB to Carry flag
+                        self.emit(Pass1Inst::Op(0x9406 | (((target + 2) as u16) << 4)));
+                        
+                        // BRCC skip_add_label (Branch if Carry Clear)
+                        self.emit(Pass1Inst::BrbcL(0, skip_add_label.clone()));
+                        
+                        // ADD res_reg, target (add left operand to result)
+                        let opc_add = self.encode_rd_rr(0x0C00, res_reg, target);
+                        self.emit(Pass1Inst::Op(opc_add));
+                        
+                        self.emit(Pass1Inst::Label(skip_add_label));
+                        // LSL target -> shift left (ADD target, target)
+                        let opc_lsl = self.encode_rd_rr(0x0C00, target, target);
+                        self.emit(Pass1Inst::Op(opc_lsl));
+                        
+                        // DEC cnt_reg (decrement loop counter)
+                        self.emit(Pass1Inst::Op(0x940A | ((cnt_reg as u16) << 4)));
+                        
+                        // BRNE loop_start_label (Branch if Not Equal - i.e., counter > 0)
+                        self.emit(Pass1Inst::BrbcL(1, loop_start_label));
+                        
+                        // MOV target, res_reg (move result to target register)
+                        let opc_mov = self.encode_rd_rr(0x2C00, target, res_reg);
+                        self.emit(Pass1Inst::Op(opc_mov));
+                    }
+                } else if (op == "/" || op == "%") && ty == "u16" {
+                    // Restoring division, 16-bit unsigned.
+                    // numerator a = target:target+1, denominator b = target+2:target+3.
+                    let loop_start_label = self.new_label("div16_loop");
+                    let skip_sub_label = self.new_label("div16_skip");
+                    let rem_lo = target + 4;
+                    let rem_hi = target + 5;
+                    let cnt = target + 6;
+                    self.emit(Pass1Inst::Op(0xE000 | (((rem_lo - 16) as u16) << 4)));    // LDI rem_lo, 0
+                    self.emit(Pass1Inst::Op(0xE000 | (((rem_hi - 16) as u16) << 4)));    // LDI rem_hi, 0
+                    self.emit(Pass1Inst::Op(0xE000 | 0x0100 | (((cnt - 16) as u16) << 4))); // LDI cnt, 16
+                    self.emit(Pass1Inst::Label(loop_start_label.clone()));
+                    self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0C00, target, target)));         // LSL a_lo (C = bit15 after ROL)
+                    self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, target + 1, target + 1))); // ROL a_hi
+                    self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, rem_lo, rem_lo)));         // ROL rem_lo
+                    self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, rem_hi, rem_hi)));         // ROL rem_hi
+                    self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1400, rem_lo, target + 2)));     // CP rem_lo, b_lo
+                    self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0400, rem_hi, target + 3)));     // CPC rem_hi, b_hi
+                    self.emit(Pass1Inst::BrbsL(0, skip_sub_label.clone()));                      // BRCS skip (rem < b)
+                    self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1800, rem_lo, target + 2)));     // SUB rem_lo, b_lo
+                    self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0800, rem_hi, target + 3)));     // SBC rem_hi, b_hi
+                    self.emit(Pass1Inst::Op(0x6001 | (((target - 16) as u16) << 4)));            // ORI a_lo, 1 (quotient bit)
+                    self.emit(Pass1Inst::Label(skip_sub_label));
+                    self.emit(Pass1Inst::Op(0x940A | ((cnt as u16) << 4)));                      // DEC cnt
+                    self.emit(Pass1Inst::BrbcL(1, loop_start_label));                            // BRNE loop
+                    if op == "%" {
+                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, target, rem_lo)));     // MOV target, rem_lo
+                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, target + 1, rem_hi))); // MOV target+1, rem_hi
+                    }
+                } else if op == "/" || op == "%" {
+                    // Restoring Division 8-bit Software Loop
+                    let loop_start_label = self.new_label("div_loop");
+                    let skip_sub_label = self.new_label("div_skip");
+
+                    let rem_reg = target + 4;
+                    let cnt_reg = target + 5;
+
+                    // LDI rem_reg, 0 (remainder)
+                    self.emit(Pass1Inst::Op(0xE000 | (((rem_reg - 16) as u16) << 4)));
+                    // LDI cnt_reg, 8 (counter)
+                    self.emit(Pass1Inst::Op(0xE008 | (((cnt_reg - 16) as u16) << 4)));
+
+                    self.emit(Pass1Inst::Label(loop_start_label.clone()));
+                    // LSL target (shift numerator left, MSB to Carry)
+                    let opc_lsl = self.encode_rd_rr(0x0C00, target, target);
+                    self.emit(Pass1Inst::Op(opc_lsl));
+                    // ROL rem_reg (rotate Carry into remainder)
+                    let opc_rol = self.encode_rd_rr(0x1C00, rem_reg, rem_reg);
+                    self.emit(Pass1Inst::Op(opc_rol));
+                    // CP rem_reg, target+2 (compare remainder with denominator)
+                    let opc_cp = self.encode_rd_rr(0x1400, rem_reg, target + 2);
+                    self.emit(Pass1Inst::Op(opc_cp));
+
+                    // BRCS skip_sub_label (Branch if Carry Set - i.e., remainder < denominator)
+                    self.emit(Pass1Inst::BrbsL(0, skip_sub_label.clone()));
+
+                    // SUB rem_reg, target+2 (subtract denominator)
+                    let opc_sub = self.encode_rd_rr(0x1800, rem_reg, target + 2);
+                    self.emit(Pass1Inst::Op(opc_sub));
+                    // SUBI target, 0xFF (set Quotient LSB to 1)
+                    self.emit(Pass1Inst::Op(0x5F0F | (((target - 16) as u16) << 4)));
+
+                    self.emit(Pass1Inst::Label(skip_sub_label));
+                    // DEC cnt_reg
+                    self.emit(Pass1Inst::Op(0x940A | ((cnt_reg as u16) << 4)));
+
+                    // BRNE loop_start_label (Branch if Zero flag is clear - counter > 0)
+                    self.emit(Pass1Inst::BrbcL(1, loop_start_label));
+
+                    if op == "%" {
+                        // MOV target, rem_reg (move remainder to target register)
+                        let opc_mov = self.encode_rd_rr(0x2C00, target, rem_reg);
+                        self.emit(Pass1Inst::Op(opc_mov));
+                    }
+                } else if op == "&" {
+                    if ty == "u8" {
+                        let opc = self.encode_rd_rr(0x2000, target, target + 2);
+                        self.emit(Pass1Inst::Op(opc));
+                    } else {
+                        let opc1 = self.encode_rd_rr(0x2000, target, target + 2);
+                        let opc2 = self.encode_rd_rr(0x2000, target + 1, target + 3);
+                        self.emit(Pass1Inst::Op(opc1));
+                        self.emit(Pass1Inst::Op(opc2));
+                    }
+                } else if op == "|" {
+                    if ty == "u8" {
+                        let opc = self.encode_rd_rr(0x2A00, target, target + 2);
+                        self.emit(Pass1Inst::Op(opc));
+                    } else {
+                        let opc1 = self.encode_rd_rr(0x2A00, target, target + 2);
+                        let opc2 = self.encode_rd_rr(0x2A00, target + 1, target + 3);
+                        self.emit(Pass1Inst::Op(opc1));
+                        self.emit(Pass1Inst::Op(opc2));
+                    }
+                } else if op == "^" {
+                    if ty == "u8" {
+                        let opc = self.encode_rd_rr(0x2400, target, target + 2);
+                        self.emit(Pass1Inst::Op(opc));
+                    } else {
+                        let opc1 = self.encode_rd_rr(0x2400, target, target + 2);
+                        let opc2 = self.encode_rd_rr(0x2400, target + 1, target + 3);
+                        self.emit(Pass1Inst::Op(opc1));
+                        self.emit(Pass1Inst::Op(opc2));
+                    }
+                } else if ["==", "!=", "<", ">", "<=", ">="].contains(&op.as_str()) {
+                    let opc1 = self.encode_rd_rr(0x1400, target, target + 2);
+                    self.emit(Pass1Inst::Op(opc1)); // CP
+                    if ty == "u16" {
+                        let opc2 = self.encode_rd_rr(0x0400, target + 1, target + 3);
+                        self.emit(Pass1Inst::Op(opc2)); // CPC
+                    }
+                    
+                    let true_label = self.new_label("cmp_true");
+                    let end_label = self.new_label("cmp_end");
+                    
+                    let br_op = match op.as_str() {
+                        "==" => op.as_str(),
+                        "!=" => op.as_str(),
+                        "<" | ">" => "<",
+                        ">=" | "<=" => ">=",
+                        _ => return Err(format!("Unsupported comparative operator in backend: {}", op)),
+                    };
+
+                    match br_op {
+                        "==" => self.emit(Pass1Inst::BrbsL(1, true_label.clone())), // BREQ
+                        "!=" => self.emit(Pass1Inst::BrbcL(1, true_label.clone())), // BRNE
+                        "<" => self.emit(Pass1Inst::BrbsL(0, true_label.clone())),  // BRLO/BRCS
+                        ">=" => self.emit(Pass1Inst::BrbcL(0, true_label.clone())), // BRSH/BRCC
+                        _ => unreachable!(),
+                    }
+
+                    // False case
+                    let d = target - 16;
+                    self.emit(Pass1Inst::Op(0xE000 | ((d as u16) << 4))); // LDI target, 0
+                    if ty == "u16" {
+                        let d = (target + 1) - 16;
+                        self.emit(Pass1Inst::Op(0xE000 | ((d as u16) << 4))); // LDI target+1, 0
+                    }
+                    self.emit(Pass1Inst::RJumpL(end_label.clone()));
+                    
+                    // True case
+                    self.emit(Pass1Inst::Label(true_label));
+                    let d = target - 16;
+                    self.emit(Pass1Inst::Op(0xE000 | ((d as u16) << 4) | 1)); // LDI target, 1
+                    if ty == "u16" {
+                        let d = (target + 1) - 16;
+                        self.emit(Pass1Inst::Op(0xE000 | ((d as u16) << 4))); // LDI target+1, 0
+                    }
+                    self.emit(Pass1Inst::Label(end_label));
+                }
+            }
+            Expr::Call { name, args } => {
+                // Check if it is a compiler intrinsic!
+                if name.starts_with('@') {
+                    let intrinsic = &name[1..];
+                    match intrinsic {
+                        "nop" => {
+                            self.emit(Pass1Inst::Op(0x0000));
+                            return Ok(());
+                        }
+                        "sleep" => {
+                            self.emit(Pass1Inst::Op(0x9588));
+                            return Ok(());
+                        }
+                        "wdr" => {
+                            self.emit(Pass1Inst::Op(0x95A8));
+                            return Ok(());
+                        }
+                        "break" => {
+                            self.emit(Pass1Inst::Op(0x9598));
+                            return Ok(());
+                        }
+                        "reti" => {
+                            self.emit(Pass1Inst::Op(0x9518));
+                            return Ok(());
+                        }
+                        "lpm" => {
+                            self.emit(Pass1Inst::Op(0x95C8));
+                            return Ok(());
+                        }
+                        "elpm" => {
+                            self.emit(Pass1Inst::Op(0x95D8));
+                            return Ok(());
+                        }
+                        "spm" => {
+                            self.emit(Pass1Inst::Op(0x95E8));
+                            return Ok(());
+                        }
+                        "ijmp" => {
+                            self.emit(Pass1Inst::Op(0x9409));
+                            return Ok(());
+                        }
+                        "icall" => {
+                            self.emit(Pass1Inst::Op(0x9509));
+                            return Ok(());
+                        }
+                        "eijmp" => {
+                            self.emit(Pass1Inst::Op(0x9419));
+                            return Ok(());
+                        }
+                        "eicall" => {
+                            self.emit(Pass1Inst::Op(0x9519));
+                            return Ok(());
+                        }
+                        "des" => {
+                            if args.len() == 1 {
+                                if let Expr::Literal(k) = args[0] {
+                                    self.emit(Pass1Inst::Op(0x940B | ((k as u16) << 4)));
+                                    return Ok(());
+                                }
+                            }
+                            return Err("Intrinsic @des expects exactly 1 literal argument (0..15)".to_string());
+                        }
+                        "swap" => {
+                            if args.len() == 1 {
+                                if let Expr::Literal(reg) = args[0] {
+                                    self.emit(Pass1Inst::Op(0x9402 | ((reg as u16) << 4)));
+                                    return Ok(());
+                                }
+                            }
+                            return Err("Intrinsic @swap expects exactly 1 literal register argument (0..31)".to_string());
+                        }
+                        "movw" => {
+                            if args.len() == 2 {
+                                if let (Expr::Literal(rd), Expr::Literal(rr)) = (&args[0], &args[1]) {
+                                    if self.target_core == TargetCore::AVRrc {
+                                        let op1 = self.encode_rd_rr(0x2C00, *rd as u8, *rr as u8);
+                                        let op2 = self.encode_rd_rr(0x2C00, (*rd + 1) as u8, (*rr + 1) as u8);
+                                        self.emit(Pass1Inst::Op(op1));
+                                        self.emit(Pass1Inst::Op(op2));
+                                    } else {
+                                        self.emit(Pass1Inst::Op(0x0100 | (((rd >> 1) as u16) << 4) | ((rr >> 1) as u16)));
+                                    }
+                                    return Ok(());
+                                }
+                            }
+                            return Err("Intrinsic @movw expects exactly 2 literal register arguments (0..30)".to_string());
+                        }
+                        "mul" => {
+                            if args.len() == 2 {
+                                if let (Expr::Literal(rd), Expr::Literal(rr)) = (&args[0], &args[1]) {
+                                    if !self.has_hw_mul() {
+                                        // Virtualized 8-bit software multiplication: Rd * Rr -> R1:R0
+                                        let op_mov1 = self.encode_rd_rr(0x2C00, 19, *rd as u8);
+                                        self.emit(Pass1Inst::Op(op_mov1)); // MOV R19, Rd (multiplicand low)
+                                        
+                                        self.emit(Pass1Inst::Op(0xE040)); // LDI R20, 0 (multiplicand high)
+                                        
+                                        let op_mov2 = self.encode_rd_rr(0x2C00, 21, *rr as u8);
+                                        self.emit(Pass1Inst::Op(op_mov2)); // MOV R21, Rr (multiplier)
+                                        
+                                        self.emit(Pass1Inst::Op(0xE000)); // LDI R16, 0 (zero register helper)
+                                        
+                                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, 0, 16))); // MOV R0, R16 (clear low result)
+                                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, 1, 16))); // MOV R1, R16 (clear high result)
+                                        
+                                        self.emit(Pass1Inst::Op(0xE068)); // LDI R22, 8 (loop counter)
+                                        
+                                        let loop_label = self.new_label("soft_mul_loop");
+                                        let skip_label = self.new_label("soft_mul_skip");
+                                        
+                                        self.emit(Pass1Inst::Label(loop_label.clone()));
+                                        
+                                        self.emit(Pass1Inst::Op(0x9406 | (21 << 4))); // LSR R21 (shift multiplier right, LSB to Carry)
+                                        
+                                        self.emit(Pass1Inst::BrbcL(0, skip_label.clone())); // BRCC soft_mul_skip
+                                        
+                                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0C00, 0, 19))); // ADD R0, R19
+                                        self.emit(Pass1Inst::Op(self.encode_rd_rr(0x1C00, 1, 20))); // ADC R1, R20
+                                        
+                                        self.emit(Pass1Inst::Label(skip_label));
+                                        
+                                        let opc_lsl = self.encode_rd_rr(0x0C00, 19, 19);
+                                        self.emit(Pass1Inst::Op(opc_lsl)); // LSL R19 (shift multiplicand low left)
+                                        
+                                        let opc_rol = self.encode_rd_rr(0x1C00, 20, 20);
+                                        self.emit(Pass1Inst::Op(opc_rol)); // ROL R20 (rotate multiplicand high left)
+                                        
+                                        self.emit(Pass1Inst::Op(0x940A | (22 << 4))); // DEC R22 (decrement loop counter)
+                                        
+                                        self.emit(Pass1Inst::BrbcL(1, loop_label)); // BRNE soft_mul_loop
+                                    } else {
+                                        self.emit(Pass1Inst::Op(0x9C00 | (((rr & 0x10) as u16) << 5) | ((*rd as u16) << 4) | ((*rr & 0x0F) as u16)));
+                                    }
+                                    return Ok(());
+                                }
+                            }
+                            return Err("Intrinsic @mul expects exactly 2 literal register arguments (0..31)".to_string());
+                        }
+                        "muls" => {
+                            if args.len() == 2 {
+                                if let (Expr::Literal(rd), Expr::Literal(rr)) = (&args[0], &args[1]) {
+                                    self.emit(Pass1Inst::Op(0x0200 | (((rd - 16) as u16) << 4) | ((rr - 16) as u16)));
+                                    return Ok(());
+                                }
+                            }
+                            return Err("Intrinsic @muls expects exactly 2 literal register arguments (16..31)".to_string());
+                        }
+                        "mulsu" => {
+                            if args.len() == 2 {
+                                if let (Expr::Literal(rd), Expr::Literal(rr)) = (&args[0], &args[1]) {
+                                    self.emit(Pass1Inst::Op(0x0300 | (((rd - 16) as u16) << 4) | ((rr - 16) as u16)));
+                                    return Ok(());
+                                }
+                            }
+                            return Err("Intrinsic @mulsu expects exactly 2 literal register arguments (16..23)".to_string());
+                        }
+                        "fmul" => {
+                            if args.len() == 2 {
+                                if let (Expr::Literal(rd), Expr::Literal(rr)) = (&args[0], &args[1]) {
+                                    self.emit(Pass1Inst::Op(0x0308 | (((rd - 16) as u16) << 4) | ((rr - 16) as u16)));
+                                    return Ok(());
+                                }
+                            }
+                            return Err("Intrinsic @fmul expects exactly 2 literal register arguments (16..23)".to_string());
+                        }
+                        "fmuls" => {
+                            if args.len() == 2 {
+                                if let (Expr::Literal(rd), Expr::Literal(rr)) = (&args[0], &args[1]) {
+                                    self.emit(Pass1Inst::Op(0x0380 | (((rd - 16) as u16) << 4) | ((rr - 16) as u16)));
+                                    return Ok(());
+                                }
+                            }
+                            return Err("Intrinsic @fmuls expects exactly 2 literal register arguments (16..23)".to_string());
+                        }
+                        "fmulsu" => {
+                            if args.len() == 2 {
+                                if let (Expr::Literal(rd), Expr::Literal(rr)) = (&args[0], &args[1]) {
+                                    self.emit(Pass1Inst::Op(0x0388 | (((rd - 16) as u16) << 4) | ((rr - 16) as u16)));
+                                    return Ok(());
+                                }
+                            }
+                            return Err("Intrinsic @fmulsu expects exactly 2 literal register arguments (16..23)".to_string());
+                        }
+                        _ => {}
+                    }
+                }
+
+                // Standard non-intrinsic function call
+                let mut reg_idx = 24u8;
+                let expected_tys = if let Some((param_tys, _)) = self.functions.get(name) {
+                    Some(param_tys.clone())
+                } else {
+                    None
+                };
+
+                for (idx, arg) in args.iter().enumerate() {
+                    let arg_ty = if let Some(ref tys) = expected_tys {
+                        if idx < tys.len() {
+                            tys[idx].as_str()
+                        } else {
+                            "u16"
+                        }
+                    } else {
+                        "u16"
+                    };
+                    
+                    self.compile_expr(arg, reg_idx, arg_ty)?;
+                    
+                    if reg_idx >= 18 {
+                        reg_idx -= 2;
+                    }
+                }
+                self.emit(Pass1Inst::RCallL(name.clone()));
+                if target != 24 {
+                    let opc1 = self.encode_rd_rr(0x2C00, target, 24);
+                    self.emit(Pass1Inst::Op(opc1)); // MOV target, R24
+                    if ty == "u16" {
+                        let opc2 = self.encode_rd_rr(0x2C00, target + 1, 25);
+                        self.emit(Pass1Inst::Op(opc2)); // MOV target+1, R25
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+fn mask_ty(v: i64, ty: &str) -> i64 {
+    if ty == "u16" { v & 0xFFFF } else { v & 0xFF }
+}
+
+/// Evaluates an expression to a compile-time constant, but only when the entire subtree
+/// is literal-computable (no variable, hardware, or call leaves). Wrapping mirrors the
+/// runtime's per-type-width unsigned arithmetic. Comparisons and logical operators are
+/// intentionally not folded here to avoid the backend's signed-branch semantics.
+fn eval_const(expr: &Expr, ty: &str) -> Option<i64> {
+    match expr {
+        Expr::Literal(v) => Some(mask_ty(*v as i64, ty)),
+        Expr::UnaryOp { op, expr } => {
+            let x = eval_const(expr, ty)?;
+            match op.as_str() {
+                "-" => Some(mask_ty(x.wrapping_neg(), ty)),
+                "~" => Some(mask_ty(!x, ty)),
+                _ => None,
+            }
+        }
+        Expr::BinOp { left, op, right } => {
+            let l = eval_const(left, ty)?;
+            let r = eval_const(right, ty)?;
+            let res = match op.as_str() {
+                "+" => l.wrapping_add(r),
+                "-" => l.wrapping_sub(r),
+                "*" => l.wrapping_mul(r),
+                "/" => { if r == 0 { return None; } l / r }
+                "%" => { if r == 0 { return None; } l % r }
+                "&" => l & r,
+                "|" => l | r,
+                "^" => l ^ r,
+                _ => return None,
+            };
+            Some(mask_ty(res, ty))
+        }
+        _ => None,
+    }
+}
+
+fn encode_rd_rr_peephole(op: u16, d: u8, r: u8) -> u16 {
+    let d_bits = (d as u16) << 4;
+    let r_bit9 = ((r & 0x10) as u16) << 5;
+    let r_bits3_0 = (r & 0x0F) as u16;
+    op | d_bits | r_bit9 | r_bits3_0
+}
+
+pub fn peephole_optimize(instructions: &[Pass1Inst]) -> Vec<Pass1Inst> {
+    let mut current = instructions.to_vec();
+    loop {
+        let mut optimized = Vec::new();
+        let mut i = 0;
+        let mut changed = false;
+        while i < current.len() {
+            // Pattern 1: Redundant relative jump directly to the next label
+            if i + 1 < current.len() {
+                if let (Pass1Inst::RJumpL(ref label), Pass1Inst::Label(ref target_label)) = 
+                    (&current[i], &current[i+1])
+                {
+                    if label == target_label {
+                        optimized.push(current[i+1].clone());
+                        i += 2;
+                        changed = true;
+                        continue;
+                    }
+                }
+            }
+
+            // Pattern 2: STS followed by LDS (2-word memory operations)
+            if i + 3 < current.len() {
+                if let (Pass1Inst::Op(op1), Pass1Inst::Op(addr1), Pass1Inst::Op(op2), Pass1Inst::Op(addr2)) = 
+                    (&current[i], &current[i+1], &current[i+2], &current[i+3]) 
+                {
+                    let is_sts = (op1 & 0xFE0F) == 0x9200;
+                    let is_lds = (op2 & 0xFE0F) == 0x9000;
+                    if is_sts && is_lds && addr1 == addr2 {
+                        let reg_sts = ((op1 >> 4) & 0x1F) as u8;
+                        let reg_lds = ((op2 >> 4) & 0x1F) as u8;
+                        if reg_sts == reg_lds {
+                            optimized.push(Pass1Inst::Op(*op1));
+                            optimized.push(Pass1Inst::Op(*addr1));
+                            i += 4;
+                            changed = true;
+                            continue;
+                        } else {
+                            optimized.push(Pass1Inst::Op(*op1));
+                            optimized.push(Pass1Inst::Op(*addr1));
+                            optimized.push(Pass1Inst::Op(encode_rd_rr_peephole(0x2C00, reg_lds, reg_sts)));
+                            i += 4;
+                            changed = true;
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            // Pattern 3: OUT followed by IN (1-word I/O space operations)
+            if i + 1 < current.len() {
+                if let (Pass1Inst::Op(op1), Pass1Inst::Op(op2)) = (&current[i], &current[i+1]) {
+                    let is_out = (op1 & 0xF800) == 0xB800;
+                    let is_in = (op2 & 0xF800) == 0xB000;
+                    if is_out && is_in {
+                        let io_addr1 = (((op1 >> 5) & 0x30) | (op1 & 0x0F)) as u8;
+                        let io_addr2 = (((op2 >> 5) & 0x30) | (op2 & 0x0F)) as u8;
+                        if io_addr1 == io_addr2 {
+                            let reg_out = ((op1 >> 4) & 0x1F) as u8;
+                            let reg_in = ((op2 >> 4) & 0x1F) as u8;
+                            if reg_out == reg_in {
+                                optimized.push(Pass1Inst::Op(*op1));
+                                i += 2;
+                                changed = true;
+                                continue;
+                            } else {
+                                optimized.push(Pass1Inst::Op(*op1));
+                                optimized.push(Pass1Inst::Op(encode_rd_rr_peephole(0x2C00, reg_in, reg_out)));
+                                i += 2;
+                                changed = true;
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Pattern 3.5: STD followed by LDD (1-word Y-displacement space operations)
+            if i + 1 < current.len() {
+                if let (Pass1Inst::Op(op1), Pass1Inst::Op(op2)) = (&current[i], &current[i+1]) {
+                    let is_std = (op1 & 0xD208) == 0x8208;
+                    let is_ldd = (op2 & 0xD208) == 0x8008;
+                    if is_std && is_ldd {
+                        let q1 = (((op1 >> 8) & 0x20) | ((op1 >> 7) & 0x18) | (op1 & 0x07)) as u8;
+                        let q2 = (((op2 >> 8) & 0x20) | ((op2 >> 7) & 0x18) | (op2 & 0x07)) as u8;
+                        if q1 == q2 {
+                            let reg_std = ((op1 >> 4) & 0x1F) as u8;
+                            let reg_ldd = ((op2 >> 4) & 0x1F) as u8;
+                            if reg_std == reg_ldd {
+                                optimized.push(Pass1Inst::Op(*op1));
+                                i += 2;
+                                changed = true;
+                                continue;
+                            } else {
+                                optimized.push(Pass1Inst::Op(*op1));
+                                optimized.push(Pass1Inst::Op(encode_rd_rr_peephole(0x2C00, reg_ldd, reg_std)));
+                                i += 2;
+                                changed = true;
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Pattern 4: Tail-call optimization. A relative call immediately followed by RET
+            // returns to the original caller anyway, so jump instead of call+return.
+            if i + 1 < current.len() {
+                if let (Pass1Inst::RCallL(ref label), Pass1Inst::Op(0x9508)) =
+                    (&current[i], &current[i+1])
+                {
+                    optimized.push(Pass1Inst::RJumpL(label.clone()));
+                    i += 2;
+                    changed = true;
+                    continue;
+                }
+            }
+
+            // Pattern 5: Remove a register move to itself (MOV Rd, Rd is a no-op).
+            if let Pass1Inst::Op(op) = &current[i] {
+                if (op & 0xFC00) == 0x2C00 {
+                    let d = ((op >> 4) & 0x1F) as u8;
+                    let r = (((op >> 5) & 0x10) | (op & 0x0F)) as u8;
+                    if d == r {
+                        i += 1;
+                        changed = true;
+                        continue;
+                    }
+                }
+            }
+
+            // Pattern 6: Dead LDI. Two consecutive LDI to the same register: the first
+            // result is overwritten before any use (LDI reads nothing, touches no flags).
+            if i + 1 < current.len() {
+                if let (Pass1Inst::Op(op1), Pass1Inst::Op(op2)) = (&current[i], &current[i+1]) {
+                    if (op1 & 0xF000) == 0xE000 && (op2 & 0xF000) == 0xE000 {
+                        let d1 = (op1 >> 4) & 0x0F;
+                        let d2 = (op2 >> 4) & 0x0F;
+                        if d1 == d2 {
+                            i += 1;
+                            changed = true;
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            optimized.push(current[i].clone());
+            i += 1;
+        }
+        if !changed {
+            break;
+        }
+        current = optimized;
+    }
+    current
+}
+
+pub fn resolve_labels(instructions: &[Pass1Inst]) -> Vec<u16> {
+    let optimized_instructions = peephole_optimize(instructions);
+    let instructions = &optimized_instructions;
+    let n = instructions.len();
+
+    // Branch relaxation: RJMP/RCALL encode a 12-bit signed relative offset (±2K words).
+    // When the target is farther, fall back to the 2-word absolute JMP/CALL. Sizing is
+    // iterated to a fixpoint because promoting one jump shifts every later address. Flips
+    // are monotonic (short -> long only), which guarantees termination.
+    let mut is_long = vec![false; n];
+    loop {
+        let mut label_addresses: HashMap<String, i64> = HashMap::new();
+        let mut addr: i64 = 0;
+        for (idx, inst) in instructions.iter().enumerate() {
+            match inst {
+                Pass1Inst::Label(name) => { label_addresses.insert(name.clone(), addr); }
+                Pass1Inst::Op(_) | Pass1Inst::BrbsL(_, _) | Pass1Inst::BrbcL(_, _) => addr += 1,
+                Pass1Inst::RJumpL(_) | Pass1Inst::RCallL(_) => addr += if is_long[idx] { 2 } else { 1 },
+            }
+        }
+        let mut changed = false;
+        let mut addr: i64 = 0;
+        for (idx, inst) in instructions.iter().enumerate() {
+            match inst {
+                Pass1Inst::Label(_) => {}
+                Pass1Inst::Op(_) | Pass1Inst::BrbsL(_, _) | Pass1Inst::BrbcL(_, _) => addr += 1,
+                Pass1Inst::RJumpL(label) | Pass1Inst::RCallL(label) => {
+                    if !is_long[idx] {
+                        let target = *label_addresses.get(label).unwrap_or(&0);
+                        let offset = target - (addr + 1);
+                        if offset < -2048 || offset > 2047 {
+                            is_long[idx] = true;
+                            changed = true;
+                        }
+                    }
+                    addr += if is_long[idx] { 2 } else { 1 };
+                }
+            }
+        }
+        if !changed { break; }
+    }
+
+    // Final label addresses with settled instruction sizes.
+    let mut label_addresses: HashMap<String, i64> = HashMap::new();
+    let mut addr: i64 = 0;
+    for (idx, inst) in instructions.iter().enumerate() {
+        match inst {
+            Pass1Inst::Label(name) => { label_addresses.insert(name.clone(), addr); }
+            Pass1Inst::Op(_) | Pass1Inst::BrbsL(_, _) | Pass1Inst::BrbcL(_, _) => addr += 1,
+            Pass1Inst::RJumpL(_) | Pass1Inst::RCallL(_) => addr += if is_long[idx] { 2 } else { 1 },
+        }
+    }
+
+    let mut final_opcodes = Vec::new();
+    let mut addr: i64 = 0;
+    for (idx, inst) in instructions.iter().enumerate() {
+        match inst {
+            Pass1Inst::Label(_) => {}
+            Pass1Inst::Op(opcode) => {
+                final_opcodes.push(*opcode);
+                addr += 1;
+            }
+            Pass1Inst::RJumpL(label) => {
+                let target = *label_addresses.get(label).unwrap_or(&0);
+                if is_long[idx] {
+                    let k = target as u32;
+                    final_opcodes.push(0x940C | ((((k >> 17) & 0x1F) as u16) << 4) | ((k >> 16) & 0x01) as u16); // JMP
+                    final_opcodes.push((k & 0xFFFF) as u16);
+                    addr += 2;
+                } else {
+                    let offset = target - (addr + 1);
+                    final_opcodes.push(0xC000 | ((offset as u16) & 0x0FFF)); // RJMP
+                    addr += 1;
+                }
+            }
+            Pass1Inst::RCallL(label) => {
+                let target = *label_addresses.get(label).unwrap_or(&0);
+                if is_long[idx] {
+                    let k = target as u32;
+                    final_opcodes.push(0x940E | ((((k >> 17) & 0x1F) as u16) << 4) | ((k >> 16) & 0x01) as u16); // CALL
+                    final_opcodes.push((k & 0xFFFF) as u16);
+                    addr += 2;
+                } else {
+                    let offset = target - (addr + 1);
+                    final_opcodes.push(0xD000 | ((offset as u16) & 0x0FFF)); // RCALL
+                    addr += 1;
+                }
+            }
+            Pass1Inst::BrbsL(sreg_bit, label) => {
+                let target = *label_addresses.get(label).unwrap_or(&0);
+                let offset = target - (addr + 1);
+                let offset_bits = (offset as u16) & 0x7F;
+                final_opcodes.push(0xF000 | (offset_bits << 3) | (*sreg_bit as u16));
+                addr += 1;
+            }
+            Pass1Inst::BrbcL(sreg_bit, label) => {
+                let target = *label_addresses.get(label).unwrap_or(&0);
+                let offset = target - (addr + 1);
+                let offset_bits = (offset as u16) & 0x7F;
+                final_opcodes.push(0xF400 | (offset_bits << 3) | (*sreg_bit as u16));
+                addr += 1;
+            }
+        }
+    }
+
+    final_opcodes
+}
+
+pub fn generate_intel_hex(opcodes: &[u16]) -> String {
+    let mut hex = String::new();
+    let mut address = 0u16;
+    
+    let chunks = opcodes.chunks(8);
+    for chunk in chunks {
+        let mut data = Vec::new();
+        for &op in chunk {
+            // Little-endian: low byte first, then high byte
+            data.push((op & 0xFF) as u8);
+            data.push((op >> 8) as u8);
+        }
+        
+        let record = make_hex_record(address, &data);
+        hex.push_str(&record);
+        hex.push('\n');
+        
+        address += data.len() as u16;
+    }
+    
+    hex.push_str(&make_eof_record());
+    hex.push('\n');
+    
+    hex
+}
+
+fn make_hex_record(address: u16, data: &[u8]) -> String {
+    let byte_count = data.len() as u8;
+    let addr_hi = (address >> 8) as u8;
+    let addr_lo = (address & 0xFF) as u8;
+    let record_type = 0x00u8;
+    
+    let mut sum = byte_count as u32 + addr_hi as u32 + addr_lo as u32 + record_type as u32;
+    for &b in data {
+        sum += b as u32;
+    }
+    
+    let checksum = (((!sum) + 1) & 0xFF) as u8;
+    
+    let mut record = format!(":{:02X}{:02X}{:02X}{:02X}", byte_count, addr_hi, addr_lo, record_type);
+    for &b in data {
+        record.push_str(&format!("{:02X}", b));
+    }
+    record.push_str(&format!("{:02X}", checksum));
+    record
+}
+
+fn make_eof_record() -> String {
+    ":00000001FF".to_string()
+}
+
+/// Returns the maximum nesting depth of range loops in a function body.
+fn max_loop_depth(body: &[Stmt]) -> usize {
+    let mut max = 0;
+    for stmt in body {
+        let d = match stmt {
+            Stmt::LoopRange { body, .. } => 1 + max_loop_depth(body),
+            Stmt::LoopInfinite { body } => max_loop_depth(body),
+            Stmt::Conditional { then_block, else_block, .. } => {
+                let t = max_loop_depth(then_block);
+                let e = else_block.as_ref().map(|b| max_loop_depth(b)).unwrap_or(0);
+                t.max(e)
+            }
+            Stmt::Switch { cases, default, .. } => {
+                let mut m = 0;
+                for (_, b) in cases { m = m.max(max_loop_depth(b)); }
+                if let Some(db) = default { m = m.max(max_loop_depth(db)); }
+                m
+            }
+            _ => 0,
+        };
+        if d > max { max = d; }
+    }
+    max
+}
+
+/// Collects every scalar variable declaration (name, type) reachable in a function body,
+/// recursing into loops, conditionals and switches. Used to plan register homes.
+fn collect_decls(body: &[Stmt], out: &mut Vec<(String, String)>) {
+    for stmt in body {
+        match stmt {
+            Stmt::VarDecl { name, ty, .. } => out.push((name.clone(), ty.clone())),
+            Stmt::LoopInfinite { body } => collect_decls(body, out),
+            Stmt::LoopRange { var_name, body, .. } => {
+                out.push((var_name.clone(), "u16".to_string()));
+                collect_decls(body, out);
+            }
+            Stmt::Conditional { then_block, else_block, .. } => {
+                collect_decls(then_block, out);
+                if let Some(eb) = else_block {
+                    collect_decls(eb, out);
+                }
+            }
+            Stmt::Switch { cases, default, .. } => {
+                for (_, b) in cases {
+                    collect_decls(b, out);
+                }
+                if let Some(db) = default {
+                    collect_decls(db, out);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+fn collect_calls_expr(expr: &Expr, calls: &mut std::collections::HashSet<String>) {
+    match expr {
+        Expr::Literal(_) => {}
+        Expr::VarRef(_) => {}
+        Expr::BinOp { left, right, .. } => {
+            collect_calls_expr(left, calls);
+            collect_calls_expr(right, calls);
+        }
+        Expr::UnaryOp { expr, .. } => {
+            collect_calls_expr(expr, calls);
+        }
+        Expr::Call { name, args } => {
+            if name.starts_with('@') {
+                calls.insert(name.clone());
+            }
+            for arg in args {
+                collect_calls_expr(arg, calls);
+            }
+        }
+    }
+}
+
+fn collect_calls_stmt(stmt: &Stmt, calls: &mut std::collections::HashSet<String>) {
+    match stmt {
+        Stmt::VarDecl { expr, .. } => {
+            collect_calls_expr(expr, calls);
+        }
+        Stmt::Assign { expr, target, .. } => {
+            collect_calls_expr(expr, calls);
+            collect_calls_expr(target, calls);
+        }
+        Stmt::LoopInfinite { body } => {
+            for s in body {
+                collect_calls_stmt(s, calls);
+            }
+        }
+        Stmt::LoopRange { start, end, body, .. } => {
+            collect_calls_expr(start, calls);
+            collect_calls_expr(end, calls);
+            for s in body {
+                collect_calls_stmt(s, calls);
+            }
+        }
+        Stmt::Conditional { cond, then_block, else_block } => {
+            collect_calls_expr(cond, calls);
+            for s in then_block {
+                collect_calls_stmt(s, calls);
+            }
+            if let Some(eb) = else_block {
+                for s in eb {
+                    collect_calls_stmt(s, calls);
+                }
+            }
+        }
+        Stmt::Switch { expr, cases, default } => {
+            collect_calls_expr(expr, calls);
+            for (case_expr, body) in cases {
+                collect_calls_expr(case_expr, calls);
+                for s in body {
+                    collect_calls_stmt(s, calls);
+                }
+            }
+            if let Some(db) = default {
+                for s in db {
+                    collect_calls_stmt(s, calls);
+                }
+            }
+        }
+        Stmt::Return { val } => {
+            if let Some(v) = val {
+                collect_calls_expr(v, calls);
+            }
+        }
+        Stmt::ExprStmt { expr } => {
+            collect_calls_expr(expr, calls);
+        }
+        Stmt::Goto(_) => {}
+        Stmt::Label(_) => {}
+    }
+}
+
+// Liveness Analyzer and Linear Scan Helper Structs
+struct LivenessAnalyzer {
+    uses: Vec<String>,
+    loop_intervals: Vec<(usize, usize)>,
+}
+
+impl LivenessAnalyzer {
+    fn new() -> Self {
+        Self {
+            uses: Vec::new(),
+            loop_intervals: Vec::new(),
+        }
+    }
+
+    fn analyze(&mut self, body: &[Stmt]) {
+        self.traverse_stmts(body);
+    }
+
+    fn traverse_expr(&mut self, expr: &Expr) {
+        match expr {
+            Expr::Literal(_) => {}
+            Expr::VarRef(name) => {
+                if name.starts_with('$') {
+                    self.uses.push(name.clone());
+                }
+            }
+            Expr::UnaryOp { expr, .. } => {
+                self.traverse_expr(expr);
+            }
+            Expr::BinOp { left, right, .. } => {
+                self.traverse_expr(left);
+                self.traverse_expr(right);
+            }
+            Expr::Call { args, .. } => {
+                for arg in args {
+                    self.traverse_expr(arg);
+                }
+            }
+        }
+    }
+
+    fn traverse_stmt(&mut self, stmt: &Stmt) {
+        match stmt {
+            Stmt::VarDecl { name, expr, .. } => {
+                self.uses.push(name.clone());
+                self.traverse_expr(expr);
+            }
+            Stmt::Assign { expr, target, .. } => {
+                self.traverse_expr(expr);
+                self.traverse_expr(target);
+            }
+            Stmt::LoopInfinite { body } => {
+                let start = self.uses.len();
+                self.traverse_stmts(body);
+                let end = self.uses.len();
+                self.loop_intervals.push((start, end));
+            }
+            Stmt::LoopRange { start, end, var_name, body } => {
+                self.uses.push(var_name.clone());
+                self.traverse_expr(start);
+                self.traverse_expr(end);
+                let l_start = self.uses.len();
+                self.traverse_stmts(body);
+                self.uses.push(var_name.clone()); // Extend induction variable lifetime to the end of the loop body
+                let l_end = self.uses.len();
+                self.loop_intervals.push((l_start, l_end));
+            }
+            Stmt::Conditional { cond, then_block, else_block } => {
+                self.traverse_expr(cond);
+                self.traverse_stmts(then_block);
+                if let Some(eb) = else_block {
+                    self.traverse_stmts(eb);
+                }
+            }
+            Stmt::Switch { expr, cases, default } => {
+                self.traverse_expr(expr);
+                for (case_expr, b) in cases {
+                    self.traverse_expr(case_expr);
+                    self.traverse_stmts(b);
+                }
+                if let Some(db) = default {
+                    self.traverse_stmts(db);
+                }
+            }
+            Stmt::Return { val } => {
+                if let Some(expr) = val {
+                    self.traverse_expr(expr);
+                }
+            }
+            Stmt::ExprStmt { expr } => {
+                self.traverse_expr(expr);
+            }
+            Stmt::Goto(_) => {}
+            Stmt::Label(_) => {}
+        }
+    }
+
+    fn traverse_stmts(&mut self, stmts: &[Stmt]) {
+        for stmt in stmts {
+            self.traverse_stmt(stmt);
+        }
+    }
+}
+
+fn encode_q(q: u8) -> u16 {
+    let q_5 = ((q & 0x20) as u16) << 8;   // bit 13
+    let q_4_3 = ((q & 0x18) as u16) << 7; // bits 11, 10
+    let q_2_0 = (q & 0x07) as u16;        // bits 2..0
+    q_5 | q_4_3 | q_2_0
+}
+
+fn rename_vars_expr(expr: &mut Expr, prefix: &str) {
+    match expr {
+        Expr::VarRef(name) => {
+            if name.starts_with('$') {
+                *name = format!("${}_{}", prefix, &name[1..]);
+            }
+        }
+        Expr::BinOp { left, right, .. } => {
+            rename_vars_expr(left, prefix);
+            rename_vars_expr(right, prefix);
+        }
+        Expr::UnaryOp { expr, .. } => {
+            rename_vars_expr(expr, prefix);
+        }
+        Expr::Call { args, .. } => {
+            for arg in args {
+                rename_vars_expr(arg, prefix);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn rename_vars_stmt(stmt: &mut Stmt, prefix: &str) {
+    match stmt {
+        Stmt::VarDecl { name, expr, .. } => {
+            if name.starts_with('$') {
+                *name = format!("${}_{}", prefix, &name[1..]);
+            }
+            rename_vars_expr(expr, prefix);
+        }
+        Stmt::Assign { expr, target, .. } => {
+            rename_vars_expr(expr, prefix);
+            rename_vars_expr(target, prefix);
+        }
+        Stmt::LoopInfinite { body } => {
+            for s in body {
+                rename_vars_stmt(s, prefix);
+            }
+        }
+        Stmt::LoopRange { start, end, var_name, body } => {
+            rename_vars_expr(start, prefix);
+            rename_vars_expr(end, prefix);
+            if var_name.starts_with('$') {
+                *var_name = format!("${}_{}", prefix, &var_name[1..]);
+            }
+            for s in body {
+                rename_vars_stmt(s, prefix);
+            }
+        }
+        Stmt::Conditional { cond, then_block, else_block } => {
+            rename_vars_expr(cond, prefix);
+            for s in then_block {
+                rename_vars_stmt(s, prefix);
+            }
+            if let Some(eb) = else_block {
+                for s in eb {
+                    rename_vars_stmt(s, prefix);
+                }
+            }
+        }
+        Stmt::Switch { expr, cases, default } => {
+            rename_vars_expr(expr, prefix);
+            for (case_expr, b) in cases {
+                rename_vars_expr(case_expr, prefix);
+                for s in b {
+                    rename_vars_stmt(s, prefix);
+                }
+            }
+            if let Some(db) = default {
+                for s in db {
+                    rename_vars_stmt(s, prefix);
+                }
+            }
+        }
+        Stmt::Return { val } => {
+            if let Some(v) = val {
+                rename_vars_expr(v, prefix);
+            }
+        }
+        Stmt::ExprStmt { expr } => {
+            rename_vars_expr(expr, prefix);
+        }
+        Stmt::Goto(_) => {}
+        Stmt::Label(_) => {}
+    }
+}
+
+fn collect_reassigned_expr(expr: &Expr, reassigned: &mut std::collections::HashSet<String>) {
+    match expr {
+        Expr::BinOp { left, right, .. } => {
+            collect_reassigned_expr(left, reassigned);
+            collect_reassigned_expr(right, reassigned);
+        }
+        Expr::UnaryOp { expr, .. } => {
+            collect_reassigned_expr(expr, reassigned);
+        }
+        Expr::Call { args, .. } => {
+            for arg in args {
+                collect_reassigned_expr(arg, reassigned);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn collect_reassigned_vars(stmts: &[Stmt], reassigned: &mut std::collections::HashSet<String>) {
+    for stmt in stmts {
+        match stmt {
+            Stmt::Assign { target, expr, .. } => {
+                if let Expr::VarRef(ref name) = *target {
+                    if name.starts_with('$') {
+                        reassigned.insert(name.clone());
+                    }
+                }
+                collect_reassigned_expr(expr, reassigned);
+            }
+            Stmt::VarDecl { expr, .. } => {
+                collect_reassigned_expr(expr, reassigned);
+            }
+            Stmt::LoopInfinite { body } => {
+                collect_reassigned_vars(body, reassigned);
+            }
+            Stmt::LoopRange { start, end, var_name, body } => {
+                collect_reassigned_expr(start, reassigned);
+                collect_reassigned_expr(end, reassigned);
+                if var_name.starts_with('$') {
+                    reassigned.insert(var_name.clone());
+                }
+                collect_reassigned_vars(body, reassigned);
+            }
+            Stmt::Conditional { cond, then_block, else_block } => {
+                collect_reassigned_expr(cond, reassigned);
+                collect_reassigned_vars(then_block, reassigned);
+                if let Some(eb) = else_block {
+                    collect_reassigned_vars(eb, reassigned);
+                }
+            }
+            Stmt::Switch { expr, cases, default } => {
+                collect_reassigned_expr(expr, reassigned);
+                for (case_expr, b) in cases {
+                    collect_reassigned_expr(case_expr, reassigned);
+                    collect_reassigned_vars(b, reassigned);
+                }
+                if let Some(db) = default {
+                    collect_reassigned_vars(db, reassigned);
+                }
+            }
+            Stmt::Return { val } => {
+                if let Some(v) = val {
+                    collect_reassigned_expr(v, reassigned);
+                }
+            }
+            Stmt::ExprStmt { expr } => {
+                collect_reassigned_expr(expr, reassigned);
+            }
+            Stmt::Goto(_) => {}
+            Stmt::Label(_) => {}
+        }
+    }
+}
+
+fn propagate_constants_expr(expr: &mut Expr, known: &std::collections::HashMap<String, i32>) {
+    match expr {
+        Expr::VarRef(name) => {
+            if let Some(&val) = known.get(name) {
+                *expr = Expr::Literal(val);
+            }
+        }
+        Expr::BinOp { left, right, .. } => {
+            propagate_constants_expr(left, known);
+            propagate_constants_expr(right, known);
+        }
+        Expr::UnaryOp { expr, .. } => {
+            propagate_constants_expr(expr, known);
+        }
+        Expr::Call { args, .. } => {
+            for arg in args {
+                propagate_constants_expr(arg, known);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn propagate_constants_stmts(
+    stmts: &mut [Stmt],
+    reassigned: &std::collections::HashSet<String>,
+    known: &mut std::collections::HashMap<String, i32>
+) {
+    for stmt in stmts {
+        match stmt {
+            Stmt::VarDecl { name, ty, expr, .. } => {
+                propagate_constants_expr(expr, known);
+                if !ty.contains('[') {
+                    if let Some(v) = eval_const(expr, ty) {
+                        *expr = Expr::Literal(v as i32);
+                        if !reassigned.contains(name) {
+                            known.insert(name.clone(), v as i32);
+                        }
+                    }
+                }
+            }
+            Stmt::Assign { expr, target, .. } => {
+                propagate_constants_expr(expr, known);
+                propagate_constants_expr(target, known);
+            }
+            Stmt::LoopInfinite { body } => {
+                propagate_constants_stmts(body, reassigned, known);
+            }
+            Stmt::LoopRange { start, end, body, .. } => {
+                propagate_constants_expr(start, known);
+                propagate_constants_expr(end, known);
+                propagate_constants_stmts(body, reassigned, known);
+            }
+            Stmt::Conditional { cond, then_block, else_block } => {
+                propagate_constants_expr(cond, known);
+                propagate_constants_stmts(then_block, reassigned, known);
+                if let Some(eb) = else_block {
+                    propagate_constants_stmts(eb, reassigned, known);
+                }
+            }
+            Stmt::Switch { expr, cases, default } => {
+                propagate_constants_expr(expr, known);
+                for (case_expr, b) in cases {
+                    propagate_constants_expr(case_expr, known);
+                    propagate_constants_stmts(b, reassigned, known);
+                }
+                if let Some(db) = default {
+                    propagate_constants_stmts(db, reassigned, known);
+                }
+            }
+            Stmt::Return { val } => {
+                if let Some(v) = val {
+                    propagate_constants_expr(v, known);
+                }
+            }
+            Stmt::ExprStmt { expr } => {
+                propagate_constants_expr(expr, known);
+            }
+            Stmt::Goto(_) => {}
+            Stmt::Label(_) => {}
+        }
+    }
+}
+
+fn rewrite_returns(stmts: &mut Vec<Stmt>, unique_ret: &str, end_label: &str, has_ret: bool) {
+    let mut new_stmts = Vec::new();
+    for stmt in std::mem::take(stmts) {
+        match stmt {
+            Stmt::Return { val } => {
+                if has_ret {
+                    if let Some(v) = val {
+                        new_stmts.push(Stmt::Assign {
+                            expr: v,
+                            target: Expr::VarRef(unique_ret.to_string()),
+                            op: "->".to_string(),
+                        });
+                    }
+                }
+                new_stmts.push(Stmt::Goto(end_label.to_string()));
+            }
+            Stmt::LoopInfinite { mut body } => {
+                rewrite_returns(&mut body, unique_ret, end_label, has_ret);
+                new_stmts.push(Stmt::LoopInfinite { body });
+            }
+            Stmt::LoopRange { start, end, var_name, mut body } => {
+                rewrite_returns(&mut body, unique_ret, end_label, has_ret);
+                new_stmts.push(Stmt::LoopRange { start, end, var_name, body });
+            }
+            Stmt::Conditional { cond, mut then_block, else_block } => {
+                rewrite_returns(&mut then_block, unique_ret, end_label, has_ret);
+                let new_else = else_block.map(|mut eb| {
+                    rewrite_returns(&mut eb, unique_ret, end_label, has_ret);
+                    eb
+                });
+                new_stmts.push(Stmt::Conditional { cond, then_block, else_block: new_else });
+            }
+            Stmt::Switch { expr, cases, default } => {
+                let mut new_cases = Vec::new();
+                for (case_expr, mut b) in cases {
+                    rewrite_returns(&mut b, unique_ret, end_label, has_ret);
+                    new_cases.push((case_expr, b));
+                }
+                let new_default = default.map(|mut db| {
+                    rewrite_returns(&mut db, unique_ret, end_label, has_ret);
+                    db
+                });
+                new_stmts.push(Stmt::Switch { expr, cases: new_cases, default: new_default });
+            }
+            other => new_stmts.push(other),
+        }
+    }
+    *stmts = new_stmts;
+}
+
+fn replace_placeholder(expr: &mut Expr, placeholder: &str, replacement: Expr) {
+    match expr {
+        Expr::VarRef(name) if name == placeholder => {
+            *expr = replacement;
+        }
+        Expr::BinOp { left, right, .. } => {
+            replace_placeholder(left, placeholder, replacement.clone());
+            replace_placeholder(right, placeholder, replacement);
+        }
+        Expr::UnaryOp { expr, .. } => {
+            replace_placeholder(expr, placeholder, replacement);
+        }
+        Expr::Call { args, .. } => {
+            for arg in args {
+                replace_placeholder(arg, placeholder, replacement.clone());
+            }
+        }
+        _ => {}
+    }
+}
+
+fn replace_placeholder_stmt(stmt: &mut Stmt, placeholder: &str, replacement: Expr) {
+    match stmt {
+        Stmt::VarDecl { expr, .. } => {
+            replace_placeholder(expr, placeholder, replacement);
+        }
+        Stmt::Assign { expr, target, .. } => {
+            replace_placeholder(expr, placeholder, replacement.clone());
+            replace_placeholder(target, placeholder, replacement);
+        }
+        Stmt::ExprStmt { expr } => {
+            replace_placeholder(expr, placeholder, replacement);
+        }
+        Stmt::Return { val } => {
+            if let Some(v) = val {
+                replace_placeholder(v, placeholder, replacement);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn find_and_replace_first_call(
+    expr: &mut Expr,
+    leaf_functions: &std::collections::HashSet<String>,
+    placeholder_counter: usize,
+) -> Option<(String, Vec<Expr>, String)> {
+    match expr {
+        Expr::Call { name, args } => {
+            if leaf_functions.contains(name) {
+                let name_cloned = name.clone();
+                let args_cloned = args.clone();
+                let placeholder = format!("$__placeholder_{}", placeholder_counter);
+                *expr = Expr::VarRef(placeholder.clone());
+                return Some((name_cloned, args_cloned, placeholder));
+            }
+            for arg in args {
+                if let Some(res) = find_and_replace_first_call(arg, leaf_functions, placeholder_counter) {
+                    return Some(res);
+                }
+            }
+            None
+        }
+        Expr::BinOp { left, right, .. } => {
+            if let Some(res) = find_and_replace_first_call(left, leaf_functions, placeholder_counter) {
+                return Some(res);
+            }
+            find_and_replace_first_call(right, leaf_functions, placeholder_counter)
+        }
+        Expr::UnaryOp { expr, .. } => {
+            find_and_replace_first_call(expr, leaf_functions, placeholder_counter)
+        }
+        _ => None,
+    }
+}
+
+fn find_and_replace_call_in_stmt(
+    stmt: &mut Stmt,
+    leaf_functions: &std::collections::HashSet<String>,
+    placeholder_counter: usize,
+) -> Option<(String, Vec<Expr>, String)> {
+    match stmt {
+        Stmt::VarDecl { expr, .. } => {
+            find_and_replace_first_call(expr, leaf_functions, placeholder_counter)
+        }
+        Stmt::Assign { expr, target, .. } => {
+            if let Some(res) = find_and_replace_first_call(expr, leaf_functions, placeholder_counter) {
+                return Some(res);
+            }
+            find_and_replace_first_call(target, leaf_functions, placeholder_counter)
+        }
+        Stmt::ExprStmt { expr } => {
+            find_and_replace_first_call(expr, leaf_functions, placeholder_counter)
+        }
+        Stmt::Return { val } => {
+            if let Some(v) = val {
+                find_and_replace_first_call(v, leaf_functions, placeholder_counter)
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
+fn inline_block(
+    body: &mut Vec<Stmt>,
+    leaf_functions: &std::collections::HashSet<String>,
+    func_bodies: &std::collections::HashMap<String, (Vec<(String, String)>, String, Vec<Stmt>)>,
+    inline_counter: &mut usize,
+) {
+    for stmt in body.iter_mut() {
+        match stmt {
+            Stmt::LoopInfinite { body } => {
+                inline_block(body, leaf_functions, func_bodies, inline_counter);
+            }
+            Stmt::LoopRange { body, .. } => {
+                inline_block(body, leaf_functions, func_bodies, inline_counter);
+            }
+            Stmt::Conditional { then_block, else_block, .. } => {
+                inline_block(then_block, leaf_functions, func_bodies, inline_counter);
+                if let Some(eb) = else_block {
+                    inline_block(eb, leaf_functions, func_bodies, inline_counter);
+                }
+            }
+            Stmt::Switch { cases, default, .. } => {
+                for (_, b) in cases {
+                    inline_block(b, leaf_functions, func_bodies, inline_counter);
+                }
+                if let Some(db) = default {
+                    inline_block(db, leaf_functions, func_bodies, inline_counter);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    let mut new_stmts = Vec::new();
+    let mut placeholder_counter = 0;
+
+    for mut stmt in std::mem::take(body) {
+        loop {
+            placeholder_counter += 1;
+            if let Some((name, args, placeholder)) = find_and_replace_call_in_stmt(&mut stmt, leaf_functions, placeholder_counter) {
+                let inline_id = *inline_counter;
+                *inline_counter += 1;
+                let prefix = format!("__inline_{}_{}", name.replace("@", ""), inline_id);
+                
+                let (params, ret_ty, leaf_body) = func_bodies.get(&name).cloned().unwrap();
+                
+                for (idx, (param_name, param_ty)) in params.iter().enumerate() {
+                    let arg = &args[idx];
+                    let unique_param = format!("${}_{}", prefix, &param_name[1..]);
+                    new_stmts.push(Stmt::VarDecl {
+                        name: unique_param,
+                        ty: param_ty.clone(),
+                        expr: arg.clone(),
+                        is_mut: true,
+                    });
+                }
+                
+                let unique_ret = format!("${}_ret", prefix);
+                if ret_ty != "void" {
+                    new_stmts.push(Stmt::VarDecl {
+                        name: unique_ret.clone(),
+                        ty: ret_ty.clone(),
+                        expr: Expr::Literal(0),
+                        is_mut: true,
+                    });
+                }
+                
+                let end_label = format!("{}_end", prefix);
+                
+                let mut rewritten_body = Vec::new();
+                for mut leaf_stmt in leaf_body {
+                    rename_vars_stmt(&mut leaf_stmt, &prefix);
+                    rewritten_body.push(leaf_stmt);
+                }
+                rewrite_returns(&mut rewritten_body, &unique_ret, &end_label, ret_ty != "void");
+                
+                new_stmts.extend(rewritten_body);
+                new_stmts.push(Stmt::Label(end_label));
+                
+                let replacement = if ret_ty != "void" {
+                    Expr::VarRef(unique_ret)
+                } else {
+                    Expr::Literal(0)
+                };
+                replace_placeholder_stmt(&mut stmt, &placeholder, replacement);
+            } else {
+                break;
+            }
+        }
+        new_stmts.push(stmt);
+    }
+    *body = new_stmts;
+}
