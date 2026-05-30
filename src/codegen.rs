@@ -15,6 +15,42 @@
 use std::collections::HashMap;
 use crate::parser::{ASTNode, Stmt, Expr};
 
+// -------------------------------------------------------------------------------------------------
+// Backend Architecture
+// -------------------------------------------------------------------------------------------------
+// File organization:
+//
+// 1) Core model/types
+//    - `TargetCore`: feature matrix by AVR family.
+//    - `Pass1Inst`: symbolic instructions with unresolved labels.
+//    - `CodeGenerator`: frontend-to-backend lowering state.
+//
+// 2) Phase 1 lowering (`impl CodeGenerator`)
+//    - AST rewrites (inlining + constant propagation).
+//    - Statement/expression lowering to `Pass1Inst`.
+//    - Target-aware instruction selection and stack/register policy.
+//
+// 3) Phase 2 assembly utilities (outside the impl)
+//    - peephole optimization
+//    - label resolution + branch relaxation
+//    - Intel HEX emission
+//
+// 4) Analysis/rewrite helpers
+//    - liveness and declaration collection
+//    - inlining support transforms
+//
+// Design:
+// We emit a symbolic pass first, then resolve physical addresses in a second pass.
+// This keeps code generation easier to reason about and makes later optimizations safer.
+// -------------------------------------------------------------------------------------------------
+
+// -------------------------------------------------------------------------------------------------
+// Core Target Model
+// -------------------------------------------------------------------------------------------------
+/// Represents the target AVR core family architecture.
+/// 
+/// Different AVR families have different feature matrices (e.g., presence of hardware
+/// multiply instructions, support for 16-bit word-immediate forms like ADIW/SBIW).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TargetCore {
     Generic,
@@ -26,25 +62,42 @@ pub enum TargetCore {
 }
 
 impl TargetCore {
+    /// True when target core family provides hardware multiply instructions.
     pub fn supports_mul(self) -> bool {
         !matches!(self, TargetCore::AVRe | TargetCore::AVRrc)
     }
 
+    /// True when target supports ADIW/SBIW word-immediate arithmetic forms.
     pub fn supports_adiw_sbiw(self) -> bool {
         !matches!(self, TargetCore::AVRrc)
     }
 }
 
+/// Symbolic instruction representation emitted during Phase 1 lowering.
+///
+/// These pseudo-instructions hold symbolic label targets (e.g., function names, loop
+/// entry/exit points) and remain unresolved until label resolution and branch relaxation
+/// are performed in Phase 2.
 #[derive(Debug, Clone)]
 pub enum Pass1Inst {
+    // One already-encoded machine word.
     Op(u16),
+    // Pseudo-instructions kept until label resolution.
     Label(String),
     RJumpL(String),
     RCallL(String),
+    // Conditional branches encoded later with 7-bit relative displacement.
     BrbsL(u8, String),
     BrbcL(u8, String),
 }
 
+// -------------------------------------------------------------------------------------------------
+// End of Core Target Model
+// -------------------------------------------------------------------------------------------------
+
+// -------------------------------------------------------------------------------------------------
+// Main Lowering State
+// -------------------------------------------------------------------------------------------------
 pub struct CodeGenerator {
     instructions: Vec<Pass1Inst>,
     constants: HashMap<String, i32>,
@@ -60,13 +113,27 @@ pub struct CodeGenerator {
     pub target_core: TargetCore,
     
     // Inlining state
+    // NOTE: currently only AST-level inlining uses these helper maps/sets.
     inline_return_labels: Vec<String>,
     inline_prefixes: Vec<String>,
     leaf_functions: std::collections::HashSet<String>,
     func_bodies: std::collections::HashMap<String, (Vec<(String, String)>, String, Vec<Stmt>)>,
 }
 
+// -------------------------------------------------------------------------------------------------
+// End of Main Lowering State
+// -------------------------------------------------------------------------------------------------
+
+// -------------------------------------------------------------------------------------------------
+// Phase 1: AST -> Pass1Inst
+// -------------------------------------------------------------------------------------------------
 impl CodeGenerator {
+    /// Constructor with deterministic backend defaults.
+    ///
+    /// State invariant after return:
+    /// - SRAM allocator base and cursor both point to `0x0100`.
+    /// - No symbols/functions are registered.
+    /// - Instruction stream is empty.
     pub fn new() -> Self {
         Self {
             instructions: Vec::new(),
@@ -88,15 +155,27 @@ impl CodeGenerator {
         }
     }
 
+    /// Overrides SRAM allocation base.
+    ///
+    /// Precondition:
+    /// - `addr` is a valid data-memory base for the selected target profile.
+    ///
+    /// Postcondition:
+    /// - Existing allocations are discarded by resetting `sram_free_ptr` to `addr`.
     pub fn set_sram_start(&mut self, addr: u16) {
         self.sram_start = addr;
         self.sram_free_ptr = addr;
     }
 
+    /// Feature gate helper for multiplication opcode paths.
     fn has_hw_mul(&self) -> bool {
         self.target_core.supports_mul()
     }
 
+    /// Returns a globally unique label for this codegen instance.
+    ///
+    /// Postcondition:
+    /// - `label_counter` increases monotonically by 1.
     fn new_label(&mut self, prefix: &str) -> String {
         self.label_counter += 1;
         format!("{}_{}", prefix, self.label_counter)
@@ -112,6 +191,13 @@ impl CodeGenerator {
         }
     }
 
+    /// Encodes generic AVR register-register instruction forms that use split `Rr` bits.
+    ///
+    /// Precondition:
+    /// - `d` and `r` are valid AVR register indices (0..31).
+    ///
+    /// Postcondition:
+    /// - Returns a complete 16-bit word for the chosen `op` template.
     fn encode_rd_rr(&self, op: u16, d: u8, r: u8) -> u16 {
         let d_bits = (d as u16) << 4;
         let r_bit9 = ((r & 0x10) as u16) << 5;
@@ -119,14 +205,21 @@ impl CodeGenerator {
         op | d_bits | r_bit9 | r_bits3_0
     }
 
+    /// Appends one symbolic instruction to the pass-1 stream.
     fn emit(&mut self, inst: Pass1Inst) {
         self.instructions.push(inst);
     }
 
+    /// True only for register pairs legal for ADIW/SBIW destination encoding.
     fn is_adiw_pair(reg: u8) -> bool {
         matches!(reg, 24 | 26 | 28 | 30)
     }
 
+    /// Emits `target += imm` for a u16 register pair.
+    ///
+    /// Selection policy:
+    /// - Use ADIW when legal (`r24/r26/r28/r30`, imm <= 63, core supports it).
+    /// - Otherwise synthesize with SUBI/SBCI using two's-complement immediate.
     fn emit_add_u16_imm(&mut self, target: u8, imm: u16) {
         if imm == 0 {
             return;
@@ -153,6 +246,11 @@ impl CodeGenerator {
         )); // SBCI high, -k_hi
     }
 
+    /// Emits `target -= imm` for a u16 register pair.
+    ///
+    /// Selection policy:
+    /// - Use SBIW when legal (`r24/r26/r28/r30`, imm <= 63, core supports it).
+    /// - Otherwise synthesize with SUBI/SBCI.
     fn emit_sub_u16_imm(&mut self, target: u8, imm: u16) {
         if imm == 0 {
             return;
@@ -174,10 +272,28 @@ impl CodeGenerator {
         )); // SBCI high, k_hi
     }
 
+    /// Full backend pipeline from parsed AST to pass-1 symbolic instructions.
+    ///
+    /// Pipeline overview:
+    /// 1) Collect function metadata and leaf candidates.
+    /// 2) Apply AST-to-AST inlining for selected leaves.
+    /// 3) Propagate constants over the rewritten AST.
+    /// 4) Register symbols, emit startup trampoline, and remove unreachable functions.
+    /// 5) Lower reachable functions to symbolic instructions.
+    /// 6) Validate memory/hardware address safety.
+    ///
+    /// Important strategy note:
+    /// We keep this flow iterative and deterministic instead of recursively emitting code
+    /// from call sites. A recursive emitter was intentionally avoided because output order
+    /// and branch spans become harder to reason about and debug.
+    ///
+    /// Output invariant:
+    /// - Every control-flow edge in this stage is label-based, never absolute-address based.
+    /// - Concrete PC-relative displacement is a phase-2 responsibility.
     pub fn compile(&mut self, ast: &[ASTNode]) -> Result<Vec<Pass1Inst>, String> {
         let mut ast = ast.to_vec();
 
-        // Pre-compute user functions and collect func bodies
+        // Stage 0A: pre-compute function signatures/bodies once.
         let mut user_funcs = std::collections::HashSet::new();
         for node in &ast {
             if let ASTNode::Func { name, params, ret_ty, body } = node {
@@ -186,7 +302,8 @@ impl CodeGenerator {
             }
         }
 
-        // Identify leaf functions iteratively
+        // Stage 0B: identify leaf functions iteratively to enforce bounded inlining.
+        // This limits code growth and branch-distance pressure on AVR targets.
         let mut leaf_functions = std::collections::HashSet::new();
         loop {
             let mut added = false;
@@ -213,7 +330,7 @@ impl CodeGenerator {
         }
         self.leaf_functions = leaf_functions.clone();
 
-        // 0. AST-to-AST Inlining Pass
+        // Stage 0C: AST-to-AST inlining pass (leaf-only policy).
         let mut inline_counter = 0;
         for node in &mut ast {
             if let ASTNode::Func { body, .. } = node {
@@ -221,7 +338,7 @@ impl CodeGenerator {
             }
         }
 
-        // 1. AST Constant Propagation on the rewritten/inlined AST!
+        // Stage 0D: constant propagation on rewritten AST.
         for node in &mut ast {
             if let ASTNode::Func { body, .. } = node {
                 let mut reassigned = std::collections::HashSet::new();
@@ -231,7 +348,7 @@ impl CodeGenerator {
             }
         }
 
-        // 1. First register all constants and functions
+        // Stage 1: register constants and function signatures.
         for node in &ast {
             match node {
                 ASTNode::Const { name, ty, value } => {
@@ -250,11 +367,11 @@ impl CodeGenerator {
             }
         }
 
-        // 2. Emit call to @main, followed by HALT (opcode 0xFFFF)
+        // Stage 2: emit startup trampoline: RCALL @main, then HALT.
         self.emit(Pass1Inst::RCallL("@main".to_string()));
         self.emit(Pass1Inst::Op(0xFFFF));
 
-        // 3. Identify all reachable functions starting from @main (Dead Code Elimination)
+        // Stage 3: mark reachable functions from @main (DCE frontier).
         let mut call_map = std::collections::HashMap::new();
         for node in &ast {
             if let ASTNode::Func { name, body, .. } = node {
@@ -280,7 +397,8 @@ impl CodeGenerator {
             }
         }
 
-        // 4. Compile only reachable functions (compile @main first to prevent branch offset overflow)
+        // Stage 4: compile reachable functions only.
+        // @main goes first to keep the hottest control-flow region close to startup.
         for node in &ast {
             if let ASTNode::Func { name, params, ret_ty, body } = node {
                 if name == "@main" && reachable.contains(name) {
@@ -296,7 +414,7 @@ impl CodeGenerator {
             }
         }
 
-        // 5. Validate hardware constants to prevent overlap with allocated variables
+        // Stage 5: validate hardware constants against allocated SRAM region.
         for (name, val) in &self.constants {
             if name.starts_with('%') {
                 let addr = *val as u16;
@@ -315,13 +433,22 @@ impl CodeGenerator {
     /// Assigns scalar `$` variables (params + locals at any depth) to callee-saved registers
     /// r2..r15, in declaration order, until the pool is exhausted; the rest fall back to SRAM.
     /// Returns the set of registers used (for prologue/epilogue save/restore).
+    ///
+    /// Allocation strategy:
+    /// - We use a lightweight linear-scan allocator over approximate liveness intervals.
+    /// - We intentionally do not use graph coloring here: linear scan is deterministic,
+    ///   faster for this compiler size, and easier to maintain/debug.
+    ///
+    /// ABI constraints respected here:
+    /// - Scalar homes are selected in callee-saved range r2..r15.
+    /// - Argument/return registers (r24:r25 descending for args) are left for call boundary use.
+    /// - Loop end-bounds get first claim over homes to avoid per-iteration SRAM reload.
     fn plan_function_registers(&mut self, params: &[(String, String)], body: &[Stmt]) -> Vec<u8> {
         self.var_homes.clear();
         self.loop_bound_regs.clear();
         self.loop_depth = 0;
 
         let mut saves: Vec<u8> = Vec::new();
-        let mut reg_free_at = [0usize; 16];
 
         // 1. Allocate loop bound registers first from R2..R15
         let depth = max_loop_depth(body);
@@ -332,8 +459,6 @@ impl CodeGenerator {
                 self.loop_bound_regs.push(cursor);
                 saves.push(cursor);
                 saves.push(cursor + 1);
-                reg_free_at[cursor as usize] = usize::MAX;
-                reg_free_at[(cursor + 1) as usize] = usize::MAX;
                 cursor += 2;
             }
         }
@@ -349,99 +474,28 @@ impl CodeGenerator {
             decl_types.insert(nm, ty);
         }
 
-        // 3. Perform Liveness Analysis
-        let mut analyzer = LivenessAnalyzer::new();
-        analyzer.analyze(body);
+        // 3. Construct CFG and Liveness Analysis
+        let mut flat_label_counter = 0;
+        let flat_stmts = flatten_stmts(body, &mut flat_label_counter);
+        let blocks = construct_cfg(&flat_stmts);
+        let (_in_sets, out_sets) = run_liveness_analysis(&blocks);
 
-        // Compute base intervals
-        let mut intervals: HashMap<String, (usize, usize)> = HashMap::new();
-        for (i, name) in analyzer.uses.iter().enumerate() {
-            intervals.entry(name.clone())
-                .and_modify(|range| range.1 = i)
-                .or_insert((i, i));
+        // 4. Build Interference Graph and Alocate Registers via Graph Coloring
+        let graph = build_interference_graph(&blocks, &out_sets);
+        
+        let mut reserved_regs = std::collections::HashSet::new();
+        for &r in &self.loop_bound_regs {
+            reserved_regs.insert(r);
+            reserved_regs.insert(r + 1);
         }
 
-        // Extend intervals for loops
-        for &(l_start, l_end) in &analyzer.loop_intervals {
-            for (i, name) in analyzer.uses.iter().enumerate() {
-                if i >= l_start && i < l_end {
-                    if let Some(range) = intervals.get_mut(name) {
-                        range.0 = std::cmp::min(range.0, l_start);
-                        range.1 = std::cmp::max(range.1, l_end);
-                    }
-                }
-            }
-        }
+        let (colors, coloring_saves) = color_graph(&graph, &decl_types, &reserved_regs);
+        self.var_homes = colors;
 
-        // Set parameters start to 0
-        for (pn, _) in params {
-            if let Some(range) = intervals.get_mut(pn) {
-                range.0 = 0;
-            } else {
-                intervals.insert(pn.clone(), (0, 0));
-            }
-        }
-
-        // 4. Linear Scan Register Allocation
-        // Sort variables by their start point
-        let mut sorted_vars: Vec<String> = decl_types.keys()
-            .filter(|name| !decl_types[*name].contains('[')) // skip arrays
-            .cloned()
-            .collect();
-        sorted_vars.sort_by_key(|name| intervals.get(name).map(|r| r.0).unwrap_or(0));
-
-        for name in &sorted_vars {
-            let ty = &decl_types[name];
-            let (start, end) = intervals.get(name).copied().unwrap_or((0, 0));
-
-            // Allocate a register
-            if ty == "u8" {
-                // Find a free register in R2..R15 (i.e. reg_free_at[reg] <= start)
-                for reg in 2..16 {
-                    if reg_free_at[reg] <= start {
-                        self.var_homes.insert(name.clone(), reg as u8);
-                        reg_free_at[reg] = end + 1; // busy until end + 1 (exclusive)
-                        if !saves.contains(&(reg as u8)) {
-                            saves.push(reg as u8);
-                        }
-                        break;
-                    }
-                }
-            } else if ty == "u16" {
-                // Find a free adjacent register pair: reg and reg+1 must be free in R2..R15
-                let mut allocated = false;
-                for reg in (2..15).step_by(2) { // Try aligned first
-                    if reg_free_at[reg] <= start && reg_free_at[reg+1] <= start {
-                        self.var_homes.insert(name.clone(), reg as u8);
-                        reg_free_at[reg] = end + 1;
-                        reg_free_at[reg+1] = end + 1;
-                        if !saves.contains(&(reg as u8)) {
-                            saves.push(reg as u8);
-                        }
-                        if !saves.contains(&((reg + 1) as u8)) {
-                            saves.push((reg + 1) as u8);
-                        }
-                        allocated = true;
-                        break;
-                    }
-                }
-                if !allocated {
-                    // Try unaligned pair
-                    for reg in 2..15 {
-                        if reg_free_at[reg] <= start && reg_free_at[reg+1] <= start {
-                            self.var_homes.insert(name.clone(), reg as u8);
-                            reg_free_at[reg] = end + 1;
-                            reg_free_at[reg+1] = end + 1;
-                            if !saves.contains(&(reg as u8)) {
-                                saves.push(reg as u8);
-                            }
-                            if !saves.contains(&((reg + 1) as u8)) {
-                                saves.push((reg + 1) as u8);
-                            }
-                            break;
-                        }
-                    }
-                }
+        // Combine loop bounds and coloring registers to preserve callee-saved registers
+        for r in coloring_saves {
+            if !saves.contains(&r) {
+                saves.push(r);
             }
         }
 
@@ -488,6 +542,12 @@ impl CodeGenerator {
         saves
     }
 
+    /// Lowers one function body with full prologue/body/epilogue handling.
+    ///
+    /// ABI assumptions encoded here:
+    /// - Incoming args start at `r24:r25` and descend by pairs.
+    /// - Return value is produced in `r24:r25`.
+    /// - Callee-saved set is exactly `current_saves`, except `@main` (root, non-returning path).
     fn compile_function(&mut self, name: &str, params: &[(String, String)], _ret_ty: &str, body: &[Stmt]) -> Result<(), String> {
         let saves = self.plan_function_registers(params, body);
         // @main is the root: nothing relies on it preserving registers, and it never returns,
@@ -544,7 +604,10 @@ impl CodeGenerator {
         Ok(())
     }
 
-    /// Emits the function epilogue (restore callee-saved registers in reverse order) and RET.
+    /// Emits function epilogue and RET.
+    ///
+    /// Invariant:
+    /// - Register pop order is strict reverse of prologue push order.
     fn emit_return(&mut self) {
         for &reg in self.current_saves.clone().iter().rev() {
             self.emit(Pass1Inst::Op(0x900F | ((reg as u16) << 4))); // POP reg
@@ -553,6 +616,12 @@ impl CodeGenerator {
     }
 
     /// Reads scalar `$` variable `name` into `target`, widening a u8 source to `ctx_ty`.
+    ///
+    /// Precondition:
+    /// - Variable was already declared and registered in `self.variables`.
+    ///
+    /// Postcondition:
+    /// - `target` contains low byte; `target+1` is valid when `ctx_ty == "u16"`.
     fn read_var(&mut self, name: &str, target: u8, ctx_ty: &str) -> Result<(), String> {
         let (addr, var_ty, _) = self.variables.get(name)
             .ok_or_else(|| format!("Undefined variable: {}", name))?;
@@ -581,6 +650,9 @@ impl CodeGenerator {
     }
 
     /// Stores `src` (and src+1 for u16) into scalar `$` variable `name`.
+    ///
+    /// Precondition:
+    /// - Variable exists and its width matches the generated store sequence.
     fn write_var(&mut self, name: &str, src: u8) -> Result<(), String> {
         let (addr, var_ty, _) = self.variables.get(name)
             .ok_or_else(|| format!("Undefined variable: {}", name))?;
@@ -611,6 +683,9 @@ impl CodeGenerator {
     /// To prevent stack-heap collision (since the hardware Stack grows downwards from `0x08FF`),
     /// we enforce a strict 64-byte safety margin at the top of SRAM. If variable allocations
     /// exceed `0x08FF - 64` (i.e. `0x08BF`), the compilation fails with an explicit SRAM Overflow error.
+    ///
+    /// Postcondition:
+    /// - `self.variables[name]` is populated even for register-homed scalars (address 0 sentinel).
     fn allocate_var(&mut self, name: &str, ty: &str, is_mut: bool) -> Result<u16, String> {
         // Register-resident scalars do not occupy SRAM; record only their type/mutability.
         if self.var_homes.contains_key(name) {
@@ -655,6 +730,9 @@ impl CodeGenerator {
     /// handles nested subroutine frames and deep recursion at runtime with zero risk of variable overlap.
     /// Opcode format: `1001 001r rrrr 1111` (binary). We shift the 5-bit register index left by 4 to map
     /// R0-R31 to bits 8..4 of the instruction word.
+    ///
+    /// Stack order contract:
+    /// - u16 spills are pushed low byte then high byte.
     fn spill_push(&mut self, reg: u8, ty: &str) -> Result<u16, String> {
         if ty == "u8" {
             let op = 0x920F | (((reg & 0x1F) as u16) << 4);
@@ -675,6 +753,9 @@ impl CodeGenerator {
     /// Since the stack is Last-In First-Out (LIFO), for 16-bit values we pop the high byte (`reg + 1`)
     /// first, followed by the low byte (`reg`).
     /// Opcode format: `1001 000d dddd 1111` (binary). We shift the target register index left by 4.
+    ///
+    /// Postcondition:
+    /// - Register contents match pre-spill value for same width/order contract.
     fn spill_pop(&mut self, target_reg: u8, _addr: u16, ty: &str) -> Result<(), String> {
         if ty == "u8" {
             let op = 0x900F | (((target_reg & 0x1F) as u16) << 4);
@@ -689,6 +770,10 @@ impl CodeGenerator {
         Ok(())
     }
 
+    /// Sequentially lowers a statement list.
+    ///
+    /// Invariant:
+    /// - Emission order strictly follows source statement order.
     fn compile_block(&mut self, block: &[Stmt]) -> Result<(), String> {
         for stmt in block {
             self.compile_stmt(stmt)?;
@@ -696,8 +781,14 @@ impl CodeGenerator {
         Ok(())
     }
 
-    // Helper to automatically optimize STS (2 words) to OUT (1 word) if address is in I/O space [0x20, 0x5F]
-    // Or to STD Y+q (1 word) if address is in displacement space [0x0100, 0x013F]
+    // Store selection policy:
+    // 1) I/O space [0x20, 0x5F]  -> OUT (1 word)
+    // 2) Y-displacement window    -> STD Y+q (1 word)
+    // 3) fallback                 -> STS (2 words)
+    //
+    // Why this order:
+    // - OUT/IN are shortest and avoid address literal words.
+    // - Y+q is still 1-word and cheap for near-SRAM locals.
     fn emit_sts(&mut self, addr: u16, reg: u8) -> Result<(), String> {
         if addr >= 0x20 && addr < 0x60 {
             // OUT A, reg -> 0xB800 | (((A & 0x30) as u16) << 5) | ((reg as u16) << 4) | ((A & 0x0F) as u16)
@@ -717,8 +808,10 @@ impl CodeGenerator {
         Ok(())
     }
 
-    // Helper to automatically optimize LDS (2 words) to IN (1 word) if address is in I/O space [0x20, 0x5F]
-    // Or to LDD Rd, Y+q (1 word) if address is in displacement space [sram_start, sram_start+63]
+    // Load selection policy mirrors `emit_sts`:
+    // 1) I/O space [0x20, 0x5F]  -> IN (1 word)
+    // 2) Y-displacement window   -> LDD Y+q (1 word)
+    // 3) fallback                -> LDS (2 words)
     fn emit_lds(&mut self, target: u8, addr: u16) -> Result<(), String> {
         if addr >= 0x20 && addr < 0x60 {
             // IN target, A -> 0xB000 | (((A & 0x30) as u16) << 5) | ((target as u16) << 4) | ((A & 0x0F) as u16)
@@ -738,6 +831,16 @@ impl CodeGenerator {
         Ok(())
     }
 
+    /// Lowers one high-level statement into target-aware symbolic instructions.
+    ///
+    /// Strategy:
+    /// - Keep control-flow explicit through generated labels.
+    /// - Prefer flag-based branches over boolean materialization where possible.
+    /// - Keep memory I/O paths centralized via `emit_sts`/`emit_lds`.
+    ///
+    /// Control-flow contract:
+    /// - `LoopRange` is lowered as half-open interval: `start <= i < end` (unsigned compare).
+    /// - Conditional jumps use "short-skip + RJMP" form to avoid BRxx range overflows.
     fn compile_stmt(&mut self, stmt: &Stmt) -> Result<(), String> {
         match stmt {
             Stmt::VarDecl { name, ty, expr, is_mut } => {
@@ -1177,6 +1280,10 @@ impl CodeGenerator {
 
     /// Best-effort static type inference: returns "u16" if the expression's value width is
     /// 16-bit (from a u16 variable, array element, function return, or wide literal), else "u8".
+    ///
+    /// Scope note:
+    /// - This is a lowering heuristic, not a full type checker.
+    /// - Unknown cases intentionally default to "u8" to avoid over-widening codegen paths.
     fn infer_type(&self, expr: &Expr) -> String {
         match expr {
             Expr::Literal(v) => if *v > 255 || *v < 0 { "u16".to_string() } else { "u8".to_string() },
@@ -1219,6 +1326,10 @@ impl CodeGenerator {
     /// Emits an unsigned comparison of `left <op> right`, leaving the result only in flags.
     /// Returns `(sreg_bit, true_when_set)`: branching when that SREG bit equals `true_when_set`
     /// is taken exactly when the comparison is TRUE. Operands are evaluated into r16/r18.
+    ///
+    /// Postcondition:
+    /// - No boolean value is materialized in general-purpose registers.
+    /// - Caller may branch immediately using the returned `(bit,set)` pair.
     fn emit_comparison(&mut self, left: &Expr, op: &str, right: &Expr, ty: &str) -> Result<(u8, bool), String> {
         // Fast-path zero-comparison for u16: == 0 and != 0
         if ty == "u16" && matches!(op, "==" | "!=") {
@@ -1288,7 +1399,7 @@ impl CodeGenerator {
         })
     }
 
-    /// Emits a SREG-bit branch to `label` taken when `bit` equals `set`.
+    /// Emits one symbolic conditional branch against a specific SREG bit state.
     fn emit_flag_branch(&mut self, bit: u8, set: bool, label: &str) {
         if set {
             self.emit(Pass1Inst::BrbsL(bit, label.to_string()));
@@ -1299,6 +1410,9 @@ impl CodeGenerator {
 
     /// Generates control flow that jumps to `false_label` when `cond` is false and falls
     /// through when it is true. Uses a short skip + long RJMP so the jump target may be far.
+    ///
+    /// Control-flow shape invariant:
+    /// - Any far jump is represented as `BRxx skip ; RJMP false_label ; skip:`.
     fn compile_cond_jump_if_false(&mut self, cond: &Expr, false_label: &str) -> Result<(), String> {
         match cond {
             Expr::BinOp { left, op, right } if matches!(op.as_str(), "==" | "!=" | "<" | ">" | "<=" | ">=") => {
@@ -1337,6 +1451,9 @@ impl CodeGenerator {
 
     /// Generates control flow that jumps to `true_label` when `cond` is true and falls
     /// through when it is false.
+    ///
+    /// Control-flow shape invariant:
+    /// - Any far jump is represented as `BRxx skip ; RJMP true_label ; skip:`.
     fn compile_cond_jump_if_true(&mut self, cond: &Expr, true_label: &str) -> Result<(), String> {
         match cond {
             Expr::BinOp { left, op, right } if matches!(op.as_str(), "==" | "!=" | "<" | ">" | "<=" | ">=") => {
@@ -1373,6 +1490,20 @@ impl CodeGenerator {
         Ok(())
     }
 
+    /// Lowers one expression into `target` (and `target+1` for u16 when needed).
+    ///
+    /// Codegen policy:
+    /// - Try constant folding and immediate-specialized patterns first.
+    /// - Prefer ISA fast paths (MUL/ADIW/SBIW/CPI) when core supports them.
+    /// - Fall back to portable software sequences when hardware support is absent.
+    ///
+    /// Arithmetic semantics:
+    /// - Unsigned wrapping arithmetic (u8/u16) is preserved by construction.
+    /// - Constant folding mirrors runtime width masking via `mask_ty`.
+    ///
+    /// Register contract:
+    /// - Result low byte is in `target`.
+    /// - Result high byte is in `target+1` when `ty == "u16"`.
     fn compile_expr(&mut self, expr: &Expr, target: u8, ty: &str) -> Result<(), String> {
         // Constant folding: collapse a fully literal arithmetic/bitwise subtree into a
         // single immediate, matching the runtime's type-width wrapping semantics.
@@ -2050,7 +2181,11 @@ impl CodeGenerator {
                 }
             }
             Expr::Call { name, args } => {
-                // Check if it is a compiler intrinsic!
+                // Intrinsics are encoded directly as opcodes to avoid function-call overhead.
+                // This path is intentionally strict about argument forms to keep assembly output
+                // deterministic and prevent hidden ABI assumptions.
+                // Rejected approach: auto-coercing arbitrary expressions into intrinsic register
+                // arguments. It simplifies syntax but obscures register ownership and side effects.
                 if name.starts_with('@') {
                     let intrinsic = &name[1..];
                     match intrinsic {
@@ -2276,6 +2411,17 @@ impl CodeGenerator {
     }
 }
 
+// -------------------------------------------------------------------------------------------------
+// End of Phase 1
+// -------------------------------------------------------------------------------------------------
+
+// -------------------------------------------------------------------------------------------------
+// Phase 2: Post-Lowering Utilities
+// -------------------------------------------------------------------------------------------------
+/// Masks a signed intermediate value to target unsigned width semantics.
+///
+/// Postcondition:
+/// - Return is in `[0,255]` for `u8` and `[0,65535]` for `u16`.
 fn mask_ty(v: i64, ty: &str) -> i64 {
     if ty == "u16" { v & 0xFFFF } else { v & 0xFF }
 }
@@ -2315,6 +2461,7 @@ fn eval_const(expr: &Expr, ty: &str) -> Option<i64> {
     }
 }
 
+/// Same bit packing as `encode_rd_rr`, kept standalone for peephole rewrites.
 fn encode_rd_rr_peephole(op: u16, d: u8, r: u8) -> u16 {
     let d_bits = (d as u16) << 4;
     let r_bit9 = ((r & 0x10) as u16) << 5;
@@ -2322,6 +2469,15 @@ fn encode_rd_rr_peephole(op: u16, d: u8, r: u8) -> u16 {
     op | d_bits | r_bit9 | r_bits3_0
 }
 
+/// Peephole pass over symbolic instructions.
+///
+/// Design note:
+/// We iterate until fixpoint. This was preferred over a single pass because some rewrites
+/// unlock later adjacent patterns.
+///
+/// Safety contract:
+/// - Rewrites must be semantics-preserving with respect to flags/observable memory.
+/// - No rule may introduce or remove labels.
 pub fn peephole_optimize(instructions: &[Pass1Inst]) -> Vec<Pass1Inst> {
     let mut current = instructions.to_vec();
     loop {
@@ -2480,6 +2636,17 @@ pub fn peephole_optimize(instructions: &[Pass1Inst]) -> Vec<Pass1Inst> {
     current
 }
 
+/// Resolves symbolic labels and relative branches into final opcodes.
+///
+/// Strategy:
+/// - First run peephole optimization.
+/// - Then perform monotonic branch relaxation (short -> long only) to guarantee convergence.
+/// - Finally encode concrete machine words.
+///
+/// Branch-range engineering detail:
+/// - BRBS/BRBC remain short branches (7-bit signed).
+/// - Frontend emits "BRxx skip; RJMP target" patterns when target distance can grow.
+/// - RJMP/RCALL are promoted to JMP/CALL only when 12-bit signed range is exceeded.
 pub fn resolve_labels(instructions: &[Pass1Inst]) -> Vec<u16> {
     let optimized_instructions = peephole_optimize(instructions);
     let instructions = &optimized_instructions;
@@ -2588,6 +2755,11 @@ pub fn resolve_labels(instructions: &[Pass1Inst]) -> Vec<u16> {
     final_opcodes
 }
 
+/// Encodes machine words as Intel HEX records.
+///
+/// Output contract:
+/// - Data records use 16-byte payloads (8 words) except possibly final partial record.
+/// - Addresses are byte addresses, little-endian payload per AVR word order.
 pub fn generate_intel_hex(opcodes: &[u16]) -> String {
     let mut hex = String::new();
     let mut address = 0u16;
@@ -2614,6 +2786,7 @@ pub fn generate_intel_hex(opcodes: &[u16]) -> String {
     hex
 }
 
+/// Builds one Intel HEX data record (record type 00) with two's-complement checksum.
 fn make_hex_record(address: u16, data: &[u8]) -> String {
     let byte_count = data.len() as u8;
     let addr_hi = (address >> 8) as u8;
@@ -2635,11 +2808,21 @@ fn make_hex_record(address: u16, data: &[u8]) -> String {
     record
 }
 
+/// End-of-file Intel HEX sentinel record.
 fn make_eof_record() -> String {
     ":00000001FF".to_string()
 }
 
+// -------------------------------------------------------------------------------------------------
+// End of Phase 2
+// -------------------------------------------------------------------------------------------------
+
+// -------------------------------------------------------------------------------------------------
+// Shared Analysis and AST Rewrite Helpers
+// -------------------------------------------------------------------------------------------------
+
 /// Returns the maximum nesting depth of range loops in a function body.
+/// This value pre-reserves end-bound register pairs to reduce loop-memory traffic.
 fn max_loop_depth(body: &[Stmt]) -> usize {
     let mut max = 0;
     for stmt in body {
@@ -2694,6 +2877,8 @@ fn collect_decls(body: &[Stmt], out: &mut Vec<(String, String)>) {
     }
 }
 
+/// Collects call names found inside an expression tree.
+/// Used by call-graph/reachability and leaf-function heuristics.
 fn collect_calls_expr(expr: &Expr, calls: &mut std::collections::HashSet<String>) {
     match expr {
         Expr::Literal(_) => {}
@@ -2716,6 +2901,10 @@ fn collect_calls_expr(expr: &Expr, calls: &mut std::collections::HashSet<String>
     }
 }
 
+/// Collects call names from a statement subtree.
+///
+/// Current policy detail:
+/// - Intrinsics (`@...`) are tracked too, because some passes treat them as call-like edges.
 fn collect_calls_stmt(stmt: &Stmt, calls: &mut std::collections::HashSet<String>) {
     match stmt {
         Stmt::VarDecl { expr, .. } => {
@@ -2775,110 +2964,587 @@ fn collect_calls_stmt(stmt: &Stmt, calls: &mut std::collections::HashSet<String>
     }
 }
 
-// Liveness Analyzer and Linear Scan Helper Structs
-struct LivenessAnalyzer {
-    uses: Vec<String>,
-    loop_intervals: Vec<(usize, usize)>,
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+enum FlatStmt {
+    VarDecl { name: String, ty: String, expr: Expr, is_mut: bool },
+    Assign { target: Expr, expr: Expr, op: String },
+    ExprStmt { expr: Expr },
+    Label(String),
+    Goto(String),
+    CondJump { cond: Expr, target: String },
+    Return { val: Option<Expr> },
 }
 
-impl LivenessAnalyzer {
+struct BasicBlock {
+    id: usize,
+    stmts: Vec<FlatStmt>,
+    successors: Vec<usize>,
+    predecessors: Vec<usize>,
+}
+
+struct InterferenceGraph {
+    nodes: std::collections::HashSet<String>,
+    adj: HashMap<String, std::collections::HashSet<String>>,
+}
+
+impl InterferenceGraph {
     fn new() -> Self {
         Self {
-            uses: Vec::new(),
-            loop_intervals: Vec::new(),
+            nodes: std::collections::HashSet::new(),
+            adj: HashMap::new(),
         }
     }
 
-    fn analyze(&mut self, body: &[Stmt]) {
-        self.traverse_stmts(body);
-    }
-
-    fn traverse_expr(&mut self, expr: &Expr) {
-        match expr {
-            Expr::Literal(_) => {}
-            Expr::VarRef(name) => {
-                if name.starts_with('$') {
-                    self.uses.push(name.clone());
-                }
-            }
-            Expr::UnaryOp { expr, .. } => {
-                self.traverse_expr(expr);
-            }
-            Expr::BinOp { left, right, .. } => {
-                self.traverse_expr(left);
-                self.traverse_expr(right);
-            }
-            Expr::Call { args, .. } => {
-                for arg in args {
-                    self.traverse_expr(arg);
-                }
-            }
+    fn add_node(&mut self, node: String) {
+        if node.starts_with('$') {
+            self.nodes.insert(node.clone());
+            self.adj.entry(node).or_insert_with(std::collections::HashSet::new);
         }
     }
 
-    fn traverse_stmt(&mut self, stmt: &Stmt) {
-        match stmt {
-            Stmt::VarDecl { name, expr, .. } => {
-                self.uses.push(name.clone());
-                self.traverse_expr(expr);
-            }
-            Stmt::Assign { expr, target, .. } => {
-                self.traverse_expr(expr);
-                self.traverse_expr(target);
-            }
-            Stmt::LoopInfinite { body } => {
-                let start = self.uses.len();
-                self.traverse_stmts(body);
-                let end = self.uses.len();
-                self.loop_intervals.push((start, end));
-            }
-            Stmt::LoopRange { start, end, var_name, body } => {
-                self.uses.push(var_name.clone());
-                self.traverse_expr(start);
-                self.traverse_expr(end);
-                let l_start = self.uses.len();
-                self.traverse_stmts(body);
-                self.uses.push(var_name.clone()); // Extend induction variable lifetime to the end of the loop body
-                let l_end = self.uses.len();
-                self.loop_intervals.push((l_start, l_end));
-            }
-            Stmt::Conditional { cond, then_block, else_block } => {
-                self.traverse_expr(cond);
-                self.traverse_stmts(then_block);
-                if let Some(eb) = else_block {
-                    self.traverse_stmts(eb);
-                }
-            }
-            Stmt::Switch { expr, cases, default } => {
-                self.traverse_expr(expr);
-                for (case_expr, b) in cases {
-                    self.traverse_expr(case_expr);
-                    self.traverse_stmts(b);
-                }
-                if let Some(db) = default {
-                    self.traverse_stmts(db);
-                }
-            }
-            Stmt::Return { val } => {
-                if let Some(expr) = val {
-                    self.traverse_expr(expr);
-                }
-            }
-            Stmt::ExprStmt { expr } => {
-                self.traverse_expr(expr);
-            }
-            Stmt::Goto(_) => {}
-            Stmt::Label(_) => {}
-        }
-    }
-
-    fn traverse_stmts(&mut self, stmts: &[Stmt]) {
-        for stmt in stmts {
-            self.traverse_stmt(stmt);
+    fn add_edge(&mut self, u: &str, v: &str) {
+        if u != v && u.starts_with('$') && v.starts_with('$') {
+            self.add_node(u.to_string());
+            self.add_node(v.to_string());
+            self.adj.get_mut(u).unwrap().insert(v.to_string());
+            self.adj.get_mut(v).unwrap().insert(u.to_string());
         }
     }
 }
 
+fn flatten_stmts(stmts: &[Stmt], label_counter: &mut usize) -> Vec<FlatStmt> {
+    let mut flat = Vec::new();
+    for stmt in stmts {
+        match stmt {
+            Stmt::VarDecl { name, ty, expr, is_mut } => {
+                flat.push(FlatStmt::VarDecl {
+                    name: name.clone(),
+                    ty: ty.clone(),
+                    expr: expr.clone(),
+                    is_mut: *is_mut,
+                });
+            }
+            Stmt::Assign { target, expr, op } => {
+                flat.push(FlatStmt::Assign {
+                    target: target.clone(),
+                    expr: expr.clone(),
+                    op: op.clone(),
+                });
+            }
+            Stmt::ExprStmt { expr } => {
+                flat.push(FlatStmt::ExprStmt { expr: expr.clone() });
+            }
+            Stmt::Goto(lbl) => {
+                flat.push(FlatStmt::Goto(lbl.clone()));
+            }
+            Stmt::Label(lbl) => {
+                flat.push(FlatStmt::Label(lbl.clone()));
+            }
+            Stmt::Return { val } => {
+                flat.push(FlatStmt::Return { val: val.clone() });
+            }
+            Stmt::LoopInfinite { body } => {
+                *label_counter += 1;
+                let start_lbl = format!("flat_loop_start_{}", label_counter);
+                flat.push(FlatStmt::Label(start_lbl.clone()));
+                flat.extend(flatten_stmts(body, label_counter));
+                flat.push(FlatStmt::Goto(start_lbl));
+            }
+            Stmt::LoopRange { start, end, var_name, body } => {
+                *label_counter += 1;
+                let loop_id = *label_counter;
+                let start_lbl = format!("flat_loop_start_{}", loop_id);
+                let body_lbl = format!("flat_loop_body_{}", loop_id);
+                let end_lbl = format!("flat_loop_end_{}", loop_id);
+                let end_tmp = format!("$loop_end_tmp_{}", loop_id);
+
+                flat.push(FlatStmt::VarDecl {
+                    name: var_name.clone(),
+                    ty: "u16".to_string(),
+                    expr: start.clone(),
+                    is_mut: true,
+                });
+                flat.push(FlatStmt::VarDecl {
+                    name: end_tmp.clone(),
+                    ty: "u16".to_string(),
+                    expr: end.clone(),
+                    is_mut: false,
+                });
+                flat.push(FlatStmt::Label(start_lbl.clone()));
+                flat.push(FlatStmt::CondJump {
+                    cond: Expr::BinOp {
+                        left: Box::new(Expr::VarRef(var_name.clone())),
+                        op: "<".to_string(),
+                        right: Box::new(Expr::VarRef(end_tmp.clone())),
+                    },
+                    target: body_lbl.clone(),
+                });
+                flat.push(FlatStmt::Goto(end_lbl.clone()));
+                flat.push(FlatStmt::Label(body_lbl));
+                flat.extend(flatten_stmts(body, label_counter));
+                flat.push(FlatStmt::Assign {
+                    target: Expr::VarRef(var_name.clone()),
+                    expr: Expr::BinOp {
+                        left: Box::new(Expr::VarRef(var_name.clone())),
+                        op: "+".to_string(),
+                        right: Box::new(Expr::Literal(1)),
+                    },
+                    op: "->".to_string(),
+                });
+                flat.push(FlatStmt::Goto(start_lbl));
+                flat.push(FlatStmt::Label(end_lbl));
+            }
+            Stmt::Conditional { cond, then_block, else_block } => {
+                *label_counter += 1;
+                let cond_id = *label_counter;
+                let then_lbl = format!("flat_cond_then_{}", cond_id);
+                let else_lbl = format!("flat_cond_else_{}", cond_id);
+                let end_lbl = format!("flat_cond_end_{}", cond_id);
+
+                flat.push(FlatStmt::CondJump {
+                    cond: cond.clone(),
+                    target: then_lbl.clone(),
+                });
+                if else_block.is_some() {
+                    flat.push(FlatStmt::Goto(else_lbl.clone()));
+                } else {
+                    flat.push(FlatStmt::Goto(end_lbl.clone()));
+                }
+                flat.push(FlatStmt::Label(then_lbl));
+                flat.extend(flatten_stmts(then_block, label_counter));
+                flat.push(FlatStmt::Goto(end_lbl.clone()));
+                if let Some(eb) = else_block {
+                    flat.push(FlatStmt::Label(else_lbl));
+                    flat.extend(flatten_stmts(eb, label_counter));
+                }
+                flat.push(FlatStmt::Label(end_lbl));
+            }
+            Stmt::Switch { expr, cases, default } => {
+                *label_counter += 1;
+                let sw_id = *label_counter;
+                let end_lbl = format!("flat_switch_end_{}", sw_id);
+                let default_lbl = format!("flat_switch_default_{}", sw_id);
+                
+                let mut case_lbls = Vec::new();
+                for i in 0..cases.len() {
+                    case_lbls.push(format!("flat_switch_case_{}_{}", sw_id, i));
+                }
+
+                for (i, (case_expr, _)) in cases.iter().enumerate() {
+                    flat.push(FlatStmt::CondJump {
+                        cond: Expr::BinOp {
+                            left: Box::new(expr.clone()),
+                            op: "==".to_string(),
+                            right: Box::new(case_expr.clone()),
+                        },
+                        target: case_lbls[i].clone(),
+                    });
+                }
+                if default.is_some() {
+                    flat.push(FlatStmt::Goto(default_lbl.clone()));
+                } else {
+                    flat.push(FlatStmt::Goto(end_lbl.clone()));
+                }
+
+                for (i, (_, body)) in cases.iter().enumerate() {
+                    flat.push(FlatStmt::Label(case_lbls[i].clone()));
+                    flat.extend(flatten_stmts(body, label_counter));
+                    flat.push(FlatStmt::Goto(end_lbl.clone()));
+                }
+
+                if let Some(db) = default {
+                    flat.push(FlatStmt::Label(default_lbl));
+                    flat.extend(flatten_stmts(db, label_counter));
+                }
+                flat.push(FlatStmt::Label(end_lbl));
+            }
+        }
+    }
+    flat
+}
+
+fn construct_cfg(flat_stmts: &[FlatStmt]) -> Vec<BasicBlock> {
+    if flat_stmts.is_empty() {
+        return Vec::new();
+    }
+
+    let mut is_leader = vec![false; flat_stmts.len()];
+    is_leader[0] = true;
+
+    for (i, stmt) in flat_stmts.iter().enumerate() {
+        match stmt {
+            FlatStmt::Goto(_) | FlatStmt::CondJump { .. } | FlatStmt::Return { .. } => {
+                if i + 1 < flat_stmts.len() {
+                    is_leader[i + 1] = true;
+                }
+            }
+            FlatStmt::Label(_) => {
+                is_leader[i] = true;
+            }
+            _ => {}
+        }
+    }
+
+    let mut blocks = Vec::new();
+    let mut current_block = Vec::new();
+
+    for (i, stmt) in flat_stmts.iter().enumerate() {
+        if is_leader[i] && i > 0 {
+            blocks.push(BasicBlock {
+                id: blocks.len(),
+                stmts: current_block,
+                successors: Vec::new(),
+                predecessors: Vec::new(),
+            });
+            current_block = Vec::new();
+        }
+        current_block.push(stmt.clone());
+    }
+    if !current_block.is_empty() {
+        blocks.push(BasicBlock {
+            id: blocks.len(),
+            stmts: current_block,
+            successors: Vec::new(),
+            predecessors: Vec::new(),
+        });
+    }
+
+    let mut label_to_block = HashMap::new();
+    for block in &blocks {
+        if let Some(FlatStmt::Label(name)) = block.stmts.first() {
+            label_to_block.insert(name.clone(), block.id);
+        }
+    }
+
+    let n_blocks = blocks.len();
+    for id in 0..n_blocks {
+        let last_stmt = blocks[id].stmts.last().unwrap();
+        match last_stmt {
+            FlatStmt::Goto(lbl) => {
+                if let Some(&target_id) = label_to_block.get(lbl) {
+                    blocks[id].successors.push(target_id);
+                }
+            }
+            FlatStmt::CondJump { target, .. } => {
+                if let Some(&target_id) = label_to_block.get(target) {
+                    blocks[id].successors.push(target_id);
+                }
+                if id + 1 < n_blocks {
+                    blocks[id].successors.push(id + 1);
+                }
+            }
+            FlatStmt::Return { .. } => {}
+            _ => {
+                if id + 1 < n_blocks {
+                    blocks[id].successors.push(id + 1);
+                }
+            }
+        }
+    }
+
+    for id in 0..n_blocks {
+        let successors = blocks[id].successors.clone();
+        for succ_id in successors {
+            if !blocks[succ_id].predecessors.contains(&id) {
+                blocks[succ_id].predecessors.push(id);
+            }
+        }
+    }
+
+    blocks
+}
+
+fn collect_expr_uses(expr: &Expr, uses: &mut std::collections::HashSet<String>) {
+    match expr {
+        Expr::Literal(_) => {}
+        Expr::VarRef(name) => {
+            if name.starts_with('$') {
+                uses.insert(name.clone());
+            }
+        }
+        Expr::UnaryOp { expr, .. } => {
+            collect_expr_uses(expr, uses);
+        }
+        Expr::BinOp { left, right, .. } => {
+            collect_expr_uses(left, uses);
+            collect_expr_uses(right, uses);
+        }
+        Expr::Call { args, .. } => {
+            for arg in args {
+                collect_expr_uses(arg, uses);
+            }
+        }
+    }
+}
+
+fn compute_gen_kill(
+    block: &BasicBlock,
+    gen: &mut std::collections::HashSet<String>,
+    kill: &mut std::collections::HashSet<String>,
+) {
+    for stmt in &block.stmts {
+        let mut stmt_uses = std::collections::HashSet::new();
+        let mut stmt_defs = std::collections::HashSet::new();
+
+        match stmt {
+            FlatStmt::VarDecl { name, expr, .. } => {
+                collect_expr_uses(expr, &mut stmt_uses);
+                if name.starts_with('$') {
+                    stmt_defs.insert(name.clone());
+                }
+            }
+            FlatStmt::Assign { target, expr, .. } => {
+                collect_expr_uses(expr, &mut stmt_uses);
+                match target {
+                    Expr::VarRef(name) => {
+                        if name.starts_with('$') {
+                            stmt_defs.insert(name.clone());
+                        }
+                    }
+                    _ => {
+                        collect_expr_uses(target, &mut stmt_uses);
+                    }
+                }
+            }
+            FlatStmt::ExprStmt { expr } => {
+                collect_expr_uses(expr, &mut stmt_uses);
+            }
+            FlatStmt::CondJump { cond, .. } => {
+                collect_expr_uses(cond, &mut stmt_uses);
+            }
+            FlatStmt::Return { val } => {
+                if let Some(expr) = val {
+                    collect_expr_uses(expr, &mut stmt_uses);
+                }
+            }
+            _ => {}
+        }
+
+        for u in stmt_uses {
+            if !kill.contains(&u) {
+                gen.insert(u);
+            }
+        }
+        for d in stmt_defs {
+            kill.insert(d);
+        }
+    }
+}
+
+fn run_liveness_analysis(
+    blocks: &[BasicBlock],
+) -> (Vec<std::collections::HashSet<String>>, Vec<std::collections::HashSet<String>>) {
+    let n = blocks.len();
+    let mut gen = vec![std::collections::HashSet::new(); n];
+    let mut kill = vec![std::collections::HashSet::new(); n];
+
+    for i in 0..n {
+        compute_gen_kill(&blocks[i], &mut gen[i], &mut kill[i]);
+    }
+
+    let mut in_sets: Vec<std::collections::HashSet<String>> = vec![std::collections::HashSet::new(); n];
+    let mut out_sets: Vec<std::collections::HashSet<String>> = vec![std::collections::HashSet::new(); n];
+
+    let mut changed = true;
+    while changed {
+        changed = false;
+        for i in (0..n).rev() {
+            let old_in = in_sets[i].clone();
+            let old_out = out_sets[i].clone();
+
+            let mut new_out = std::collections::HashSet::new();
+            for &succ in &blocks[i].successors {
+                for v in &in_sets[succ] {
+                    new_out.insert(v.clone());
+                }
+            }
+            out_sets[i] = new_out;
+
+            let mut new_in = gen[i].clone();
+            for v in &out_sets[i] {
+                if !kill[i].contains(v) {
+                    new_in.insert(v.clone());
+                }
+            }
+            in_sets[i] = new_in;
+
+            if in_sets[i] != old_in || out_sets[i] != old_out {
+                changed = true;
+            }
+        }
+    }
+
+    (in_sets, out_sets)
+}
+
+fn build_interference_graph(
+    blocks: &[BasicBlock],
+    out_sets: &[std::collections::HashSet<String>],
+) -> InterferenceGraph {
+    let mut graph = InterferenceGraph::new();
+
+    for block in blocks {
+        for stmt in &block.stmts {
+            match stmt {
+                FlatStmt::VarDecl { name, .. } => {
+                    graph.add_node(name.clone());
+                }
+                _ => {}
+            }
+        }
+    }
+
+    for i in 0..blocks.len() {
+        let block = &blocks[i];
+        let mut live = out_sets[i].clone();
+
+        for stmt in block.stmts.iter().rev() {
+            let mut stmt_uses = std::collections::HashSet::new();
+            let mut stmt_defs = std::collections::HashSet::new();
+
+            match stmt {
+                FlatStmt::VarDecl { name, expr, .. } => {
+                    collect_expr_uses(expr, &mut stmt_uses);
+                    if name.starts_with('$') {
+                        stmt_defs.insert(name.clone());
+                    }
+                }
+                FlatStmt::Assign { target, expr, .. } => {
+                    collect_expr_uses(expr, &mut stmt_uses);
+                    match target {
+                        Expr::VarRef(name) => {
+                            if name.starts_with('$') {
+                                stmt_defs.insert(name.clone());
+                            }
+                        }
+                        _ => {
+                            collect_expr_uses(target, &mut stmt_uses);
+                        }
+                    }
+                }
+                FlatStmt::ExprStmt { expr } => {
+                    collect_expr_uses(expr, &mut stmt_uses);
+                }
+                FlatStmt::CondJump { cond, .. } => {
+                    collect_expr_uses(cond, &mut stmt_uses);
+                }
+                FlatStmt::Return { val } => {
+                    if let Some(expr) = val {
+                        collect_expr_uses(expr, &mut stmt_uses);
+                    }
+                }
+                _ => {}
+            }
+
+            for d in &stmt_defs {
+                for l in &live {
+                    graph.add_edge(d, l);
+                }
+            }
+
+            for d in stmt_defs {
+                live.remove(&d);
+            }
+            for u in stmt_uses {
+                live.insert(u);
+            }
+
+            let live_vec: Vec<String> = live.iter().cloned().collect();
+            for j in 0..live_vec.len() {
+                for k in j+1..live_vec.len() {
+                    graph.add_edge(&live_vec[j], &live_vec[k]);
+                }
+            }
+        }
+    }
+
+    graph
+}
+
+fn color_graph(
+    graph: &InterferenceGraph,
+    decl_types: &HashMap<String, String>,
+    reserved_regs: &std::collections::HashSet<u8>,
+) -> (HashMap<String, u8>, Vec<u8>) {
+    let mut colors: HashMap<String, u8> = HashMap::new();
+    let mut used_regs = std::collections::HashSet::new();
+
+    let mut nodes: Vec<String> = graph.nodes.iter()
+        .filter(|node| {
+            let ty = decl_types.get(*node).cloned().unwrap_or_else(|| "u8".to_string());
+            !ty.contains('[')
+        })
+        .cloned()
+        .collect();
+    nodes.sort_by(|a, b| {
+        let deg_a = graph.adj.get(a).map_or(0, |neighbors| neighbors.len());
+        let deg_b = graph.adj.get(b).map_or(0, |neighbors| neighbors.len());
+        deg_b.cmp(&deg_a)
+    });
+
+    for node in &nodes {
+        let ty = decl_types.get(node).cloned().unwrap_or_else(|| "u8".to_string());
+        let is_u16 = ty == "u16";
+
+        let mut neighbors_regs = std::collections::HashSet::new();
+        if let Some(neighbors) = graph.adj.get(node) {
+            for neighbor in neighbors {
+                if let Some(&color) = colors.get(neighbor) {
+                    let neighbor_ty = decl_types.get(neighbor).cloned().unwrap_or_else(|| "u8".to_string());
+                    neighbors_regs.insert(color);
+                    if neighbor_ty == "u16" {
+                        neighbors_regs.insert(color + 1);
+                    }
+                }
+            }
+        }
+
+        let mut assigned_reg = None;
+        if is_u16 {
+            for reg in (2..15).step_by(2) {
+                if !reserved_regs.contains(&reg) && !reserved_regs.contains(&(reg + 1))
+                   && !neighbors_regs.contains(&reg) && !neighbors_regs.contains(&(reg + 1)) {
+                    assigned_reg = Some(reg);
+                    break;
+                }
+            }
+            if assigned_reg.is_none() {
+                for reg in 2..15 {
+                    if !reserved_regs.contains(&reg) && !reserved_regs.contains(&(reg + 1))
+                       && !neighbors_regs.contains(&reg) && !neighbors_regs.contains(&(reg + 1)) {
+                        assigned_reg = Some(reg);
+                        break;
+                    }
+                }
+            }
+        } else {
+            for reg in 2..16 {
+                if !reserved_regs.contains(&reg) && !neighbors_regs.contains(&reg) {
+                    assigned_reg = Some(reg);
+                    break;
+                }
+            }
+        }
+
+        if let Some(reg) = assigned_reg {
+            colors.insert(node.clone(), reg);
+            used_regs.insert(reg);
+            if is_u16 {
+                used_regs.insert(reg + 1);
+            }
+        }
+    }
+
+    let mut saves: Vec<u8> = used_regs.into_iter().collect();
+    saves.sort_unstable();
+    (colors, saves)
+}
+
+/// Encodes `q` field for `LDD/STD Y+q` forms.
+///
+/// Precondition:
+/// - `q` fits architectural displacement range `0..=63`.
 fn encode_q(q: u8) -> u16 {
     let q_5 = ((q & 0x20) as u16) << 8;   // bit 13
     let q_4_3 = ((q & 0x18) as u16) << 7; // bits 11, 10
@@ -2886,6 +3552,19 @@ fn encode_q(q: u8) -> u16 {
     q_5 | q_4_3 | q_2_0
 }
 
+// -------------------------------------------------------------------------------------------------
+// End of Shared Analysis and AST Rewrite Helpers
+// -------------------------------------------------------------------------------------------------
+
+// -------------------------------------------------------------------------------------------------
+// Inlining + Constant-Propagation Rewrite Helpers
+// -------------------------------------------------------------------------------------------------
+// Inlining strategy notes:
+// - Only leaf functions are inlined by policy.
+// - Calls are replaced one at a time using placeholders to preserve expression structure.
+// - Returns are rewritten to a single exit label with optional synthesized return slot.
+
+/// Renames `$`-prefixed variables inside one expression with an inline-unique prefix.
 fn rename_vars_expr(expr: &mut Expr, prefix: &str) {
     match expr {
         Expr::VarRef(name) => {
@@ -2909,6 +3588,10 @@ fn rename_vars_expr(expr: &mut Expr, prefix: &str) {
     }
 }
 
+/// Renames `$`-prefixed variables throughout one statement subtree.
+///
+/// Invariant:
+/// - Label identifiers are not renamed here; only variable names are rewritten.
 fn rename_vars_stmt(stmt: &mut Stmt, prefix: &str) {
     match stmt {
         Stmt::VarDecl { name, expr, .. } => {
@@ -2974,6 +3657,7 @@ fn rename_vars_stmt(stmt: &mut Stmt, prefix: &str) {
     }
 }
 
+/// Traverses expression to discover nested references that may imply reassignment contexts.
 fn collect_reassigned_expr(expr: &Expr, reassigned: &mut std::collections::HashSet<String>) {
     match expr {
         Expr::BinOp { left, right, .. } => {
@@ -2992,6 +3676,7 @@ fn collect_reassigned_expr(expr: &Expr, reassigned: &mut std::collections::HashS
     }
 }
 
+/// Marks variables that are written after declaration, preventing unsafe constant substitution.
 fn collect_reassigned_vars(stmts: &[Stmt], reassigned: &mut std::collections::HashSet<String>) {
     for stmt in stmts {
         match stmt {
@@ -3048,6 +3733,7 @@ fn collect_reassigned_vars(stmts: &[Stmt], reassigned: &mut std::collections::Ha
     }
 }
 
+/// Replaces variable references with known literal values in-place.
 fn propagate_constants_expr(expr: &mut Expr, known: &std::collections::HashMap<String, i32>) {
     match expr {
         Expr::VarRef(name) => {
@@ -3071,11 +3757,18 @@ fn propagate_constants_expr(expr: &mut Expr, known: &std::collections::HashMap<S
     }
 }
 
+/// Propagates constant literals through statement lists using a conservative known-value map.
+///
+/// Contract:
+/// - Never promotes a variable to constant if it may be reassigned in the same function body.
+/// - Rewrites are local and in-place over AST nodes.
 fn propagate_constants_stmts(
     stmts: &mut [Stmt],
     reassigned: &std::collections::HashSet<String>,
     known: &mut std::collections::HashMap<String, i32>
 ) {
+    // Conservative rule:
+    // `known` is updated only for scalars proven not to be reassigned in current function body.
     for stmt in stmts {
         match stmt {
             Stmt::VarDecl { name, ty, expr, .. } => {
@@ -3132,6 +3825,10 @@ fn propagate_constants_stmts(
     }
 }
 
+/// Rewrites `return` into assignment-to-synthesized-slot (optional) + goto single epilogue label.
+///
+/// Postcondition:
+/// - Structured body has no raw `Stmt::Return` nodes.
 fn rewrite_returns(stmts: &mut Vec<Stmt>, unique_ret: &str, end_label: &str, has_ret: bool) {
     let mut new_stmts = Vec::new();
     for stmt in std::mem::take(stmts) {
@@ -3182,6 +3879,7 @@ fn rewrite_returns(stmts: &mut Vec<Stmt>, unique_ret: &str, end_label: &str, has
     *stmts = new_stmts;
 }
 
+/// Replaces one placeholder variable reference inside an expression tree.
 fn replace_placeholder(expr: &mut Expr, placeholder: &str, replacement: Expr) {
     match expr {
         Expr::VarRef(name) if name == placeholder => {
@@ -3203,6 +3901,7 @@ fn replace_placeholder(expr: &mut Expr, placeholder: &str, replacement: Expr) {
     }
 }
 
+/// Statement-level placeholder replacement adapter.
 fn replace_placeholder_stmt(stmt: &mut Stmt, placeholder: &str, replacement: Expr) {
     match stmt {
         Stmt::VarDecl { expr, .. } => {
@@ -3224,6 +3923,10 @@ fn replace_placeholder_stmt(stmt: &mut Stmt, placeholder: &str, replacement: Exp
     }
 }
 
+/// Finds first inline-eligible call in expression order and rewrites it to a placeholder slot.
+///
+/// Postcondition on `Some(...)`:
+/// - Returned placeholder name is present in `expr` as `Expr::VarRef`.
 fn find_and_replace_first_call(
     expr: &mut Expr,
     leaf_functions: &std::collections::HashSet<String>,
@@ -3258,6 +3961,7 @@ fn find_and_replace_first_call(
     }
 }
 
+/// Statement adapter for `find_and_replace_first_call`.
 fn find_and_replace_call_in_stmt(
     stmt: &mut Stmt,
     leaf_functions: &std::collections::HashSet<String>,
@@ -3287,6 +3991,11 @@ fn find_and_replace_call_in_stmt(
     }
 }
 
+/// Performs leaf-function AST inlining inside a statement block.
+///
+/// Invariants after return:
+/// - Fresh names prevent collisions with caller locals.
+/// - Inlined returns are canonicalized to one synthetic end label per inlined call.
 fn inline_block(
     body: &mut Vec<Stmt>,
     leaf_functions: &std::collections::HashSet<String>,
@@ -3379,3 +4088,7 @@ fn inline_block(
     }
     *body = new_stmts;
 }
+
+// -------------------------------------------------------------------------------------------------
+// End of Inlining + Constant-Propagation Rewrite Helpers
+// -------------------------------------------------------------------------------------------------
