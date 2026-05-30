@@ -29,8 +29,8 @@
     # Blocks execution until the TWI Interrupt Flag (TWINT) is set, signaling hardware operation complete
     @_twi_wait() {
         loop * {
-            mut $ctrl: u8 = %TWCR
-            mut $twint: u8 = $ctrl & 0x80
+            ram imut $ctrl: u8 = %TWCR
+            ram imut $twint: u8 = $ctrl & 0x80
             ? $twint != 0 { loop_break }
         }
     }
@@ -95,8 +95,8 @@
     # Blocks execution until the TWI Interrupt Flag (TWINT) is set, signaling hardware operation complete
     @_twi_wait() {
         loop * {
-            mut $ctrl: u8 = %TWCR
-            mut $twint: u8 = $ctrl & 0x80
+            ram imut $ctrl: u8 = %TWCR
+            ram imut $twint: u8 = $ctrl & 0x80
             ? $twint != 0 { loop_break }
         }
     }
@@ -161,8 +161,8 @@
     # Blocks execution until the TWI Interrupt Flag (TWINT) is set, signaling hardware operation complete
     @_twi_wait() {
         loop * {
-            mut $ctrl: u8 = %TWCR
-            mut $twint: u8 = $ctrl & 0x80
+            ram imut $ctrl: u8 = %TWCR
+            ram imut $twint: u8 = $ctrl & 0x80
             ? $twint != 0 { loop_break }
         }
     }

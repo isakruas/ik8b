@@ -16,25 +16,25 @@
 # Verifies hexadecimals, negatives, boolean literals (true, false), and single-quoted character literals.
 
 @main {
-    mut $ok: u8 = 1
-    mut $res: u8 = 0
-    mut $res16: u16 = 0
+    ram mut $ok: u8 = 1
+    ram mut $res: u8 = 0
+    ram imut $res16: u16 = 0
 
     # 1. Hexadecimal Literals
-    mut $hex: u8 = 0x5A
+    ram imut $hex: u8 = 0x5A
     ? $hex != 90 {
         0 -> $ok
     }
 
     # 2. Negative Number Literals
-    mut $neg: u8 = -15
+    ram imut $neg: u8 = -15
     ? $neg != -15 {
         0 -> $ok
     }
 
     # 3. Boolean Literals (true, false)
-    mut $b_true: u8 = true
-    mut $b_false: u8 = false
+    ram imut $b_true: u8 = true
+    ram imut $b_false: u8 = false
     
     ? $b_true != 1 {
         0 -> $ok
@@ -44,8 +44,8 @@
     }
 
     # 4. Standard Character Literals
-    mut $char_a: u8 = 'A'
-    mut $char_z: u8 = 'z'
+    ram imut $char_a: u8 = 'A'
+    ram imut $char_z: u8 = 'z'
     
     ? $char_a != 65 {
         0 -> $ok
@@ -55,11 +55,11 @@
     }
 
     # 5. Escaped Character Literals
-    mut $char_nl: u8 = '\n'
-    mut $char_tab: u8 = '\t'
-    mut $char_null: u8 = '\0'
-    mut $char_slash: u8 = '\\'
-    mut $char_quote: u8 = '\''
+    ram imut $char_nl: u8 = '\n'
+    ram imut $char_tab: u8 = '\t'
+    ram imut $char_null: u8 = '\0'
+    ram imut $char_slash: u8 = '\\'
+    ram imut $char_quote: u8 = '\''
 
     ? $char_nl != 10 {
         0 -> $ok

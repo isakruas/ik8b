@@ -19,12 +19,12 @@
 namespace atmega328p
 
 @main {
-    mut $res: u8 = 0
-    mut $ok: u8 = 1
+    ram mut $res: u8 = 0
+    ram mut $ok: u8 = 1
 
     # 1. Boolean literals test
-    mut $t_bool: u8 = true
-    mut $f_bool: u8 = false
+    ram imut $t_bool: u8 = true
+    ram imut $f_bool: u8 = false
     
     ? $t_bool != 1 {
         0 -> $ok
@@ -34,8 +34,8 @@ namespace atmega328p
     }
 
     # 2. Character literals test
-    mut $char_a: u8 = 'A'
-    mut $char_nl: u8 = '\n'
+    ram imut $char_a: u8 = 'A'
+    ram imut $char_nl: u8 = '\n'
     
     ? $char_a != 65 {
         0 -> $ok
@@ -45,7 +45,7 @@ namespace atmega328p
     }
 
     # 3. Unary prefix operators test (8-bit)
-    mut $val: u8 = 5
+    ram imut $val: u8 = 5
     
     # Unary negation: -$val -> -5 (0xFB)
     (-$val) -> $res
@@ -72,8 +72,8 @@ namespace atmega328p
     }
 
     # 4. Unary prefix operators test (16-bit)
-    mut $val16: u16 = 5
-    mut $res16: u16 = 0
+    ram imut $val16: u16 = 5
+    ram mut $res16: u16 = 0
 
     # Unary negation (16-bit): -$val16 -> -5 = 65531 (0xFFFB)
     (-$val16) -> $res16
@@ -94,7 +94,7 @@ namespace atmega328p
     }
 
     # 5. Compound assignment on array elements (8-bit)
-    mut $buf8: u8[5] = 0
+    ram mut $buf8: u8[5] = 0
     10 -> $buf8[0]
     
     # Addition assignment: 5 ->+ $buf8[0] (should be 15)
@@ -116,7 +116,7 @@ namespace atmega328p
     }
 
     # 6. Compound assignment on array elements (16-bit)
-    mut $buf16: u16[3] = 0
+    ram mut $buf16: u16[3] = 0
     1000 -> $buf16[1]
     
     # Addition assignment (16-bit): 500 ->+ $buf16[1] (should be 1500)

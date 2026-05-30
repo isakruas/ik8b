@@ -17,19 +17,19 @@
 # compound updates, nested loops, and loop-carried values.
 
 @main {
-    mut $ok: u8 = 1
-    mut $res: u16 = 0
+    ram mut $ok: u8 = 1
+    ram mut $res: u16 = 0
 
     # 8 simultaneously-live u8 locals.
-    mut $a: u8 = 1
-    mut $b: u8 = 2
-    mut $c: u8 = 3
-    mut $d: u8 = 4
-    mut $e: u8 = 5
-    mut $f: u8 = 6
-    mut $g: u8 = 7
-    mut $h: u8 = 8
-    mut $sum: u8 = 0
+    ram imut $a: u8 = 1
+    ram imut $b: u8 = 2
+    ram imut $c: u8 = 3
+    ram imut $d: u8 = 4
+    ram imut $e: u8 = 5
+    ram imut $f: u8 = 6
+    ram imut $g: u8 = 7
+    ram imut $h: u8 = 8
+    ram mut $sum: u8 = 0
     $a + $b -> $sum
     $sum + $c -> $sum
     $sum + $d -> $sum
@@ -40,7 +40,7 @@
     ? $sum != 36 { 0 -> $ok }
 
     # u8 compound assignments.
-    mut $cx: u8 = 100
+    ram mut $cx: u8 = 100
     50 ->+ $cx
     ? $cx != 150 { 0 -> $ok }
     25 ->- $cx
@@ -53,21 +53,21 @@
     ? $cx != 2 { 0 -> $ok }
 
     # u16 compound assignments.
-    mut $w: u16 = 10000
+    ram mut $w: u16 = 10000
     5000 ->+ $w
     ? $w != 15000 { 0 -> $ok }
     3000 ->- $w
     ? $w != 12000 { 0 -> $ok }
 
     # Single loop accumulate.
-    mut $acc: u16 = 0
+    ram mut $acc: u16 = 0
     loop 0..10 -> $i {
         1 ->+ $acc
     }
     ? $acc != 10 { 0 -> $ok }
 
     # Nested loops.
-    mut $cnt: u16 = 0
+    ram mut $cnt: u16 = 0
     loop 0..5 -> $oi {
         loop 0..5 -> $ii {
             1 ->+ $cnt
@@ -76,19 +76,19 @@
     ? $cnt != 25 { 0 -> $ok }
 
     # Loop-carried value using the induction variable.
-    mut $s2: u16 = 0
+    ram mut $s2: u16 = 0
     loop 1..5 -> $k {
         $s2 + $k -> $s2
     }
     ? $s2 != 10 { 0 -> $ok }
 
     # Many simultaneously-live u16 locals.
-    mut $p1: u16 = 100
-    mut $p2: u16 = 200
-    mut $p3: u16 = 300
-    mut $p4: u16 = 400
-    mut $p5: u16 = 500
-    mut $tot: u16 = 0
+    ram imut $p1: u16 = 100
+    ram imut $p2: u16 = 200
+    ram imut $p3: u16 = 300
+    ram imut $p4: u16 = 400
+    ram imut $p5: u16 = 500
+    ram mut $tot: u16 = 0
     $p1 + $p2 -> $tot
     $tot + $p3 -> $tot
     $tot + $p4 -> $tot

@@ -18,8 +18,8 @@
 import tests/test_helper
 
 @main {
-    mut $ok: u8 = 1
-    mut $res: u16 = 0
+    ram mut $ok: u8 = 1
+    ram mut $res: u16 = 0
 
     # 1. Direct function call with parameters
     @add_u8(10, 20) -> $res
@@ -60,6 +60,6 @@ import tests/test_helper
 }
 
 @nested_ops($x: u16, $y: u16) -> u16 {
-    mut $sum: u16 = $x + $y
+    ram imut $sum: u16 = $x + $y
     return @square($sum)
 }

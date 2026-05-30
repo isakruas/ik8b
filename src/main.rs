@@ -254,43 +254,87 @@ fn main() {
         }
     };
     
-    if report {
-        println!("SRAM_BYTES={}", codegen.sram_used());
-    }
-
     // 4. Resolve Labels
     let opcodes = codegen::resolve_labels(&insts);
-
+    
     // 4b. Device memory-budget check + usage report.
     let prog_bytes = opcodes.len() as u32 * 2;
     let sram_bytes = codegen.sram_used() as u32;
-    let eeprom_bytes: u32 = 0; // EEPROM data emission not implemented yet.
-    let mut over_budget = false;
-    let pct = |used: u32, total: u32| -> String {
-        if total == 0 { "?".to_string() } else { format!("{}%", used * 100 / total) }
-    };
+    let eeprom_bytes = codegen.eeprom_used() as u32;
 
-    println!("Device: {} ({:?})", device.name, device.core);
-    let usable_flash = device.flash_size.saturating_sub(device.boot_size);
-    if device.flash_size == 0 {
-        println!("Program: {} bytes (flash limit unknown)", prog_bytes);
-    } else {
-        println!("Program: {}/{} bytes ({})", prog_bytes, usable_flash, pct(prog_bytes, usable_flash));
-        if prog_bytes > usable_flash {
-            eprintln!("Memory Error: program ({} bytes) exceeds usable flash ({} bytes) on {}.", prog_bytes, usable_flash, device.name);
-            over_budget = true;
+    let mut over_budget = false;
+    let pct_val = |used: u32, total: u32| -> u32 {
+        if total == 0 { 0 } else { used * 100 / total }
+    };
+    
+    if report {
+     
+        println!();
+        println!("ik8b Build Summary");
+        println!("┌──────────────────────────────────────────────────────────────┐");
+        println!("  Device:    {} ({:?})", device.name, device.core);
+        
+        let usable_flash = device.flash_size.saturating_sub(device.boot_size);
+        if device.flash_size == 0 {
+            println!("  Program:   {:5} B          [░░░░░░░░░░░░░░░░░░░░]   ?%", prog_bytes);
+        } else {
+            println!(
+                "  Program:   {:5} / {:5} B  [{}]  {:3}%",
+                prog_bytes,
+                usable_flash,
+                make_progress_bar(prog_bytes, usable_flash),
+                pct_val(prog_bytes, usable_flash)
+            );
+            if prog_bytes > usable_flash {
+                eprintln!("  Memory Error: program exceeds usable flash!");
+                over_budget = true;
+            }
         }
-    }
-    if device.sram_size == 0 {
-        println!("Data (SRAM): {} bytes (limit unknown)", sram_bytes);
-    } else {
-        println!("Data (SRAM): {}/{} bytes ({})", sram_bytes, device.sram_size, pct(sram_bytes, device.sram_size));
-        if sram_bytes > device.sram_size {
-            eprintln!("Memory Error: static data ({} bytes) exceeds SRAM ({} bytes) on {}.", sram_bytes, device.sram_size, device.name);
-            over_budget = true;
+        
+        if device.sram_size == 0 {
+            println!("  SRAM:      {:5} B          [░░░░░░░░░░░░░░░░░░░░]   ?%", sram_bytes);
+        } else {
+            println!(
+                "  SRAM:      {:5} / {:5} B  [{}]  {:3}%",
+                sram_bytes,
+                device.sram_size,
+                make_progress_bar(sram_bytes, device.sram_size),
+                pct_val(sram_bytes, device.sram_size)
+            );
+            if sram_bytes > device.sram_size {
+                eprintln!("  Memory Error: static data exceeds SRAM!");
+                over_budget = true;
+            }
         }
+        
+        if device.eeprom_size == 0 {
+            println!("  EEPROM:    {:5} B          [░░░░░░░░░░░░░░░░░░░░]   ?%", eeprom_bytes);
+        } else {
+            println!(
+                "  EEPROM:    {:5} / {:5} B  [{}]  {:3}%",
+                eeprom_bytes,
+                device.eeprom_size,
+                make_progress_bar(eeprom_bytes, device.eeprom_size),
+                pct_val(eeprom_bytes, device.eeprom_size)
+            );
+            if eeprom_bytes > device.eeprom_size {
+                eprintln!("  Memory Error: EEPROM data exceeds device capacity!");
+                over_budget = true;
+            }
+        }
+        
+        let regs_used = codegen.total_registers_used.len() as u32;
+        println!(
+            "  Registers: {:5} /    14 R  [{}]  {:3}%",
+            regs_used,
+            make_progress_bar(regs_used, 14),
+            pct_val(regs_used, 14)
+        );
+        println!("└──────────────────────────────────────────────────────────────┘");
+        println!();
+        
     }
-    println!("EEPROM: {}/{} bytes", eeprom_bytes, device.eeprom_size);
+    
     if over_budget {
         process::exit(1);
     }
@@ -306,4 +350,20 @@ fn main() {
             process::exit(1);
         }
     }
+}
+
+fn make_progress_bar(used: u32, total: u32) -> String {
+    if total == 0 {
+        return "░░░░░░░░░░░░░░░░░░░░".to_string();
+    }
+    let filled_len = ((used as f64 / total as f64) * 20.0).round() as usize;
+    let filled_len = std::cmp::min(filled_len, 20);
+    let mut bar = String::new();
+    for _ in 0..filled_len {
+        bar.push('█');
+    }
+    for _ in filled_len..20 {
+        bar.push('░');
+    }
+    bar
 }

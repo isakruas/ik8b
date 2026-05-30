@@ -371,9 +371,24 @@ impl Parser {
     fn parse_statement(&mut self) -> Result<Stmt, String> {
         let tok = self.peek(0).ok_or_else(|| "Unexpected EOF in statement".to_string())?.clone();
         match tok.kind {
-            TokenKind::Keyword(ref kw) if kw == "val" || kw == "mut" => {
-                let is_mut = kw == "mut";
+            TokenKind::Keyword(ref kw) if kw == "ram" || kw == "eeprom" || kw == "flash" => {
+                let storage = kw.as_str();
                 self.consume(None)?;
+                
+                let next_tok = self.peek(0).ok_or_else(|| format!("Expected mutability specifier after {}", kw))?.clone();
+                let is_mut = match next_tok.kind {
+                    TokenKind::Keyword(ref k) if k == "mut" || k == "imut" => {
+                        let im = k == "mut";
+                        self.consume(None)?;
+                        im
+                    }
+                    _ => return Err(format!("Expected mutability specifier (mut or imut) after {}: {:?} at line {}", kw, next_tok, next_tok.line)),
+                };
+
+                if storage == "flash" && is_mut {
+                    return Err(format!("flash variables must be immutable: flash imut expected at line {}", tok.line));
+                }
+
                 let name_tok = self.consume(None)?;
                 let name = match name_tok.kind {
                     TokenKind::Identifier(ref n) if n.starts_with('$') => n.clone(),
@@ -401,7 +416,18 @@ impl Parser {
                 }
                 self.consume(Some(TokenKind::Symbol("=".to_string())))?;
                 let expr = self.parse_expr()?;
-                Ok(Stmt::VarDecl { name, ty, expr, is_mut })
+                
+                let final_ty = if storage == "eeprom" {
+                    format!("eeprom {}", ty)
+                } else if storage == "flash" {
+                    format!("flash {}", ty)
+                } else {
+                    ty
+                };
+                Ok(Stmt::VarDecl { name, ty: final_ty, expr, is_mut })
+            }
+            TokenKind::Keyword(ref kw) if kw == "mut" || kw == "imut" => {
+                return Err(format!("Syntax Error: Variable declarations must explicitly specify a storage location (ram, eeprom, or flash) before the mutability specifier at line {}", tok.line));
             }
             TokenKind::Keyword(ref kw) if kw == "loop" => {
                 self.consume(None)?;
@@ -789,3 +815,58 @@ impl Parser {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lexer::Lexer;
+
+    #[test]
+    fn test_valid_variable_declaration() {
+        let code = "
+        @main {
+            ram mut $ok: u8 = 1
+            ram imut $x: u16 = 2
+            eeprom mut $y: u8 = 3
+            flash imut $z: u8 = 4
+        }
+        ";
+        let mut lexer = Lexer::new(code);
+        let tokens = lexer.tokenize().unwrap();
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+        assert!(result.is_ok(), "Expected valid code to compile, but got: {:?}", result);
+    }
+
+    #[test]
+    fn test_invalid_variable_declarations() {
+        // Without storage space (mut)
+        let code_mut = "
+        @main {
+            mut $ok: u8 = 1
+        }
+        ";
+        let mut lexer = Lexer::new(code_mut);
+        let tokens = lexer.tokenize().unwrap();
+        let mut parser = Parser::new(tokens);
+        let result = parser.parse();
+        assert!(result.is_err());
+        let err_msg = result.err().unwrap();
+        assert!(err_msg.contains("Syntax Error: Variable declarations must explicitly specify a storage location"));
+
+        // Without storage space (imut)
+        let code_imut = "
+        @main {
+            imut $ok: u8 = 1
+        }
+        ";
+        let mut lexer2 = Lexer::new(code_imut);
+        let tokens2 = lexer2.tokenize().unwrap();
+        let mut parser2 = Parser::new(tokens2);
+        let result2 = parser2.parse();
+        assert!(result2.is_err());
+        let err_msg2 = result2.err().unwrap();
+        assert!(err_msg2.contains("Syntax Error: Variable declarations must explicitly specify a storage location"));
+    }
+}
+

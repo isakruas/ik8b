@@ -110,7 +110,7 @@
 
 # Computes a bitmask representing (1 << pin) dynamically
 @_gpio_mask($pin: u8) -> u8 {
-    mut $mask: u8 = 1
+    ram mut $mask: u8 = 1
     loop 0..$pin -> $i {
         $mask * 2 -> $mask
     }
@@ -123,15 +123,15 @@
 
 # Configures direction of Port B pin (0 = Input, 1 = Output)
 @pin_mode_b($pin: u8, $mode: u8) {
-    mut $mask: u8 = 0
+    ram mut $mask: u8 = 0
     @_gpio_mask($pin) -> $mask
     ? $mode == 1 {
-        mut $ddr: u8 = %DDRB
+        ram mut $ddr: u8 = %DDRB
         $ddr | $mask -> $ddr
         $ddr -> %DDRB
     } : {
-        mut $ddr: u8 = %DDRB
-        mut $inv_mask: u8 = ~$mask
+        ram mut $ddr: u8 = %DDRB
+        ram imut $inv_mask: u8 = ~$mask
         $ddr & $inv_mask -> $ddr
         $ddr -> %DDRB
     }
@@ -139,15 +139,15 @@
 
 # Writes logical state to Port B pin (0 = Low, 1 = High)
 @digital_write_b($pin: u8, $val: u8) {
-    mut $mask: u8 = 0
+    ram mut $mask: u8 = 0
     @_gpio_mask($pin) -> $mask
     ? $val == 1 {
-        mut $port: u8 = %PORTB
+        ram mut $port: u8 = %PORTB
         $port | $mask -> $port
         $port -> %PORTB
     } : {
-        mut $port: u8 = %PORTB
-        mut $inv_mask: u8 = ~$mask
+        ram mut $port: u8 = %PORTB
+        ram imut $inv_mask: u8 = ~$mask
         $port & $inv_mask -> $port
         $port -> %PORTB
     }
@@ -155,8 +155,8 @@
 
 # Reads and returns the logical state of Port B pin (0 or 1)
 @digital_read_b($pin: u8) -> u8 {
-    mut $pin_val: u8 = %PINB
-    mut $mask: u8 = 0
+    ram mut $pin_val: u8 = %PINB
+    ram mut $mask: u8 = 0
     @_gpio_mask($pin) -> $mask
     $pin_val & $mask -> $pin_val
     ? $pin_val != 0 {
@@ -167,9 +167,9 @@
 
 # Toggles the logical output state of Port B pin
 @toggle_b($pin: u8) {
-    mut $mask: u8 = 0
+    ram mut $mask: u8 = 0
     @_gpio_mask($pin) -> $mask
-    mut $port: u8 = %PORTB
+    ram mut $port: u8 = %PORTB
     $port ^ $mask -> $port
     $port -> %PORTB
 }
@@ -179,45 +179,45 @@
 # -------------------------------------------------------------
 ? namespace == atmega328p {
     @pin_mode_a($pin: u8, $mode: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $mode == 1 {
-            mut $ddr: u8 = %DDRA
+            ram mut $ddr: u8 = %DDRA
             $ddr | $mask -> $ddr
             $ddr -> %DDRA
         } : {
-            mut $ddr: u8 = %DDRA
-            mut $inv_mask: u8 = ~$mask
+            ram mut $ddr: u8 = %DDRA
+            ram imut $inv_mask: u8 = ~$mask
             $ddr & $inv_mask -> $ddr
             $ddr -> %DDRA
         }
     }
     @digital_write_a($pin: u8, $val: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $val == 1 {
-            mut $port: u8 = %PORTA
+            ram mut $port: u8 = %PORTA
             $port | $mask -> $port
             $port -> %PORTA
         } : {
-            mut $port: u8 = %PORTA
-            mut $inv_mask: u8 = ~$mask
+            ram mut $port: u8 = %PORTA
+            ram imut $inv_mask: u8 = ~$mask
             $port & $inv_mask -> $port
             $port -> %PORTA
         }
     }
     @digital_read_a($pin: u8) -> u8 {
-        mut $pin_val: u8 = %PINA
-        mut $mask: u8 = 0
+        ram mut $pin_val: u8 = %PINA
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         $pin_val & $mask -> $pin_val
         ? $pin_val != 0 { return 1 }
         return 0
     }
     @toggle_a($pin: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
-        mut $port: u8 = %PORTA
+        ram mut $port: u8 = %PORTA
         $port ^ $mask -> $port
         $port -> %PORTA
     }
@@ -225,45 +225,45 @@
 
 ? namespace == atmega2560 {
     @pin_mode_a($pin: u8, $mode: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $mode == 1 {
-            mut $ddr: u8 = %DDRA
+            ram mut $ddr: u8 = %DDRA
             $ddr | $mask -> $ddr
             $ddr -> %DDRA
         } : {
-            mut $ddr: u8 = %DDRA
-            mut $inv_mask: u8 = ~$mask
+            ram mut $ddr: u8 = %DDRA
+            ram imut $inv_mask: u8 = ~$mask
             $ddr & $inv_mask -> $ddr
             $ddr -> %DDRA
         }
     }
     @digital_write_a($pin: u8, $val: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $val == 1 {
-            mut $port: u8 = %PORTA
+            ram mut $port: u8 = %PORTA
             $port | $mask -> $port
             $port -> %PORTA
         } : {
-            mut $port: u8 = %PORTA
-            mut $inv_mask: u8 = ~$mask
+            ram mut $port: u8 = %PORTA
+            ram imut $inv_mask: u8 = ~$mask
             $port & $inv_mask -> $port
             $port -> %PORTA
         }
     }
     @digital_read_a($pin: u8) -> u8 {
-        mut $pin_val: u8 = %PINA
-        mut $mask: u8 = 0
+        ram mut $pin_val: u8 = %PINA
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         $pin_val & $mask -> $pin_val
         ? $pin_val != 0 { return 1 }
         return 0
     }
     @toggle_a($pin: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
-        mut $port: u8 = %PORTA
+        ram mut $port: u8 = %PORTA
         $port ^ $mask -> $port
         $port -> %PORTA
     }
@@ -274,45 +274,45 @@
 # -------------------------------------------------------------
 ? namespace == atmega328p {
     @pin_mode_c($pin: u8, $mode: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $mode == 1 {
-            mut $ddr: u8 = %DDRC
+            ram mut $ddr: u8 = %DDRC
             $ddr | $mask -> $ddr
             $ddr -> %DDRC
         } : {
-            mut $ddr: u8 = %DDRC
-            mut $inv_mask: u8 = ~$mask
+            ram mut $ddr: u8 = %DDRC
+            ram imut $inv_mask: u8 = ~$mask
             $ddr & $inv_mask -> $ddr
             $ddr -> %DDRC
         }
     }
     @digital_write_c($pin: u8, $val: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $val == 1 {
-            mut $port: u8 = %PORTC
+            ram mut $port: u8 = %PORTC
             $port | $mask -> $port
             $port -> %PORTC
         } : {
-            mut $port: u8 = %PORTC
-            mut $inv_mask: u8 = ~$mask
+            ram mut $port: u8 = %PORTC
+            ram imut $inv_mask: u8 = ~$mask
             $port & $inv_mask -> $port
             $port -> %PORTC
         }
     }
     @digital_read_c($pin: u8) -> u8 {
-        mut $pin_val: u8 = %PINC
-        mut $mask: u8 = 0
+        ram mut $pin_val: u8 = %PINC
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         $pin_val & $mask -> $pin_val
         ? $pin_val != 0 { return 1 }
         return 0
     }
     @toggle_c($pin: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
-        mut $port: u8 = %PORTC
+        ram mut $port: u8 = %PORTC
         $port ^ $mask -> $port
         $port -> %PORTC
     }
@@ -320,45 +320,45 @@
 
 ? namespace == atmega2560 {
     @pin_mode_c($pin: u8, $mode: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $mode == 1 {
-            mut $ddr: u8 = %DDRC
+            ram mut $ddr: u8 = %DDRC
             $ddr | $mask -> $ddr
             $ddr -> %DDRC
         } : {
-            mut $ddr: u8 = %DDRC
-            mut $inv_mask: u8 = ~$mask
+            ram mut $ddr: u8 = %DDRC
+            ram imut $inv_mask: u8 = ~$mask
             $ddr & $inv_mask -> $ddr
             $ddr -> %DDRC
         }
     }
     @digital_write_c($pin: u8, $val: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $val == 1 {
-            mut $port: u8 = %PORTC
+            ram mut $port: u8 = %PORTC
             $port | $mask -> $port
             $port -> %PORTC
         } : {
-            mut $port: u8 = %PORTC
-            mut $inv_mask: u8 = ~$mask
+            ram mut $port: u8 = %PORTC
+            ram imut $inv_mask: u8 = ~$mask
             $port & $inv_mask -> $port
             $port -> %PORTC
         }
     }
     @digital_read_c($pin: u8) -> u8 {
-        mut $pin_val: u8 = %PINC
-        mut $mask: u8 = 0
+        ram mut $pin_val: u8 = %PINC
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         $pin_val & $mask -> $pin_val
         ? $pin_val != 0 { return 1 }
         return 0
     }
     @toggle_c($pin: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
-        mut $port: u8 = %PORTC
+        ram mut $port: u8 = %PORTC
         $port ^ $mask -> $port
         $port -> %PORTC
     }
@@ -366,45 +366,45 @@
 
 ? namespace == atmega32u4 {
     @pin_mode_c($pin: u8, $mode: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $mode == 1 {
-            mut $ddr: u8 = %DDRC
+            ram mut $ddr: u8 = %DDRC
             $ddr | $mask -> $ddr
             $ddr -> %DDRC
         } : {
-            mut $ddr: u8 = %DDRC
-            mut $inv_mask: u8 = ~$mask
+            ram mut $ddr: u8 = %DDRC
+            ram imut $inv_mask: u8 = ~$mask
             $ddr & $inv_mask -> $ddr
             $ddr -> %DDRC
         }
     }
     @digital_write_c($pin: u8, $val: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $val == 1 {
-            mut $port: u8 = %PORTC
+            ram mut $port: u8 = %PORTC
             $port | $mask -> $port
             $port -> %PORTC
         } : {
-            mut $port: u8 = %PORTC
-            mut $inv_mask: u8 = ~$mask
+            ram mut $port: u8 = %PORTC
+            ram imut $inv_mask: u8 = ~$mask
             $port & $inv_mask -> $port
             $port -> %PORTC
         }
     }
     @digital_read_c($pin: u8) -> u8 {
-        mut $pin_val: u8 = %PINC
-        mut $mask: u8 = 0
+        ram mut $pin_val: u8 = %PINC
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         $pin_val & $mask -> $pin_val
         ? $pin_val != 0 { return 1 }
         return 0
     }
     @toggle_c($pin: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
-        mut $port: u8 = %PORTC
+        ram mut $port: u8 = %PORTC
         $port ^ $mask -> $port
         $port -> %PORTC
     }
@@ -415,45 +415,45 @@
 # -------------------------------------------------------------
 ? namespace == atmega328p {
     @pin_mode_d($pin: u8, $mode: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $mode == 1 {
-            mut $ddr: u8 = %DDRD
+            ram mut $ddr: u8 = %DDRD
             $ddr | $mask -> $ddr
             $ddr -> %DDRD
         } : {
-            mut $ddr: u8 = %DDRD
-            mut $inv_mask: u8 = ~$mask
+            ram mut $ddr: u8 = %DDRD
+            ram imut $inv_mask: u8 = ~$mask
             $ddr & $inv_mask -> $ddr
             $ddr -> %DDRD
         }
     }
     @digital_write_d($pin: u8, $val: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $val == 1 {
-            mut $port: u8 = %PORTD
+            ram mut $port: u8 = %PORTD
             $port | $mask -> $port
             $port -> %PORTD
         } : {
-            mut $port: u8 = %PORTD
-            mut $inv_mask: u8 = ~$mask
+            ram mut $port: u8 = %PORTD
+            ram imut $inv_mask: u8 = ~$mask
             $port & $inv_mask -> $port
             $port -> %PORTD
         }
     }
     @digital_read_d($pin: u8) -> u8 {
-        mut $pin_val: u8 = %PIND
-        mut $mask: u8 = 0
+        ram mut $pin_val: u8 = %PIND
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         $pin_val & $mask -> $pin_val
         ? $pin_val != 0 { return 1 }
         return 0
     }
     @toggle_d($pin: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
-        mut $port: u8 = %PORTD
+        ram mut $port: u8 = %PORTD
         $port ^ $mask -> $port
         $port -> %PORTD
     }
@@ -461,45 +461,45 @@
 
 ? namespace == atmega2560 {
     @pin_mode_d($pin: u8, $mode: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $mode == 1 {
-            mut $ddr: u8 = %DDRD
+            ram mut $ddr: u8 = %DDRD
             $ddr | $mask -> $ddr
             $ddr -> %DDRD
         } : {
-            mut $ddr: u8 = %DDRD
-            mut $inv_mask: u8 = ~$mask
+            ram mut $ddr: u8 = %DDRD
+            ram imut $inv_mask: u8 = ~$mask
             $ddr & $inv_mask -> $ddr
             $ddr -> %DDRD
         }
     }
     @digital_write_d($pin: u8, $val: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $val == 1 {
-            mut $port: u8 = %PORTD
+            ram mut $port: u8 = %PORTD
             $port | $mask -> $port
             $port -> %PORTD
         } : {
-            mut $port: u8 = %PORTD
-            mut $inv_mask: u8 = ~$mask
+            ram mut $port: u8 = %PORTD
+            ram imut $inv_mask: u8 = ~$mask
             $port & $inv_mask -> $port
             $port -> %PORTD
         }
     }
     @digital_read_d($pin: u8) -> u8 {
-        mut $pin_val: u8 = %PIND
-        mut $mask: u8 = 0
+        ram mut $pin_val: u8 = %PIND
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         $pin_val & $mask -> $pin_val
         ? $pin_val != 0 { return 1 }
         return 0
     }
     @toggle_d($pin: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
-        mut $port: u8 = %PORTD
+        ram mut $port: u8 = %PORTD
         $port ^ $mask -> $port
         $port -> %PORTD
     }
@@ -507,45 +507,45 @@
 
 ? namespace == atmega32u4 {
     @pin_mode_d($pin: u8, $mode: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $mode == 1 {
-            mut $ddr: u8 = %DDRD
+            ram mut $ddr: u8 = %DDRD
             $ddr | $mask -> $ddr
             $ddr -> %DDRD
         } : {
-            mut $ddr: u8 = %DDRD
-            mut $inv_mask: u8 = ~$mask
+            ram mut $ddr: u8 = %DDRD
+            ram imut $inv_mask: u8 = ~$mask
             $ddr & $inv_mask -> $ddr
             $ddr -> %DDRD
         }
     }
     @digital_write_d($pin: u8, $val: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $val == 1 {
-            mut $port: u8 = %PORTD
+            ram mut $port: u8 = %PORTD
             $port | $mask -> $port
             $port -> %PORTD
         } : {
-            mut $port: u8 = %PORTD
-            mut $inv_mask: u8 = ~$mask
+            ram mut $port: u8 = %PORTD
+            ram imut $inv_mask: u8 = ~$mask
             $port & $inv_mask -> $port
             $port -> %PORTD
         }
     }
     @digital_read_d($pin: u8) -> u8 {
-        mut $pin_val: u8 = %PIND
-        mut $mask: u8 = 0
+        ram mut $pin_val: u8 = %PIND
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         $pin_val & $mask -> $pin_val
         ? $pin_val != 0 { return 1 }
         return 0
     }
     @toggle_d($pin: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
-        mut $port: u8 = %PORTD
+        ram mut $port: u8 = %PORTD
         $port ^ $mask -> $port
         $port -> %PORTD
     }
@@ -556,89 +556,89 @@
 # -------------------------------------------------------------
 ? namespace == atmega2560 {
     @pin_mode_e($pin: u8, $mode: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $mode == 1 {
-            mut $ddr: u8 = %DDRE
+            ram mut $ddr: u8 = %DDRE
             $ddr | $mask -> $ddr
             $ddr -> %DDRE
         } : {
-            mut $ddr: u8 = %DDRE
-            mut $inv_mask: u8 = ~$mask
+            ram mut $ddr: u8 = %DDRE
+            ram imut $inv_mask: u8 = ~$mask
             $ddr & $inv_mask -> $ddr
             $ddr -> %DDRE
         }
     }
     @digital_write_e($pin: u8, $val: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $val == 1 {
-            mut $port: u8 = %PORTE
+            ram mut $port: u8 = %PORTE
             $port | $mask -> $port
             $port -> %PORTE
         } : {
-            mut $port: u8 = %PORTE
-            mut $inv_mask: u8 = ~$mask
+            ram mut $port: u8 = %PORTE
+            ram imut $inv_mask: u8 = ~$mask
             $port & $inv_mask -> $port
             $port -> %PORTE
         }
     }
     @digital_read_e($pin: u8) -> u8 {
-        mut $pin_val: u8 = %PINE
-        mut $mask: u8 = 0
+        ram mut $pin_val: u8 = %PINE
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         $pin_val & $mask -> $pin_val
         ? $pin_val != 0 { return 1 }
         return 0
     }
     @toggle_e($pin: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
-        mut $port: u8 = %PORTE
+        ram mut $port: u8 = %PORTE
         $port ^ $mask -> $port
         $port -> %PORTE
     }
 
     @pin_mode_f($pin: u8, $mode: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $mode == 1 {
-            mut $ddr: u8 = %DDRF
+            ram mut $ddr: u8 = %DDRF
             $ddr | $mask -> $ddr
             $ddr -> %DDRF
         } : {
-            mut $ddr: u8 = %DDRF
-            mut $inv_mask: u8 = ~$mask
+            ram mut $ddr: u8 = %DDRF
+            ram imut $inv_mask: u8 = ~$mask
             $ddr & $inv_mask -> $ddr
             $ddr -> %DDRF
         }
     }
     @digital_write_f($pin: u8, $val: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $val == 1 {
-            mut $port: u8 = %PORTF
+            ram mut $port: u8 = %PORTF
             $port | $mask -> $port
             $port -> %PORTF
         } : {
-            mut $port: u8 = %PORTF
-            mut $inv_mask: u8 = ~$mask
+            ram mut $port: u8 = %PORTF
+            ram imut $inv_mask: u8 = ~$mask
             $port & $inv_mask -> $port
             $port -> %PORTF
         }
     }
     @digital_read_f($pin: u8) -> u8 {
-        mut $pin_val: u8 = %PINF
-        mut $mask: u8 = 0
+        ram mut $pin_val: u8 = %PINF
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         $pin_val & $mask -> $pin_val
         ? $pin_val != 0 { return 1 }
         return 0
     }
     @toggle_f($pin: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
-        mut $port: u8 = %PORTF
+        ram mut $port: u8 = %PORTF
         $port ^ $mask -> $port
         $port -> %PORTF
     }
@@ -646,89 +646,89 @@
 
 ? namespace == atmega32u4 {
     @pin_mode_e($pin: u8, $mode: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $mode == 1 {
-            mut $ddr: u8 = %DDRE
+            ram mut $ddr: u8 = %DDRE
             $ddr | $mask -> $ddr
             $ddr -> %DDRE
         } : {
-            mut $ddr: u8 = %DDRE
-            mut $inv_mask: u8 = ~$mask
+            ram mut $ddr: u8 = %DDRE
+            ram imut $inv_mask: u8 = ~$mask
             $ddr & $inv_mask -> $ddr
             $ddr -> %DDRE
         }
     }
     @digital_write_e($pin: u8, $val: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $val == 1 {
-            mut $port: u8 = %PORTE
+            ram mut $port: u8 = %PORTE
             $port | $mask -> $port
             $port -> %PORTE
         } : {
-            mut $port: u8 = %PORTE
-            mut $inv_mask: u8 = ~$mask
+            ram mut $port: u8 = %PORTE
+            ram imut $inv_mask: u8 = ~$mask
             $port & $inv_mask -> $port
             $port -> %PORTE
         }
     }
     @digital_read_e($pin: u8) -> u8 {
-        mut $pin_val: u8 = %PINE
-        mut $mask: u8 = 0
+        ram mut $pin_val: u8 = %PINE
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         $pin_val & $mask -> $pin_val
         ? $pin_val != 0 { return 1 }
         return 0
     }
     @toggle_e($pin: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
-        mut $port: u8 = %PORTE
+        ram mut $port: u8 = %PORTE
         $port ^ $mask -> $port
         $port -> %PORTE
     }
 
     @pin_mode_f($pin: u8, $mode: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $mode == 1 {
-            mut $ddr: u8 = %DDRF
+            ram mut $ddr: u8 = %DDRF
             $ddr | $mask -> $ddr
             $ddr -> %DDRF
         } : {
-            mut $ddr: u8 = %DDRF
-            mut $inv_mask: u8 = ~$mask
+            ram mut $ddr: u8 = %DDRF
+            ram imut $inv_mask: u8 = ~$mask
             $ddr & $inv_mask -> $ddr
             $ddr -> %DDRF
         }
     }
     @digital_write_f($pin: u8, $val: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $val == 1 {
-            mut $port: u8 = %PORTF
+            ram mut $port: u8 = %PORTF
             $port | $mask -> $port
             $port -> %PORTF
         } : {
-            mut $port: u8 = %PORTF
-            mut $inv_mask: u8 = ~$mask
+            ram mut $port: u8 = %PORTF
+            ram imut $inv_mask: u8 = ~$mask
             $port & $inv_mask -> $port
             $port -> %PORTF
         }
     }
     @digital_read_f($pin: u8) -> u8 {
-        mut $pin_val: u8 = %PINF
-        mut $mask: u8 = 0
+        ram mut $pin_val: u8 = %PINF
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         $pin_val & $mask -> $pin_val
         ? $pin_val != 0 { return 1 }
         return 0
     }
     @toggle_f($pin: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
-        mut $port: u8 = %PORTF
+        ram mut $port: u8 = %PORTF
         $port ^ $mask -> $port
         $port -> %PORTF
     }
@@ -739,221 +739,221 @@
 # -------------------------------------------------------------
 ? namespace == atmega2560 {
     @pin_mode_g($pin: u8, $mode: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $mode == 1 {
-            mut $ddr: u8 = %DDRG
+            ram mut $ddr: u8 = %DDRG
             $ddr | $mask -> $ddr
             $ddr -> %DDRG
         } : {
-            mut $ddr: u8 = %DDRG
-            mut $inv_mask: u8 = ~$mask
+            ram mut $ddr: u8 = %DDRG
+            ram imut $inv_mask: u8 = ~$mask
             $ddr & $inv_mask -> $ddr
             $ddr -> %DDRG
         }
     }
     @digital_write_g($pin: u8, $val: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $val == 1 {
-            mut $port: u8 = %PORTG
+            ram mut $port: u8 = %PORTG
             $port | $mask -> $port
             $port -> %PORTG
         } : {
-            mut $port: u8 = %PORTG
-            mut $inv_mask: u8 = ~$mask
+            ram mut $port: u8 = %PORTG
+            ram imut $inv_mask: u8 = ~$mask
             $port & $inv_mask -> $port
             $port -> %PORTG
         }
     }
     @digital_read_g($pin: u8) -> u8 {
-        mut $pin_val: u8 = %PING
-        mut $mask: u8 = 0
+        ram mut $pin_val: u8 = %PING
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         $pin_val & $mask -> $pin_val
         ? $pin_val != 0 { return 1 }
         return 0
     }
     @toggle_g($pin: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
-        mut $port: u8 = %PORTG
+        ram mut $port: u8 = %PORTG
         $port ^ $mask -> $port
         $port -> %PORTG
     }
 
     @pin_mode_h($pin: u8, $mode: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $mode == 1 {
-            mut $ddr: u8 = %DDRH
+            ram mut $ddr: u8 = %DDRH
             $ddr | $mask -> $ddr
             $ddr -> %DDRH
         } : {
-            mut $ddr: u8 = %DDRH
-            mut $inv_mask: u8 = ~$mask
+            ram mut $ddr: u8 = %DDRH
+            ram imut $inv_mask: u8 = ~$mask
             $ddr & $inv_mask -> $ddr
             $ddr -> %DDRH
         }
     }
     @digital_write_h($pin: u8, $val: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $val == 1 {
-            mut $port: u8 = %PORTH
+            ram mut $port: u8 = %PORTH
             $port | $mask -> $port
             $port -> %PORTH
         } : {
-            mut $port: u8 = %PORTH
-            mut $inv_mask: u8 = ~$mask
+            ram mut $port: u8 = %PORTH
+            ram imut $inv_mask: u8 = ~$mask
             $port & $inv_mask -> $port
             $port -> %PORTH
         }
     }
     @digital_read_h($pin: u8) -> u8 {
-        mut $pin_val: u8 = %PINH
-        mut $mask: u8 = 0
+        ram mut $pin_val: u8 = %PINH
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         $pin_val & $mask -> $pin_val
         ? $pin_val != 0 { return 1 }
         return 0
     }
     @toggle_h($pin: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
-        mut $port: u8 = %PORTH
+        ram mut $port: u8 = %PORTH
         $port ^ $mask -> $port
         $port -> %PORTH
     }
 
     @pin_mode_j($pin: u8, $mode: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $mode == 1 {
-            mut $ddr: u8 = %DDRJ
+            ram mut $ddr: u8 = %DDRJ
             $ddr | $mask -> $ddr
             $ddr -> %DDRJ
         } : {
-            mut $ddr: u8 = %DDRJ
-            mut $inv_mask: u8 = ~$mask
+            ram mut $ddr: u8 = %DDRJ
+            ram imut $inv_mask: u8 = ~$mask
             $ddr & $inv_mask -> $ddr
             $ddr -> %DDRJ
         }
     }
     @digital_write_j($pin: u8, $val: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $val == 1 {
-            mut $port: u8 = %PORTJ
+            ram mut $port: u8 = %PORTJ
             $port | $mask -> $port
             $port -> %PORTJ
         } : {
-            mut $port: u8 = %PORTJ
-            mut $inv_mask: u8 = ~$mask
+            ram mut $port: u8 = %PORTJ
+            ram imut $inv_mask: u8 = ~$mask
             $port & $inv_mask -> $port
             $port -> %PORTJ
         }
     }
     @digital_read_j($pin: u8) -> u8 {
-        mut $pin_val: u8 = %PINJ
-        mut $mask: u8 = 0
+        ram mut $pin_val: u8 = %PINJ
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         $pin_val & $mask -> $pin_val
         ? $pin_val != 0 { return 1 }
         return 0
     }
     @toggle_j($pin: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
-        mut $port: u8 = %PORTJ
+        ram mut $port: u8 = %PORTJ
         $port ^ $mask -> $port
         $port -> %PORTJ
     }
 
     @pin_mode_k($pin: u8, $mode: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $mode == 1 {
-            mut $ddr: u8 = %DDRK
+            ram mut $ddr: u8 = %DDRK
             $ddr | $mask -> $ddr
             $ddr -> %DDRK
         } : {
-            mut $ddr: u8 = %DDRK
-            mut $inv_mask: u8 = ~$mask
+            ram mut $ddr: u8 = %DDRK
+            ram imut $inv_mask: u8 = ~$mask
             $ddr & $inv_mask -> $ddr
             $ddr -> %DDRK
         }
     }
     @digital_write_k($pin: u8, $val: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $val == 1 {
-            mut $port: u8 = %PORTK
+            ram mut $port: u8 = %PORTK
             $port | $mask -> $port
             $port -> %PORTK
         } : {
-            mut $port: u8 = %PORTK
-            mut $inv_mask: u8 = ~$mask
+            ram mut $port: u8 = %PORTK
+            ram imut $inv_mask: u8 = ~$mask
             $port & $inv_mask -> $port
             $port -> %PORTK
         }
     }
     @digital_read_k($pin: u8) -> u8 {
-        mut $pin_val: u8 = %PINK
-        mut $mask: u8 = 0
+        ram mut $pin_val: u8 = %PINK
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         $pin_val & $mask -> $pin_val
         ? $pin_val != 0 { return 1 }
         return 0
     }
     @toggle_k($pin: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
-        mut $port: u8 = %PORTK
+        ram mut $port: u8 = %PORTK
         $port ^ $mask -> $port
         $port -> %PORTK
     }
 
     @pin_mode_l($pin: u8, $mode: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $mode == 1 {
-            mut $ddr: u8 = %DDRL
+            ram mut $ddr: u8 = %DDRL
             $ddr | $mask -> $ddr
             $ddr -> %DDRL
         } : {
-            mut $ddr: u8 = %DDRL
-            mut $inv_mask: u8 = ~$mask
+            ram mut $ddr: u8 = %DDRL
+            ram imut $inv_mask: u8 = ~$mask
             $ddr & $inv_mask -> $ddr
             $ddr -> %DDRL
         }
     }
     @digital_write_l($pin: u8, $val: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         ? $val == 1 {
-            mut $port: u8 = %PORTL
+            ram mut $port: u8 = %PORTL
             $port | $mask -> $port
             $port -> %PORTL
         } : {
-            mut $port: u8 = %PORTL
-            mut $inv_mask: u8 = ~$mask
+            ram mut $port: u8 = %PORTL
+            ram imut $inv_mask: u8 = ~$mask
             $port & $inv_mask -> $port
             $port -> %PORTL
         }
     }
     @digital_read_l($pin: u8) -> u8 {
-        mut $pin_val: u8 = %PINL
-        mut $mask: u8 = 0
+        ram mut $pin_val: u8 = %PINL
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
         $pin_val & $mask -> $pin_val
         ? $pin_val != 0 { return 1 }
         return 0
     }
     @toggle_l($pin: u8) {
-        mut $mask: u8 = 0
+        ram mut $mask: u8 = 0
         @_gpio_mask($pin) -> $mask
-        mut $port: u8 = %PORTL
+        ram mut $port: u8 = %PORTL
         $port ^ $mask -> $port
         $port -> %PORTL
     }

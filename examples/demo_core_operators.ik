@@ -18,12 +18,12 @@
 namespace atmega328p
 
 @main {
-    mut $res: u8 = 0
-    mut $ok: u8 = 1
+    ram mut $res: u8 = 0
+    ram mut $ok: u8 = 1
 
     # 1. Arithmetic Test
-    mut $x: u8 = 10
-    mut $y: u8 = 3
+    ram imut $x: u8 = 10
+    ram imut $y: u8 = 3
 
     # Addition: 10 + 3 = 13
     $x + $y -> $res
@@ -56,8 +56,8 @@ namespace atmega328p
     }
 
     # 2. Bitwise operations
-    mut $a: u8 = 0xF0
-    mut $b: u8 = 0x0F
+    ram imut $a: u8 = 0xF0
+    ram imut $b: u8 = 0x0F
 
     # Bitwise AND: 0xF0 & 0x0F = 0x00
     $a & $b -> $res
@@ -103,8 +103,8 @@ namespace atmega328p
     }
 
     # 4. Switch-Case tests
-    mut $val: u8 = 2
-    mut $switch_ok: u8 = 0
+    ram imut $val: u8 = 2
+    ram mut $switch_ok: u8 = 0
 
     # Test case matching: $val is 2, should match case 2
     switch $val {
@@ -143,7 +143,7 @@ namespace atmega328p
 
     # 5. Array Tests
     # Allocate a buffer of 5 bytes, all initialized to 0
-    mut $buf: u8[5] = 0
+    ram mut $buf: u8[5] = 0
     
     # Write to elements
     10 -> $buf[0]
@@ -162,14 +162,14 @@ namespace atmega328p
     }
     
     # Dynamic indexing using a variable
-    mut $idx: u8 = 1
+    ram imut $idx: u8 = 1
     ? $buf[$idx] != 20 {
         0 -> $ok
     }
 
     # 6. Logical operators (&& and ||)
-    mut $t1: u8 = 1
-    mut $t2: u8 = 0
+    ram imut $t1: u8 = 1
+    ram imut $t2: u8 = 0
 
     # 1 && 0 should be false (0)
     ? $t1 && $t2 {

@@ -16,8 +16,8 @@
 # Verifies standard hardware instructions @nop, @swap, @movw, and @mul.
 
 @main {
-    mut $ok: u8 = 1
-    mut $res: u8 = 0
+    ram imut $ok: u8 = 1
+    ram mut $res: u8 = 0
 
     # 1. @nop intrinsic
     @nop()

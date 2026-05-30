@@ -95,15 +95,15 @@ def parse_ik_report(text):
         "sram_used": -1, "sram_limit": -1,
         "eeprom_used": -1, "eeprom_limit": -1,
     }
-    m = re.search(r"Program:\s+(\d+)/(\d+)\s+bytes", text)
+    m = re.search(r"Program:\s+(\d+)\s*/\s*(\d+)\s*(?:bytes|B)?", text)
     if m:
         out["prog_used"] = int(m.group(1))
         out["prog_limit"] = int(m.group(2))
-    m = re.search(r"Data \(SRAM\):\s+(\d+)/(\d+)\s+bytes", text)
+    m = re.search(r"(?:Data \(SRAM\)|SRAM):\s+(\d+)\s*/\s*(\d+)\s*(?:bytes|B)?", text)
     if m:
         out["sram_used"] = int(m.group(1))
         out["sram_limit"] = int(m.group(2))
-    m = re.search(r"EEPROM:\s+(\d+)/(\d+)\s+bytes", text)
+    m = re.search(r"(?:EEPROM|Imut):\s+(\d+)\s*/\s*(\d+)\s*(?:bytes|B)?", text)
     if m:
         out["eeprom_used"] = int(m.group(1))
         out["eeprom_limit"] = int(m.group(2))

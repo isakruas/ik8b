@@ -35,7 +35,7 @@ Statement            ::= VariableDeclaration
                        | ReturnStatement
                        | ExpressionStatement
 
-VariableDeclaration  ::= ("val" | "mut") VariableIdentifier ":" Type [ "[" Number "]" ] "=" Expression
+VariableDeclaration  ::= ("ram" | "eeprom" | "flash") ("mut" | "imut") VariableIdentifier ":" Type [ "[" Number "]" ] "=" Expression
 
 Assignment           ::= Expression ( "->" | "->+" | "->-" | "->&" | "->|" | "->^" ) TargetExpression
 

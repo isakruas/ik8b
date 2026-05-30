@@ -28,7 +28,7 @@
 
     # Configures SPI Master Mode (ATmega328p: PB3=MOSI, PB5=SCK, PB2=SS outputs)
     @spi_init_master() {
-        mut $ddr: u8 = %DDRB
+        ram mut $ddr: u8 = %DDRB
         # Set MOSI (Bit 3), SCK (Bit 5), and SS (Bit 2) as outputs
         $ddr | 0x2C -> $ddr
         $ddr -> %DDRB
@@ -40,8 +40,8 @@
     @spi_transfer($data: u8) -> u8 {
         $data -> %SPDR
         loop * {
-            mut $status: u8 = %SPSR
-            mut $spif: u8 = $status & 0x80
+            ram imut $status: u8 = %SPSR
+            ram imut $spif: u8 = $status & 0x80
             ? $spif != 0 { loop_break }
         }
         return %SPDR
@@ -60,7 +60,7 @@
 
     # Configures SPI Master Mode (ATmega2560: PB2=MOSI, PB1=SCK, PB0=SS outputs)
     @spi_init_master() {
-        mut $ddr: u8 = %DDRB
+        ram mut $ddr: u8 = %DDRB
         # Set MOSI (Bit 2), SCK (Bit 1), and SS (Bit 0) as outputs
         $ddr | 0x07 -> $ddr
         $ddr -> %DDRB
@@ -72,8 +72,8 @@
     @spi_transfer($data: u8) -> u8 {
         $data -> %SPDR
         loop * {
-            mut $status: u8 = %SPSR
-            mut $spif: u8 = $status & 0x80
+            ram imut $status: u8 = %SPSR
+            ram imut $spif: u8 = $status & 0x80
             ? $spif != 0 { loop_break }
         }
         return %SPDR
@@ -92,7 +92,7 @@
 
     # Configures SPI Master Mode (ATmega32u4: PB2=MOSI, PB1=SCK, PB0=SS outputs)
     @spi_init_master() {
-        mut $ddr: u8 = %DDRB
+        ram mut $ddr: u8 = %DDRB
         # Set MOSI (Bit 2), SCK (Bit 1), and SS (Bit 0) as outputs
         $ddr | 0x07 -> $ddr
         $ddr -> %DDRB
@@ -104,8 +104,8 @@
     @spi_transfer($data: u8) -> u8 {
         $data -> %SPDR
         loop * {
-            mut $status: u8 = %SPSR
-            mut $spif: u8 = $status & 0x80
+            ram imut $status: u8 = %SPSR
+            ram imut $spif: u8 = $status & 0x80
             ? $spif != 0 { loop_break }
         }
         return %SPDR

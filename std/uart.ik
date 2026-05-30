@@ -32,8 +32,8 @@
 
     # Initializes USART0 with calculated baud rate prescaler, enabling TX and RX, 8-bit data, 1-bit stop
     @uart_init($ubrr: u16) {
-        mut $ubrr_lo: u8 = $ubrr & 0xFF
-        mut $ubrr_hi: u8 = ($ubrr / 256) & 0xFF
+        ram imut $ubrr_lo: u8 = $ubrr & 0xFF
+        ram imut $ubrr_hi: u8 = ($ubrr / 256) & 0xFF
         $ubrr_lo -> %UBRR0L
         $ubrr_hi -> %UBRR0H
         # Enable Receiver (RXEN0=1) and Transmitter (TXEN0=1)
@@ -45,8 +45,8 @@
     # Transmits a single byte over USART0, polling the Data Register Empty (UDRE0) flag
     @uart_send($data: u8) {
         loop * {
-            mut $status: u8 = %UCSR0A
-            mut $udre: u8 = $status & 0x20
+            ram imut $status: u8 = %UCSR0A
+            ram imut $udre: u8 = $status & 0x20
             ? $udre != 0 { loop_break }
         }
         $data -> %UDR0
@@ -55,8 +55,8 @@
     # Receives a single byte over USART0, polling the Receive Complete (RXC0) flag
     @uart_receive() -> u8 {
         loop * {
-            mut $status: u8 = %UCSR0A
-            mut $rxc: u8 = $status & 0x80
+            ram imut $status: u8 = %UCSR0A
+            ram imut $rxc: u8 = $status & 0x80
             ? $rxc != 0 { loop_break }
         }
         return %UDR0
@@ -64,8 +64,8 @@
 
     # Checks if data has been received and is available to read in USART0 (RXC0 flag)
     @uart_available() -> u8 {
-        mut $status: u8 = %UCSR0A
-        mut $rxc: u8 = $status & 0x80
+        ram imut $status: u8 = %UCSR0A
+        ram imut $rxc: u8 = $status & 0x80
         ? $rxc != 0 { return 1 }
         return 0
     }
@@ -109,8 +109,8 @@
 
     # Initializes USART0 with calculated baud rate prescaler, enabling TX and RX
     @uart_init($ubrr: u16) {
-        mut $ubrr_lo: u8 = $ubrr & 0xFF
-        mut $ubrr_hi: u8 = ($ubrr / 256) & 0xFF
+        ram imut $ubrr_lo: u8 = $ubrr & 0xFF
+        ram imut $ubrr_hi: u8 = ($ubrr / 256) & 0xFF
         $ubrr_lo -> %UBRR0L
         $ubrr_hi -> %UBRR0H
         # Enable RXEN0=1, TXEN0=1
@@ -122,8 +122,8 @@
     # Transmits a single byte over USART0, polling the UDRE0 flag
     @uart_send($data: u8) {
         loop * {
-            mut $status: u8 = %UCSR0A
-            mut $udre: u8 = $status & 0x20
+            ram imut $status: u8 = %UCSR0A
+            ram imut $udre: u8 = $status & 0x20
             ? $udre != 0 { loop_break }
         }
         $data -> %UDR0
@@ -132,8 +132,8 @@
     # Receives a single byte over USART0, polling the RXC0 flag
     @uart_receive() -> u8 {
         loop * {
-            mut $status: u8 = %UCSR0A
-            mut $rxc: u8 = $status & 0x80
+            ram imut $status: u8 = %UCSR0A
+            ram imut $rxc: u8 = $status & 0x80
             ? $rxc != 0 { loop_break }
         }
         return %UDR0
@@ -141,8 +141,8 @@
 
     # Checks if data is available to read in USART0 (RXC0 flag)
     @uart_available() -> u8 {
-        mut $status: u8 = %UCSR0A
-        mut $rxc: u8 = $status & 0x80
+        ram imut $status: u8 = %UCSR0A
+        ram imut $rxc: u8 = $status & 0x80
         ? $rxc != 0 { return 1 }
         return 0
     }
@@ -158,8 +158,8 @@
 
     # Initializes USART1 with calculated baud rate prescaler, enabling TX and RX
     @uart1_init($ubrr: u16) {
-        mut $ubrr_lo: u8 = $ubrr & 0xFF
-        mut $ubrr_hi: u8 = ($ubrr / 256) & 0xFF
+        ram imut $ubrr_lo: u8 = $ubrr & 0xFF
+        ram imut $ubrr_hi: u8 = ($ubrr / 256) & 0xFF
         $ubrr_lo -> %UBRR1L
         $ubrr_hi -> %UBRR1H
         # Enable RXEN1=1, TXEN1=1
@@ -171,8 +171,8 @@
     # Transmits a single byte over USART1, polling the UDRE1 flag
     @uart1_send($data: u8) {
         loop * {
-            mut $status: u8 = %UCSR1A
-            mut $udre: u8 = $status & 0x20
+            ram imut $status: u8 = %UCSR1A
+            ram imut $udre: u8 = $status & 0x20
             ? $udre != 0 { loop_break }
         }
         $data -> %UDR1
@@ -181,8 +181,8 @@
     # Receives a single byte over USART1, polling the RXC1 flag
     @uart1_receive() -> u8 {
         loop * {
-            mut $status: u8 = %UCSR1A
-            mut $rxc: u8 = $status & 0x80
+            ram imut $status: u8 = %UCSR1A
+            ram imut $rxc: u8 = $status & 0x80
             ? $rxc != 0 { loop_break }
         }
         return %UDR1
@@ -205,8 +205,8 @@
 
     # Initializes USART1 as the primary UART interface (ATmega32u4 lacks USART0)
     @uart_init($ubrr: u16) {
-        mut $ubrr_lo: u8 = $ubrr & 0xFF
-        mut $ubrr_hi: u8 = ($ubrr / 256) & 0xFF
+        ram imut $ubrr_lo: u8 = $ubrr & 0xFF
+        ram imut $ubrr_hi: u8 = ($ubrr / 256) & 0xFF
         $ubrr_lo -> %UBRR1L
         $ubrr_hi -> %UBRR1H
         # Enable RXEN1=1, TXEN1=1
@@ -218,8 +218,8 @@
     # Transmits a single byte over USART1, polling the UDRE1 flag
     @uart_send($data: u8) {
         loop * {
-            mut $status: u8 = %UCSR1A
-            mut $udre: u8 = $status & 0x20
+            ram imut $status: u8 = %UCSR1A
+            ram imut $udre: u8 = $status & 0x20
             ? $udre != 0 { loop_break }
         }
         $data -> %UDR1
@@ -228,8 +228,8 @@
     # Receives a single byte over USART1, polling the RXC1 flag
     @uart_receive() -> u8 {
         loop * {
-            mut $status: u8 = %UCSR1A
-            mut $rxc: u8 = $status & 0x80
+            ram imut $status: u8 = %UCSR1A
+            ram imut $rxc: u8 = $status & 0x80
             ? $rxc != 0 { loop_break }
         }
         return %UDR1
@@ -237,8 +237,8 @@
 
     # Checks if data is available to read in USART1 (RXC1 flag)
     @uart_available() -> u8 {
-        mut $status: u8 = %UCSR1A
-        mut $rxc: u8 = $status & 0x80
+        ram imut $status: u8 = %UCSR1A
+        ram imut $rxc: u8 = $status & 0x80
         ? $rxc != 0 { return 1 }
         return 0
     }

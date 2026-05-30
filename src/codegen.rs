@@ -108,9 +108,11 @@ pub struct CodeGenerator {
     current_saves: Vec<u8>,                          // callee-saved regs to push/pop in this function
     sram_free_ptr: u16,
     sram_start: u16,
+    eeprom_free_ptr: u16,
     label_counter: usize,
     functions: HashMap<String, (Vec<String>, String)>,
     pub target_core: TargetCore,
+    pub total_registers_used: std::collections::HashSet<u8>,
     
     // Inlining state
     // NOTE: currently only AST-level inlining uses these helper maps/sets.
@@ -118,6 +120,7 @@ pub struct CodeGenerator {
     inline_prefixes: Vec<String>,
     leaf_functions: std::collections::HashSet<String>,
     func_bodies: std::collections::HashMap<String, (Vec<(String, String)>, String, Vec<Stmt>)>,
+    imut_constants: HashMap<String, i64>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -145,6 +148,7 @@ impl CodeGenerator {
             current_saves: Vec::new(),
             sram_free_ptr: 0x0100,
             sram_start: 0x0100,
+            eeprom_free_ptr: 0,
             label_counter: 0,
             functions: HashMap::new(),
             target_core: TargetCore::Generic,
@@ -152,6 +156,8 @@ impl CodeGenerator {
             inline_prefixes: Vec::new(),
             leaf_functions: std::collections::HashSet::new(),
             func_bodies: std::collections::HashMap::new(),
+            total_registers_used: std::collections::HashSet::new(),
+            imut_constants: HashMap::new(),
         }
     }
 
@@ -189,6 +195,104 @@ impl CodeGenerator {
         } else {
             0
         }
+    }
+
+    /// Bytes of EEPROM allocated for persistent `imut` variables.
+    pub fn eeprom_used(&self) -> u16 {
+        self.eeprom_free_ptr
+    }
+
+    /// Emits hardware register read protocol to load byte from EEPROM address `addr` into `target`.
+    fn emit_eeprom_read(&mut self, addr: u16, target: u8) -> Result<(), String> {
+        if matches!(self.target_core, TargetCore::AVRxt | TargetCore::AVRxm) {
+            return Err("Memory Error: imut storage is not supported on AVRxt/AVRxm architecture cores".to_string());
+        }
+        // 1. Wait for completion of previous write: SBIC 0x1F, 1 ; RJMP -2
+        self.emit(Pass1Inst::Op(0x99F9)); // SBIC 0x1F, 1
+        self.emit(Pass1Inst::Op(0xCFFE)); // RJMP -2
+
+        // 2. Set address in EEARL (0x21) and EEARH (0x22)
+        let addr_lo = (addr & 0xFF) as u8;
+        let addr_hi = ((addr >> 8) & 0xFF) as u8;
+
+        // Load addr_lo into target
+        let k_hi = (addr_lo >> 4) & 0x0F;
+        let k_lo = addr_lo & 0x0F;
+        let d = target - 16;
+        self.emit(Pass1Inst::Op(0xE000 | ((k_hi as u16) << 8) | ((d as u16) << 4) | (k_lo as u16))); // LDI target, addr_lo
+        
+        // OUT 0x21, target
+        let op_out_lo = 0xB800 | ((0x21 & 0x30) << 5) | ((target as u16) << 4) | (0x21 & 0x0F);
+        self.emit(Pass1Inst::Op(op_out_lo));
+
+        // Load addr_hi into target
+        let k_hi = (addr_hi >> 4) & 0x0F;
+        let k_lo = addr_hi & 0x0F;
+        self.emit(Pass1Inst::Op(0xE000 | ((k_hi as u16) << 8) | ((d as u16) << 4) | (k_lo as u16))); // LDI target, addr_hi
+
+        // OUT 0x22, target
+        let op_out_hi = 0xB800 | ((0x22 & 0x30) << 5) | ((target as u16) << 4) | (0x22 & 0x0F);
+        self.emit(Pass1Inst::Op(op_out_hi));
+
+        // 3. Start EEPROM read: SBI 0x1F, 0
+        self.emit(Pass1Inst::Op(0x9AF8));
+
+        // 4. Read data from EEDR (0x20) into target
+        let op_in = 0xB000 | ((0x20 & 0x30) << 5) | ((target as u16) << 4) | (0x20 & 0x0F);
+        self.emit(Pass1Inst::Op(op_in));
+
+        Ok(())
+    }
+
+    fn emit_eeprom_write(&mut self, addr: u16, src: u8) -> Result<(), String> {
+        if matches!(self.target_core, TargetCore::AVRxt | TargetCore::AVRxm) {
+            return Err("Memory Error: imut storage is not supported on AVRxt/AVRxm architecture cores".to_string());
+        }
+        // 1. Wait for completion of previous write: SBIC 0x1F, 1 ; RJMP -2
+        self.emit(Pass1Inst::Op(0x99F9)); // SBIC 0x1F, 1
+        self.emit(Pass1Inst::Op(0xCFFE)); // RJMP -2
+
+        let tmp_reg = if src == 18 { 16 } else { 18 };
+        let d = tmp_reg - 16;
+        
+        // Save tmp_reg
+        self.emit(Pass1Inst::Op(0x920F | ((tmp_reg as u16) << 4))); // PUSH tmp_reg
+
+        // 2. Set address in EEARL (0x21) and EEARH (0x22)
+        let addr_lo = (addr & 0xFF) as u8;
+        let addr_hi = ((addr >> 8) & 0xFF) as u8;
+
+        // Load addr_lo into tmp_reg
+        let k_hi = (addr_lo >> 4) & 0x0F;
+        let k_lo = addr_lo & 0x0F;
+        self.emit(Pass1Inst::Op(0xE000 | ((k_hi as u16) << 8) | ((d as u16) << 4) | (k_lo as u16))); // LDI tmp_reg, addr_lo
+
+        // OUT 0x21, tmp_reg
+        let op_out_lo = 0xB800 | ((0x21 & 0x30) << 5) | ((tmp_reg as u16) << 4) | (0x21 & 0x0F);
+        self.emit(Pass1Inst::Op(op_out_lo));
+
+        // Load addr_hi into tmp_reg
+        let k_hi = (addr_hi >> 4) & 0x0F;
+        let k_lo = addr_hi & 0x0F;
+        self.emit(Pass1Inst::Op(0xE000 | ((k_hi as u16) << 8) | ((d as u16) << 4) | (k_lo as u16))); // LDI tmp_reg, addr_hi
+
+        // OUT 0x22, tmp_reg
+        let op_out_hi = 0xB800 | ((0x22 & 0x30) << 5) | ((tmp_reg as u16) << 4) | (0x22 & 0x0F);
+        self.emit(Pass1Inst::Op(op_out_hi));
+
+        // Restore tmp_reg
+        self.emit(Pass1Inst::Op(0x900F | ((tmp_reg as u16) << 4))); // POP tmp_reg
+
+        // 3. Write data to EEDR (0x20)
+        let op_out_eedr = 0xB800 | ((0x20 & 0x30) << 5) | ((src as u16) << 4) | (0x20 & 0x0F);
+        self.emit(Pass1Inst::Op(op_out_eedr));
+
+        // 4. Trigger write: SBI 0x1F, 2 (EEMPE) followed immediately by SBI 0x1F, 1 (EEPE)
+        self.emit(Pass1Inst::Op(0x9AFA)); // SBI 0x1F, 2
+        self.emit(Pass1Inst::Op(0x9AF9)); // SBI 0x1F, 1
+        self.emit(Pass1Inst::Op(0x98F9)); // CBI 0x1F, 1 (EEPE) - Simulator compatibility helper
+
+        Ok(())
     }
 
     /// Encodes generic AVR register-register instruction forms that use split `Rr` bits.
@@ -538,6 +642,12 @@ impl CodeGenerator {
             }
         }
 
+        for &r in &saves {
+            if r >= 2 && r <= 15 {
+                self.total_registers_used.insert(r);
+            }
+        }
+
         saves.sort_unstable();
         saves
     }
@@ -623,21 +733,42 @@ impl CodeGenerator {
     /// Postcondition:
     /// - `target` contains low byte; `target+1` is valid when `ctx_ty == "u16"`.
     fn read_var(&mut self, name: &str, target: u8, ctx_ty: &str) -> Result<(), String> {
+        if let Some(&val) = self.imut_constants.get(name) {
+            let ty_clean = if ctx_ty.starts_with("flash ") { &ctx_ty[6..] } else if ctx_ty.starts_with("eeprom ") { &ctx_ty[7..] } else { ctx_ty };
+            return self.compile_expr(&Expr::Literal(val as i32), target, ty_clean);
+        }
         let (addr, var_ty, _) = self.variables.get(name)
             .ok_or_else(|| format!("Undefined variable: {}", name))?;
         let addr = *addr;
         let var_ty = var_ty.clone();
+        
+        if var_ty.starts_with("eeprom ") {
+            let actual_ty = &var_ty[7..];
+            if actual_ty == "u16" {
+                self.emit_eeprom_read(addr, target)?;
+                self.emit_eeprom_read(addr + 1, target + 1)?;
+            } else {
+                self.emit_eeprom_read(addr, target)?;
+                if ctx_ty == "u16" {
+                    self.emit(Pass1Inst::Op(0xE000 | (((target + 1 - 16) as u16) << 4))); // LDI target+1, 0
+                }
+            }
+            return Ok(());
+        }
+
+        let var_ty_clean = if var_ty.starts_with("flash ") { var_ty[6..].to_string() } else { var_ty.clone() };
+
         let home = self.var_homes.get(name).copied();
         if let Some(h) = home {
             let lo = self.encode_rd_rr(0x2C00, target, h);
             self.emit(Pass1Inst::Op(lo));
-            if var_ty == "u16" {
+            if var_ty_clean == "u16" {
                 let hi = self.encode_rd_rr(0x2C00, target + 1, h + 1);
                 self.emit(Pass1Inst::Op(hi));
             } else if ctx_ty == "u16" {
                 self.emit(Pass1Inst::Op(0xE000 | (((target + 1 - 16) as u16) << 4))); // LDI target+1, 0
             }
-        } else if var_ty == "u16" {
+        } else if var_ty_clean == "u16" {
             self.emit_lds(target, addr)?;
             self.emit_lds(target + 1, addr + 1)?;
         } else {
@@ -658,15 +789,29 @@ impl CodeGenerator {
             .ok_or_else(|| format!("Undefined variable: {}", name))?;
         let addr = *addr;
         let var_ty = var_ty.clone();
+
+        if var_ty.starts_with("eeprom ") {
+            let actual_ty = &var_ty[7..];
+            if actual_ty == "u16" {
+                self.emit_eeprom_write(addr, src)?;
+                self.emit_eeprom_write(addr + 1, src + 1)?;
+            } else {
+                self.emit_eeprom_write(addr, src)?;
+            }
+            return Ok(());
+        }
+
+        let var_ty_clean = if var_ty.starts_with("flash ") { var_ty[6..].to_string() } else { var_ty.clone() };
+
         let home = self.var_homes.get(name).copied();
         if let Some(h) = home {
             let lo = self.encode_rd_rr(0x2C00, h, src);
             self.emit(Pass1Inst::Op(lo));
-            if var_ty == "u16" {
+            if var_ty_clean == "u16" {
                 let hi = self.encode_rd_rr(0x2C00, h + 1, src + 1);
                 self.emit(Pass1Inst::Op(hi));
             }
-        } else if var_ty == "u16" {
+        } else if var_ty_clean == "u16" {
             self.emit_sts(addr, src)?;
             self.emit_sts(addr + 1, src + 1)?;
         } else {
@@ -687,6 +832,28 @@ impl CodeGenerator {
     /// Postcondition:
     /// - `self.variables[name]` is populated even for register-homed scalars (address 0 sentinel).
     fn allocate_var(&mut self, name: &str, ty: &str, is_mut: bool) -> Result<u16, String> {
+        if ty.starts_with("eeprom ") {
+            let actual_ty = &ty[7..];
+            let addr = self.eeprom_free_ptr;
+            let size = if actual_ty.contains('[') && actual_ty.contains(']') {
+                let parts: Vec<&str> = actual_ty.split('[').collect();
+                let base_ty = parts[0];
+                let size_str = parts[1].trim_end_matches(']');
+                let item_count = size_str.parse::<u16>().unwrap_or(1);
+                let item_sz = if base_ty == "u16" { 2 } else { 1 };
+                item_count * item_sz
+            } else if actual_ty == "u8" {
+                1
+            } else if actual_ty == "u16" {
+                2
+            } else {
+                1
+            };
+            self.eeprom_free_ptr += size;
+            self.variables.insert(name.to_string(), (addr, ty.to_string(), is_mut));
+            return Ok(addr);
+        }
+
         // Register-resident scalars do not occupy SRAM; record only their type/mutability.
         if self.var_homes.contains_key(name) {
             self.variables.insert(name.to_string(), (0, ty.to_string(), is_mut));
@@ -695,16 +862,18 @@ impl CodeGenerator {
 
         let addr = self.sram_free_ptr;
 
-        let size = if ty.contains('[') && ty.contains(']') {
-            let parts: Vec<&str> = ty.split('[').collect();
+        let ty_clean = if ty.starts_with("flash ") { &ty[6..] } else { ty };
+
+        let size = if ty_clean.contains('[') && ty_clean.contains(']') {
+            let parts: Vec<&str> = ty_clean.split('[').collect();
             let base_ty = parts[0];
             let size_str = parts[1].trim_end_matches(']');
             let item_count = size_str.parse::<u16>().unwrap_or(1);
             let item_sz = if base_ty == "u16" { 2 } else { 1 };
             item_count * item_sz
-        } else if ty == "u8" {
+        } else if ty_clean == "u8" {
             1
-        } else if ty == "u16" {
+        } else if ty_clean == "u16" {
             2
         } else {
             1
@@ -844,28 +1013,42 @@ impl CodeGenerator {
     fn compile_stmt(&mut self, stmt: &Stmt) -> Result<(), String> {
         match stmt {
             Stmt::VarDecl { name, ty, expr, is_mut } => {
-                let addr = self.allocate_var(name, ty, *is_mut)?;
-                if ty.contains('[') {
-                    let parts: Vec<&str> = ty.split('[').collect();
-                    let base_ty = parts[0];
-                    let size_str = parts[1].trim_end_matches(']');
-                    let size = size_str.parse::<u16>().unwrap_or(1);
-                    
-                    self.compile_expr(expr, 16, base_ty)?;
-                    
-                    let item_sz = if base_ty == "u16" { 2 } else { 1 };
-                    for i in 0..size {
-                        let offset = i * item_sz;
-                        if base_ty == "u8" {
-                            self.emit_sts(addr + offset, 16)?;
-                        } else {
-                            self.emit_sts(addr + offset, 16)?;
-                            self.emit_sts(addr + offset + 1, 17)?;
-                        }
+                let is_scalar_imut = !*is_mut && !ty.contains('[') && !ty.starts_with("eeprom");
+                let mut const_val = None;
+                if is_scalar_imut {
+                    let ty_clean = if ty.starts_with("flash ") { &ty[6..] } else { ty };
+                    if let Some(v) = eval_const(expr, ty_clean, &self.imut_constants) {
+                        const_val = Some(v);
                     }
+                }
+
+                if let Some(v) = const_val {
+                    self.imut_constants.insert(name.clone(), v);
+                    self.variables.insert(name.clone(), (0, ty.clone(), false));
                 } else {
-                    self.compile_expr(expr, 16, ty)?;
-                    self.write_var(name, 16)?;
+                    let addr = self.allocate_var(name, ty, *is_mut)?;
+                    if ty.contains('[') {
+                        let parts: Vec<&str> = ty.split('[').collect();
+                        let base_ty = parts[0];
+                        let size_str = parts[1].trim_end_matches(']');
+                        let size = size_str.parse::<u16>().unwrap_or(1);
+                        
+                        self.compile_expr(expr, 16, base_ty)?;
+                        
+                        let item_sz = if base_ty == "u16" { 2 } else { 1 };
+                        for i in 0..size {
+                            let offset = i * item_sz;
+                            if base_ty == "u8" {
+                                self.emit_sts(addr + offset, 16)?;
+                            } else {
+                                self.emit_sts(addr + offset, 16)?;
+                                self.emit_sts(addr + offset + 1, 17)?;
+                            }
+                        }
+                    } else {
+                        self.compile_expr(expr, 16, ty)?;
+                        self.write_var(name, 16)?;
+                    }
                 }
             }
             Stmt::Assign { expr, target, op } => {
@@ -1290,7 +1473,8 @@ impl CodeGenerator {
             Expr::VarRef(name) => {
                 if name.starts_with('$') {
                     if let Some((_, t, _)) = self.variables.get(name) {
-                        if t.starts_with("u16") { return "u16".to_string(); }
+                        let t_clean = if t.starts_with("eeprom ") { &t[7..] } else if t.starts_with("flash ") { &t[6..] } else { t };
+                        if t_clean.starts_with("u16") { return "u16".to_string(); }
                     }
                 }
                 "u8".to_string()
@@ -1299,7 +1483,8 @@ impl CodeGenerator {
                 if op == "[]" {
                     if let Expr::VarRef(name) = &**left {
                         if let Some((_, t, _)) = self.variables.get(name) {
-                            if t.starts_with("u16") { return "u16".to_string(); }
+                            let t_clean = if t.starts_with("eeprom ") { &t[7..] } else if t.starts_with("flash ") { &t[6..] } else { t };
+                            if t_clean.starts_with("u16") { return "u16".to_string(); }
                         }
                     }
                     return "u8".to_string();
@@ -1505,10 +1690,11 @@ impl CodeGenerator {
     /// - Result low byte is in `target`.
     /// - Result high byte is in `target+1` when `ty == "u16"`.
     fn compile_expr(&mut self, expr: &Expr, target: u8, ty: &str) -> Result<(), String> {
+        let ty = if ty.starts_with("eeprom ") { &ty[7..] } else if ty.starts_with("flash ") { &ty[6..] } else { ty };
         // Constant folding: collapse a fully literal arithmetic/bitwise subtree into a
         // single immediate, matching the runtime's type-width wrapping semantics.
         if !matches!(expr, Expr::Literal(_)) {
-            if let Some(v) = eval_const(expr, ty) {
+            if let Some(v) = eval_const(expr, ty, &self.imut_constants) {
                 return self.compile_expr(&Expr::Literal(v as i32), target, ty);
             }
         }
@@ -2423,18 +2609,26 @@ impl CodeGenerator {
 /// Postcondition:
 /// - Return is in `[0,255]` for `u8` and `[0,65535]` for `u16`.
 fn mask_ty(v: i64, ty: &str) -> i64 {
-    if ty == "u16" { v & 0xFFFF } else { v & 0xFF }
+    let ty_clean = if ty.starts_with("eeprom ") { &ty[7..] } else if ty.starts_with("flash ") { &ty[6..] } else { ty };
+    if ty_clean == "u16" { v & 0xFFFF } else { v & 0xFF }
 }
 
 /// Evaluates an expression to a compile-time constant, but only when the entire subtree
 /// is literal-computable (no variable, hardware, or call leaves). Wrapping mirrors the
 /// runtime's per-type-width unsigned arithmetic. Comparisons and logical operators are
 /// intentionally not folded here to avoid the backend's signed-branch semantics.
-fn eval_const(expr: &Expr, ty: &str) -> Option<i64> {
+fn eval_const(expr: &Expr, ty: &str, imut_constants: &HashMap<String, i64>) -> Option<i64> {
     match expr {
         Expr::Literal(v) => Some(mask_ty(*v as i64, ty)),
+        Expr::VarRef(ref name) => {
+            if name.starts_with('$') {
+                imut_constants.get(name).copied()
+            } else {
+                None
+            }
+        }
         Expr::UnaryOp { op, expr } => {
-            let x = eval_const(expr, ty)?;
+            let x = eval_const(expr, ty, imut_constants)?;
             match op.as_str() {
                 "-" => Some(mask_ty(x.wrapping_neg(), ty)),
                 "~" => Some(mask_ty(!x, ty)),
@@ -2442,8 +2636,8 @@ fn eval_const(expr: &Expr, ty: &str) -> Option<i64> {
             }
         }
         Expr::BinOp { left, op, right } => {
-            let l = eval_const(left, ty)?;
-            let r = eval_const(right, ty)?;
+            let l = eval_const(left, ty, imut_constants)?;
+            let r = eval_const(right, ty, imut_constants)?;
             let res = match op.as_str() {
                 "+" => l.wrapping_add(r),
                 "-" => l.wrapping_sub(r),
@@ -3473,7 +3667,7 @@ fn color_graph(
     let mut nodes: Vec<String> = graph.nodes.iter()
         .filter(|node| {
             let ty = decl_types.get(*node).cloned().unwrap_or_else(|| "u8".to_string());
-            !ty.contains('[')
+            !ty.contains('[') && !ty.starts_with("eeprom ")
         })
         .cloned()
         .collect();
@@ -3774,7 +3968,7 @@ fn propagate_constants_stmts(
             Stmt::VarDecl { name, ty, expr, .. } => {
                 propagate_constants_expr(expr, known);
                 if !ty.contains('[') {
-                    if let Some(v) = eval_const(expr, ty) {
+                    if let Some(v) = eval_const(expr, ty, &HashMap::new()) {
                         *expr = Expr::Literal(v as i32);
                         if !reassigned.contains(name) {
                             known.insert(name.clone(), v as i32);

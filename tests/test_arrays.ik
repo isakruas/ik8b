@@ -16,12 +16,12 @@
 # Verifies scalar initialization, static indexing, dynamic variable indexing, 16-bit elements, and compound assignments.
 
 @main {
-    mut $ok: u8 = 1
-    mut $res: u8 = 0
-    mut $res16: u16 = 0
+    ram mut $ok: u8 = 1
+    ram mut $res: u8 = 0
+    ram imut $res16: u16 = 0
 
     # 1. 8-bit Array Static Read/Write
-    mut $buf8: u8[5] = 0
+    ram mut $buf8: u8[5] = 0
     
     10 -> $buf8[0]
     20 -> $buf8[1]
@@ -38,7 +38,7 @@
     }
 
     # 2. 8-bit Array Dynamic Indexing
-    mut $idx8: u8 = 1
+    ram mut $idx8: u8 = 1
     ? $buf8[$idx8] != 20 {
         0 -> $ok
     }
@@ -66,7 +66,7 @@
     }
 
     # 4. 16-bit Array Static Read/Write
-    mut $buf16: u16[3] = 0
+    ram mut $buf16: u16[3] = 0
     
     1000 -> $buf16[0]
     2000 -> $buf16[1]
@@ -79,7 +79,7 @@
     }
 
     # 5. 16-bit Array Dynamic Indexing
-    mut $idx16: u16 = 1
+    ram imut $idx16: u16 = 1
     ? $buf16[$idx16] != 2000 {
         0 -> $ok
     }

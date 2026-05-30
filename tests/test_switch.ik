@@ -16,11 +16,11 @@
 # Verifies switch matching on standard values, complex case targets, and wildcard (*) default fallbacks.
 
 @main {
-    mut $res: u8 = 0
-    mut $ok: u8 = 1
+    ram mut $res: u8 = 0
+    ram mut $ok: u8 = 1
 
     # 1. Direct case match
-    mut $val: u8 = 2
+    ram mut $val: u8 = 2
     switch $val {
         1 -> {
             10 -> $res
@@ -74,8 +74,8 @@
     }
 
     #  switch statement with dynamic expressions
-    mut $x: u8 = 2
-    mut $y: u8 = 3
+    ram imut $x: u8 = 2
+    ram imut $y: u8 = 3
     switch $x + $y {
         4 -> {
             40 -> $res

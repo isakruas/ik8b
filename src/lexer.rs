@@ -189,7 +189,7 @@ impl Lexer {
                     tokens.push(Token { kind: TokenKind::Symbol("%".to_string()), line: self.line });
                 } else {
                     match ident.as_str() {
-                        "const" | "mut" | "val" | "loop" | "return" | "import" | "switch" | "namespace" => {
+                        "mut" | "loop" | "return" | "import" | "switch" | "namespace" | "imut" | "ram" | "eeprom" | "flash" | "const" => {
                             tokens.push(Token { kind: TokenKind::Keyword(ident), line: self.line });
                         }
                         "u8" | "u16" | "void" => {

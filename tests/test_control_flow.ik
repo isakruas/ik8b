@@ -16,11 +16,11 @@
 # Verifies conditional branching, range-based loops (including nested), and subroutine returns.
 
 @main {
-    mut $res: u8 = 0
-    mut $ok: u8 = 1
+    ram mut $res: u8 = 0
+    ram mut $ok: u8 = 1
 
     # 1. Conditionals (If-Then-Else)
-    mut $x: u8 = 10
+    ram imut $x: u8 = 10
     ? $x == 10 {
         1 -> $res
     } : {
@@ -40,7 +40,7 @@
     }
 
     # 2. Simple Range Loop
-    mut $sum: u16 = 0
+    ram mut $sum: u16 = 0
     loop 0..5 -> $i {
         $sum + $i -> $sum
     }
@@ -49,7 +49,7 @@
     }
 
     # 3. Dynamic Range Bounds Loop
-    mut $limit: u16 = 10
+    ram imut $limit: u16 = 10
     0 -> $sum
     loop 5..$limit -> $j {
         $sum + $j -> $sum

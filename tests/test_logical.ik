@@ -16,11 +16,11 @@
 # Verifies logical short-circuit AND (&&), logical OR (||), and prefix logical NOT (!).
 
 @main {
-    mut $res: u8 = 0
-    mut $ok: u8 = 1
+    ram mut $res: u8 = 0
+    ram mut $ok: u8 = 1
 
-    mut $t: u8 = 1
-    mut $f: u8 = 0
+    ram imut $t: u8 = 1
+    ram imut $f: u8 = 0
 
     # 1. Logical NOT (!) on true
     !$t -> $res
@@ -35,7 +35,7 @@
     }
 
     # 3. Logical NOT (!) on non-zero
-    mut $val: u8 = 42
+    ram imut $val: u8 = 42
     !$val -> $res
     ? $res != 0 {
         0 -> $ok
@@ -54,7 +54,7 @@
     }
 
     # 6. Short-circuit AND (&&) - False && True (should short-circuit and not evaluate right side)
-    mut $eval_right: u8 = 0
+    ram mut $eval_right: u8 = 0
     ? $f && (@trigger_eval_right() == 1) {
         0 -> $ok
     }

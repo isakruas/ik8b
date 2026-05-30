@@ -17,17 +17,17 @@
 # preserve any registers its caller is using to hold variables.
 
 @main {
-    mut $ok: u8 = 1
-    mut $res: u16 = 0
+    ram mut $ok: u8 = 1
+    ram mut $res: u16 = 0
 
-    mut $v1: u8 = 11
-    mut $v2: u8 = 22
-    mut $v3: u8 = 33
-    mut $v4: u8 = 44
-    mut $v5: u16 = 1000
-    mut $v6: u16 = 2000
-    mut $v7: u16 = 3000
-    mut $v8: u16 = 60000
+    ram imut $v1: u8 = 11
+    ram imut $v2: u8 = 22
+    ram imut $v3: u8 = 33
+    ram imut $v4: u8 = 44
+    ram imut $v5: u16 = 1000
+    ram imut $v6: u16 = 2000
+    ram imut $v7: u16 = 3000
+    ram imut $v8: u16 = 60000
 
     @clobber(99, 88) -> $res
     ? $res != 187 { 0 -> $ok }
@@ -46,18 +46,18 @@
     ? $v8 != 60000 { 0 -> $ok }
 
     # Use locals in arithmetic after the calls to ensure they are truly live.
-    mut $acc: u16 = 0
+    ram mut $acc: u16 = 0
     $v5 + $v6 -> $acc
     $acc + $v7 -> $acc
     ? $acc != 6000 { 0 -> $ok }
 
-    mut $before: u8 = 123
+    ram imut $before: u8 = 123
     @clobber(1, 2) -> $res
     ? $before != 123 { 0 -> $ok }
     ? $res != 3 { 0 -> $ok }
 
     # A call nested inside a loop: the loop counter must survive each call.
-    mut $loopacc: u16 = 0
+    ram mut $loopacc: u16 = 0
     loop 0..6 -> $i {
         @clobber(1, 1) -> $res
         $loopacc + $res -> $loopacc
@@ -69,20 +69,20 @@
 }
 
 @clobber($a: u8, $b: u8) -> u16 {
-    mut $x1: u8 = 1
-    mut $x2: u8 = 2
-    mut $x3: u8 = 3
-    mut $x4: u8 = 4
-    mut $sum: u16 = 0
+    ram imut $x1: u8 = 1
+    ram imut $x2: u8 = 2
+    ram imut $x3: u8 = 3
+    ram imut $x4: u8 = 4
+    ram mut $sum: u16 = 0
     $a + $b -> $sum
     return $sum
 }
 
 @clobber2($a: u16, $b: u16) -> u16 {
-    mut $y1: u16 = 9
-    mut $y2: u16 = 8
-    mut $y3: u16 = 7
-    mut $r: u16 = 0
+    ram imut $y1: u16 = 9
+    ram imut $y2: u16 = 8
+    ram imut $y3: u16 = 7
+    ram mut $r: u16 = 0
     $a + $b -> $r
     return $r
 }

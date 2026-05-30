@@ -24,7 +24,7 @@ import std/math
     @pin_mode_b(0, 1)
     
     # 2. Math: Clamp a value
-    mut $clamped: u16 = 0
+    ram mut $clamped: u16 = 0
     @clamp(150, 10, 100) -> $clamped   # Will clamp to 100
     
     # 3. GPIO: Turn on PB0 if clamp is 100

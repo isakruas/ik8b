@@ -36,14 +36,14 @@ import std/math
     @twi_init(72)
     
     # 5. Math: Clamp a value and map it
-    mut $clamped: u16 = 0
+    ram mut $clamped: u16 = 0
     @clamp(150, 10, 100) -> $clamped   # Will clamp to 100
     
-    mut $mapped: u16 = 0
+    ram mut $mapped: u16 = 0
     @map($clamped, 0, 100, 0, 255) -> $mapped # Will map 100 to 255
     
     # 6. Serial Transmit to terminal: Send the mapped byte
-    mut $mapped8: u8 = 0
+    ram mut $mapped8: u8 = 0
     $mapped & 0xFF -> $mapped8
     @uart_send($mapped8)
     

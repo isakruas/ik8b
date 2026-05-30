@@ -37,7 +37,7 @@ Line comments start with `#` and continue to the end of the line.
 The reserved keywords are:
 
 ```ik
-const mut val loop return import switch namespace
+const mut imut ram eeprom flash loop return import switch namespace
 ```
 
 The primitive type names are:
@@ -192,16 +192,29 @@ Arguments are evaluated into register pairs starting at `R24:R25`, then
 
 ### 5.4 Variables
 
-Variables are declared inside function blocks:
+Variables are declared inside function blocks and must explicitly specify both their storage location (`ram`, `eeprom`, or `flash`) and their mutability (`mut` or `imut`):
 
 ```ik
-val $pin: u8 = 5
-mut $counter: u16 = 0
-mut $buffer: u8[16] = 0
+ram imut $pin: u8 = 5
+ram mut $counter: u16 = 0
+ram mut $buffer: u8[16] = 0
+eeprom mut $saved_count: u8 = 0
+flash imut $lookup_table: u8[4] = 12
 ```
 
-`val` declares an immutable variable after initialization. `mut` declares a
-mutable variable. Every declaration must have an initializer.
+The supported combinations of storage space and mutability are:
+
+| Declaration | Description |
+|---|---|
+| `ram mut` | A mutable variable allocated in the static SRAM space. |
+| `ram imut` | An immutable variable allocated in the static SRAM space. |
+| `eeprom mut` | A mutable variable stored in persistent EEPROM. |
+| `eeprom imut` | An immutable variable stored in persistent EEPROM. |
+| `flash imut` | An immutable constant variable placed in program Flash memory. |
+
+Every variable declaration must have an initializer. If a variable declaration omits the storage location or is declared incorrectly, a compilation syntax error is immediately raised. 
+
+`flash mut` is invalid and illegal. Because Flash memory cannot be modified at runtime by normal write instructions, any declaration of `flash mut` will raise a compilation error.
 
 Array initializers are scalar expressions. The compiler evaluates the
 initializer once and writes that value to every element. Array elements may be
@@ -251,7 +264,7 @@ element. Compound arrows update the target using its current value:
 | `->|` | `target = target | expression` |
 | `->^` | `target = target ^ expression` |
 
-Assigning to a `val` variable or immutable array element is a compilation error.
+Assigning to an `imut` variable or immutable array element is a compilation error.
 
 ### 6.2 Conditionals
 

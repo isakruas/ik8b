@@ -52,7 +52,7 @@ test: build
 	    if [ "$$fp" -gt 0 ] && [ "$$sram" -eq 0 ]; then rm -f $$tmp_src $$hex; continue; fi; \
 	    rm -f $$tmp_src; \
 	    if [ $$compile_rc -ne 0 ]; then \
-	      if echo "$$compile_out" | grep -q "Memory Error: program"; then rm -f $$hex; continue; fi; \
+	      if echo "$$compile_out" | grep -q "Memory Error:"; then rm -f $$hex; continue; fi; \
 	      echo "  -> $$mcu: COMPILE FAIL. Error: $$compile_out"; suite_fail=1; rm -f $$hex; continue; \
 	    fi; \
 	    out=$$($(VM_BIN) $$hex -mmcu=$$mcu -n 200000 -d 2>&1); \
