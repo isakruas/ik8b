@@ -147,10 +147,16 @@ pub struct CodeGenerator {
     str_vars: HashMap<String, String>,
     // Intern pool for string literals materialized in SRAM: literal bytes -> base address.
     string_pool: HashMap<String, u16>,
-    // Flash string data: accumulated raw bytes for all flash strings.
+    // Flash string data: accumulated raw bytes for all flash strings, packed
+    // into one contiguous blob emitted after all code.
     flash_data_blob: Vec<u8>,
-    // Flash string dedup pool: string content -> (label_name, byte_offset_in_blob).
-    flash_string_pool: HashMap<String, (String, u16)>,
+    // Single label marking the start of `flash_data_blob`. Every flash string
+    // is addressed as (this label) + (its byte offset), so all of them share
+    // one base label rather than each owning a label only one of which gets
+    // an address assigned during resolution.
+    flash_blob_label: Option<String>,
+    // Flash string dedup pool: string content -> byte offset within the blob.
+    flash_string_pool: HashMap<String, u16>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -198,6 +204,7 @@ impl CodeGenerator {
             str_vars: HashMap::new(),
             string_pool: HashMap::new(),
             flash_data_blob: Vec::new(),
+            flash_blob_label: None,
             flash_string_pool: HashMap::new(),
         }
     }
@@ -652,19 +659,11 @@ impl CodeGenerator {
                 }
             }
         }
-        // Stage 6: emit accumulated flash string data blob (if any).
-        if !self.flash_data_blob.is_empty() {
-            // Use the first label from the pool as the data section label.
-            // All FlashLdi16 instructions reference a label from flash_string_pool.
-            // We emit one FlashDataBlob per unique label (though currently all data
-            // is packed into one contiguous blob with different offsets).
-            let mut emitted_labels = std::collections::HashSet::new();
-            let blob = self.flash_data_blob.clone();
-            for (_, (label, _)) in &self.flash_string_pool {
-                if emitted_labels.insert(label.clone()) {
-                    self.emit(Pass1Inst::FlashDataBlob(label.clone(), blob.clone()));
-                    break; // All data is in one blob with the first label
-                }
+        // Stage 6: emit the single accumulated flash string data blob (if any).
+        // Every flash string is addressed relative to this one shared label.
+        if let Some(label) = self.flash_blob_label.clone() {
+            if !self.flash_data_blob.is_empty() {
+                self.emit(Pass1Inst::FlashDataBlob(label, self.flash_data_blob.clone()));
             }
         }
 
@@ -1644,18 +1643,23 @@ impl CodeGenerator {
                         if self.target_core == TargetCore::AVRrc {
                             return Err("Memory Error: flash str storage is not supported on AVRrc architecture cores (no LPM instruction)".to_string());
                         }
-                        // Flash string: store the string bytes in the flash data blob.
-                        // The actual flash byte address is resolved at link time via FlashLdi16.
+                        // Flash string: append the bytes to the shared flash data blob.
+                        // The variable's stored "address" is its byte offset within the
+                        // blob; the real flash address is (blob label) + offset, resolved
+                        // at link time via FlashLdi16. Identical literals are deduplicated.
                         if let Expr::StringLit(ref lit) = *expr {
-                            let bytes: Vec<u8> = lit.chars().map(|c| c as u8).collect();
-                            let (_label, offset) = if let Some((lbl, off)) = self.flash_string_pool.get(lit) {
-                                (lbl.clone(), *off)
+                            // Ensure the single shared blob label exists.
+                            if self.flash_blob_label.is_none() {
+                                self.flash_blob_label = Some(self.new_label("flash_blob"));
+                            }
+                            let offset = if let Some(off) = self.flash_string_pool.get(lit) {
+                                *off
                             } else {
-                                let label = self.new_label("flash_str");
+                                let bytes: Vec<u8> = lit.chars().map(|c| c as u8).collect();
                                 let offset = self.flash_data_blob.len() as u16;
                                 self.flash_data_blob.extend_from_slice(&bytes);
-                                self.flash_string_pool.insert(lit.clone(), (label.clone(), offset));
-                                (label, offset)
+                                self.flash_string_pool.insert(lit.clone(), offset);
+                                offset
                             };
                             // Register the variable: address field stores the byte offset within the
                             // flash data blob. Type is "str flash" so the [] operator can detect it.
@@ -2652,18 +2656,11 @@ impl CodeGenerator {
 
                         // Flash string path: use LPM instead of LD
                         if array_ty == "str flash" {
-                            // Look up the flash string label and byte offset for this variable
-                            let flash_label = {
-                                let mut found_label = None;
-                                for (_, (lbl, off)) in &self.flash_string_pool {
-                                    if *off == base_addr {
-                                        found_label = Some((lbl.clone(), *off));
-                                        break;
-                                    }
-                                }
-                                found_label.ok_or_else(|| format!("Internal error: flash string variable {} not found in pool", array_name))?
-                            };
-                            let (label, byte_offset) = flash_label;
+                            // All flash strings share one blob label; this variable's
+                            // base_addr is its byte offset within that blob.
+                            let label = self.flash_blob_label.clone()
+                                .ok_or_else(|| format!("Internal error: flash blob label missing for {}", array_name))?;
+                            let byte_offset = base_addr;
 
                             // Compute index into target:target+1
                             self.compile_expr(right, target, "u16")?;
