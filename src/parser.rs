@@ -478,11 +478,11 @@ impl Parser {
                     return Ok(Stmt::VarDecl { name, ty, expr, is_mut: true });
                 }
 
-                // String declaration: `ram str $name = "..."`.
+                // String declaration: `ram str $name = "..."` or `flash str $name = "..."`.
                 if matches!(self.peek(0).map(|t| &t.kind), Some(TokenKind::Keyword(k)) if k == "str") {
                     self.consume(None)?; // str
-                    if storage != "ram" {
-                        return Err(format!("String variables currently support only RAM storage (got '{}') at line {}", storage, tok.line));
+                    if storage != "ram" && storage != "flash" {
+                        return Err(format!("String variables currently support only RAM or flash storage (got '{}') at line {}", storage, tok.line));
                     }
                     let name_tok = self.consume(None)?;
                     let name = match name_tok.kind {

@@ -89,6 +89,13 @@ pub enum Pass1Inst {
     // Conditional branches encoded later with 7-bit relative displacement.
     BrbsL(u8, String),
     BrbcL(u8, String),
+    // Load register pair (target, target+1) with the byte address of a flash
+    // label plus a constant byte offset. Resolved during label resolution.
+    // Fields: (target_register, label_name, byte_offset)
+    FlashLdi16(u8, String, u16),
+    // Raw data blob to embed in flash (program memory) after all code.
+    // Packed as little-endian u16 words during label resolution.
+    FlashDataBlob(String, Vec<u8>),
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -136,10 +143,14 @@ pub struct CodeGenerator {
     // Pointer variables: name -> (target memory space "ram"/"flash"/"eeprom", pointee type).
     // Width is normalized to u16 (a 16-bit address) in `variables`.
     ptr_vars: HashMap<String, (String, String)>,
-    // String variables: name -> storage space ("ram").
+    // String variables: name -> storage space ("ram" or "flash").
     str_vars: HashMap<String, String>,
     // Intern pool for string literals materialized in SRAM: literal bytes -> base address.
     string_pool: HashMap<String, u16>,
+    // Flash string data: accumulated raw bytes for all flash strings.
+    flash_data_blob: Vec<u8>,
+    // Flash string dedup pool: string content -> (label_name, byte_offset_in_blob).
+    flash_string_pool: HashMap<String, (String, u16)>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -186,6 +197,8 @@ impl CodeGenerator {
             ptr_vars: HashMap::new(),
             str_vars: HashMap::new(),
             string_pool: HashMap::new(),
+            flash_data_blob: Vec::new(),
+            flash_string_pool: HashMap::new(),
         }
     }
 
@@ -636,6 +649,21 @@ impl CodeGenerator {
                         "Memory Error: Hardware conflict: Constant '{}' points to address 0x{:04X}, which overlaps with the compiler-allocated SRAM variable space [0x{:04X}, 0x{:04X})",
                         name, addr, self.sram_start, self.sram_free_ptr
                     ));
+                }
+            }
+        }
+        // Stage 6: emit accumulated flash string data blob (if any).
+        if !self.flash_data_blob.is_empty() {
+            // Use the first label from the pool as the data section label.
+            // All FlashLdi16 instructions reference a label from flash_string_pool.
+            // We emit one FlashDataBlob per unique label (though currently all data
+            // is packed into one contiguous blob with different offsets).
+            let mut emitted_labels = std::collections::HashSet::new();
+            let blob = self.flash_data_blob.clone();
+            for (_, (label, _)) in &self.flash_string_pool {
+                if emitted_labels.insert(label.clone()) {
+                    self.emit(Pass1Inst::FlashDataBlob(label.clone(), blob.clone()));
+                    break; // All data is in one blob with the first label
                 }
             }
         }
@@ -1610,7 +1638,32 @@ impl CodeGenerator {
                 if let Some(space) = ty.strip_prefix("str ") {
                     self.str_vars.insert(name.clone(), space.to_string());
                     if space == "flash" {
-                        return Err("Type Error: flash str variables are not yet supported by the code generator".to_string());
+                        // Reduced-core (AVRrc) devices lack the LPM instruction and this VM
+                        // does not memory-map program memory into the data space, so flash
+                        // strings cannot be read there. Reject consistently with imut/EEPROM.
+                        if self.target_core == TargetCore::AVRrc {
+                            return Err("Memory Error: flash str storage is not supported on AVRrc architecture cores (no LPM instruction)".to_string());
+                        }
+                        // Flash string: store the string bytes in the flash data blob.
+                        // The actual flash byte address is resolved at link time via FlashLdi16.
+                        if let Expr::StringLit(ref lit) = *expr {
+                            let bytes: Vec<u8> = lit.chars().map(|c| c as u8).collect();
+                            let (_label, offset) = if let Some((lbl, off)) = self.flash_string_pool.get(lit) {
+                                (lbl.clone(), *off)
+                            } else {
+                                let label = self.new_label("flash_str");
+                                let offset = self.flash_data_blob.len() as u16;
+                                self.flash_data_blob.extend_from_slice(&bytes);
+                                self.flash_string_pool.insert(lit.clone(), (label.clone(), offset));
+                                (label, offset)
+                            };
+                            // Register the variable: address field stores the byte offset within the
+                            // flash data blob. Type is "str flash" so the [] operator can detect it.
+                            self.variables.insert(name.clone(), (offset, "str flash".to_string(), false));
+                        } else {
+                            return Err("flash str variables must be initialized with a string literal".to_string());
+                        }
+                        return Ok(());
                     }
                 }
                 let norm_ty = normalize_width_type(ty);
@@ -2595,42 +2648,80 @@ impl CodeGenerator {
                         let (base_addr, array_ty, _) = self.variables.get(array_name)
                             .ok_or_else(|| format!("Undefined array variable: {}", array_name))?;
                         let base_addr = *base_addr;
+                        let array_ty = array_ty.clone();
+
+                        // Flash string path: use LPM instead of LD
+                        if array_ty == "str flash" {
+                            // Look up the flash string label and byte offset for this variable
+                            let flash_label = {
+                                let mut found_label = None;
+                                for (_, (lbl, off)) in &self.flash_string_pool {
+                                    if *off == base_addr {
+                                        found_label = Some((lbl.clone(), *off));
+                                        break;
+                                    }
+                                }
+                                found_label.ok_or_else(|| format!("Internal error: flash string variable {} not found in pool", array_name))?
+                            };
+                            let (label, byte_offset) = flash_label;
+
+                            // Compute index into target:target+1
+                            self.compile_expr(right, target, "u16")?;
+
+                            // Load Z with flash data byte address + byte offset
+                            // FlashLdi16 emits two LDI instructions that resolve to
+                            // (label_word_address * 2 + byte_offset) at link time
+                            self.emit(Pass1Inst::FlashLdi16(30, label, byte_offset));
+
+                            // ADD Z, index
+                            let opc_add = self.encode_rd_rr(0x0C00, 30, target);
+                            let opc_adc = self.encode_rd_rr(0x1C00, 31, target + 1);
+                            self.emit(Pass1Inst::Op(opc_add)); // ADD R30, idx_lo
+                            self.emit(Pass1Inst::Op(opc_adc)); // ADC R31, idx_hi
+
+                            // LPM target, Z
+                            self.emit(Pass1Inst::Op(0x9004 | ((target as u16) << 4))); // LPM target, Z
+                            if ty == "u16" {
+                                self.emit_widen_high(target, false);
+                            }
+                        } else {
+                            // SRAM array/string path (existing logic)
+                            let item_ty = if array_ty.starts_with("u16") || array_ty.starts_with("i16") || array_ty.starts_with("r16") { "u16" } else { "u8" };
+                            self.compile_expr(right, target, "u16")?;
                         
-                        let item_ty = if array_ty.starts_with("u16") || array_ty.starts_with("i16") || array_ty.starts_with("r16") { "u16" } else { "u8" };
-                        self.compile_expr(right, target, "u16")?;
+                            if item_ty == "u16" {
+                                let opc_lsl = self.encode_rd_rr(0x0C00, target, target);
+                                let opc_rol = self.encode_rd_rr(0x1C00, target + 1, target + 1);
+                                self.emit(Pass1Inst::Op(opc_lsl)); // ADD idx, idx
+                                self.emit(Pass1Inst::Op(opc_rol)); // ADC idx+1, idx+1
+                            }
                         
-                        if item_ty == "u16" {
-                            let opc_lsl = self.encode_rd_rr(0x0C00, target, target);
-                            let opc_rol = self.encode_rd_rr(0x1C00, target + 1, target + 1);
-                            self.emit(Pass1Inst::Op(opc_lsl)); // ADD idx, idx
-                            self.emit(Pass1Inst::Op(opc_rol)); // ADC idx+1, idx+1
-                        }
+                            let base_lo = (base_addr & 0xFF) as u8;
+                            let base_hi = ((base_addr >> 8) & 0xFF) as u8;
                         
-                        let base_lo = (base_addr & 0xFF) as u8;
-                        let base_hi = ((base_addr >> 8) & 0xFF) as u8;
+                            let k_hi = (base_lo >> 4) & 0x0F;
+                            let k_lo = base_lo & 0x0F;
+                            let d = 30 - 16;
+                            self.emit(Pass1Inst::Op(0xE000 | ((k_hi as u16) << 8) | ((d as u16) << 4) | (k_lo as u16))); // LDI R30, base_lo
                         
-                        let k_hi = (base_lo >> 4) & 0x0F;
-                        let k_lo = base_lo & 0x0F;
-                        let d = 30 - 16;
-                        self.emit(Pass1Inst::Op(0xE000 | ((k_hi as u16) << 8) | ((d as u16) << 4) | (k_lo as u16))); // LDI R30, base_lo
+                            let k_hi = (base_hi >> 4) & 0x0F;
+                            let k_lo = base_hi & 0x0F;
+                            let d = 31 - 16;
+                            self.emit(Pass1Inst::Op(0xE000 | ((k_hi as u16) << 8) | ((d as u16) << 4) | (k_lo as u16))); // LDI R31, base_hi
                         
-                        let k_hi = (base_hi >> 4) & 0x0F;
-                        let k_lo = base_hi & 0x0F;
-                        let d = 31 - 16;
-                        self.emit(Pass1Inst::Op(0xE000 | ((k_hi as u16) << 8) | ((d as u16) << 4) | (k_lo as u16))); // LDI R31, base_hi
+                            let opc_add = self.encode_rd_rr(0x0C00, 30, target);
+                            let opc_adc = self.encode_rd_rr(0x1C00, 31, target + 1);
+                            self.emit(Pass1Inst::Op(opc_add)); // ADD R30, idx
+                            self.emit(Pass1Inst::Op(opc_adc)); // ADC R31, idx+1
                         
-                        let opc_add = self.encode_rd_rr(0x0C00, 30, target);
-                        let opc_adc = self.encode_rd_rr(0x1C00, 31, target + 1);
-                        self.emit(Pass1Inst::Op(opc_add)); // ADD R30, idx
-                        self.emit(Pass1Inst::Op(opc_adc)); // ADC R31, idx+1
-                        
-                        self.emit(Pass1Inst::Op(0x8000 | ((target as u16) << 4))); // LD target, Z
-                        if ty == "u16" && item_ty == "u16" {
-                            self.emit(Pass1Inst::Op(0x9001 | ((target as u16) << 4))); // LD target, Z+
-                            self.emit(Pass1Inst::Op(0x8000 | (((target + 1) as u16) << 4))); // LD target+1, Z
-                        } else if ty == "u16" && item_ty == "u8" {
-                            let d = (target + 1) - 16;
-                            self.emit(Pass1Inst::Op(0xE000 | ((d as u16) << 4))); // LDI target+1, 0
+                            self.emit(Pass1Inst::Op(0x8000 | ((target as u16) << 4))); // LD target, Z
+                            if ty == "u16" && item_ty == "u16" {
+                                self.emit(Pass1Inst::Op(0x9001 | ((target as u16) << 4))); // LD target, Z+
+                                self.emit(Pass1Inst::Op(0x8000 | (((target + 1) as u16) << 4))); // LD target+1, Z
+                            } else if ty == "u16" && item_ty == "u8" {
+                                let d = (target + 1) - 16;
+                                self.emit(Pass1Inst::Op(0xE000 | ((d as u16) << 4))); // LDI target+1, 0
+                            }
                         }
                     } else {
                         return Err("Array indexing is only supported on direct variables.".to_string());
@@ -3511,8 +3602,8 @@ fn validate_type(ty: &str) -> Result<(), String> {
         return validate_type(pointee);
     }
     if let Some(space) = ty.strip_prefix("str ") {
-        if !matches!(space, "ram") {
-            return Err(format!("Type Error: string space must be ram, got '{}'", space));
+        if !matches!(space, "ram" | "flash") {
+            return Err(format!("Type Error: string space must be ram or flash, got '{}'", space));
         }
         return Ok(());
     }
@@ -3857,6 +3948,11 @@ pub fn resolve_labels(instructions: &[Pass1Inst]) -> Vec<u16> {
                 Pass1Inst::Label(name) => { label_addresses.insert(name.clone(), addr); }
                 Pass1Inst::Op(_) | Pass1Inst::BrbsL(_, _) | Pass1Inst::BrbcL(_, _) => addr += 1,
                 Pass1Inst::RJumpL(_) | Pass1Inst::RCallL(_) => addr += if is_long[idx] { 2 } else { 1 },
+                Pass1Inst::FlashLdi16(_, _, _) => addr += 2, // Two LDI instructions
+                Pass1Inst::FlashDataBlob(name, data) => {
+                    label_addresses.insert(name.clone(), addr);
+                    addr += ((data.len() + 1) / 2) as i64; // Ceiling division: pack bytes into u16 words
+                }
             }
         }
         let mut changed = false;
@@ -3876,6 +3972,10 @@ pub fn resolve_labels(instructions: &[Pass1Inst]) -> Vec<u16> {
                     }
                     addr += if is_long[idx] { 2 } else { 1 };
                 }
+                Pass1Inst::FlashLdi16(_, _, _) => addr += 2,
+                Pass1Inst::FlashDataBlob(_, data) => {
+                    addr += ((data.len() + 1) / 2) as i64;
+                }
             }
         }
         if !changed { break; }
@@ -3889,6 +3989,11 @@ pub fn resolve_labels(instructions: &[Pass1Inst]) -> Vec<u16> {
             Pass1Inst::Label(name) => { label_addresses.insert(name.clone(), addr); }
             Pass1Inst::Op(_) | Pass1Inst::BrbsL(_, _) | Pass1Inst::BrbcL(_, _) => addr += 1,
             Pass1Inst::RJumpL(_) | Pass1Inst::RCallL(_) => addr += if is_long[idx] { 2 } else { 1 },
+            Pass1Inst::FlashLdi16(_, _, _) => addr += 2,
+            Pass1Inst::FlashDataBlob(name, data) => {
+                label_addresses.insert(name.clone(), addr);
+                addr += ((data.len() + 1) / 2) as i64;
+            }
         }
     }
 
@@ -3940,6 +4045,31 @@ pub fn resolve_labels(instructions: &[Pass1Inst]) -> Vec<u16> {
                 let offset_bits = (offset as u16) & 0x7F;
                 final_opcodes.push(0xF400 | (offset_bits << 3) | (*sreg_bit as u16));
                 addr += 1;
+            }
+            Pass1Inst::FlashLdi16(target_reg, label, byte_offset) => {
+                // Resolve the flash data byte address: label_word_addr * 2 + byte_offset
+                let label_word_addr = *label_addresses.get(label).unwrap_or(&0) as u16;
+                let byte_addr = label_word_addr.wrapping_mul(2).wrapping_add(*byte_offset);
+                let lo = (byte_addr & 0xFF) as u8;
+                let hi = ((byte_addr >> 8) & 0xFF) as u8;
+                let d_lo = (*target_reg - 16) as u16;
+                let d_hi = (*target_reg + 1 - 16) as u16;
+                // LDI target_reg, lo
+                final_opcodes.push(0xE000 | (((lo >> 4) as u16) << 8) | (d_lo << 4) | ((lo & 0x0F) as u16));
+                // LDI target_reg+1, hi
+                final_opcodes.push(0xE000 | (((hi >> 4) as u16) << 8) | (d_hi << 4) | ((hi & 0x0F) as u16));
+                addr += 2;
+            }
+            Pass1Inst::FlashDataBlob(_name, data) => {
+                // Pack raw bytes as little-endian u16 words
+                let mut i = 0;
+                while i < data.len() {
+                    let lo = data[i];
+                    let hi = if i + 1 < data.len() { data[i + 1] } else { 0x00 };
+                    final_opcodes.push((lo as u16) | ((hi as u16) << 8));
+                    i += 2;
+                }
+                addr += ((data.len() + 1) / 2) as i64;
             }
         }
     }

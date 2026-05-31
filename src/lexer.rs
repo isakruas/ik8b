@@ -174,16 +174,28 @@ impl Lexer {
                         }
                         let e = self.source[self.idx];
                         self.idx += 1;
-                        let mapped = match e {
-                            'n' => '\n',
-                            'r' => '\r',
-                            't' => '\t',
-                            '0' => '\0',
-                            '\\' => '\\',
-                            '"' => '"',
+                        match e {
+                            'n' => { s.push('\n'); },
+                            'r' => { s.push('\r'); },
+                            't' => { s.push('\t'); },
+                            '0' => { s.push('\0'); },
+                            '\\' => { s.push('\\'); },
+                            '"' => { s.push('"'); },
+                            'x' => {
+                                if self.idx + 1 < self.source.len() {
+                                    let hex_str: String = self.source[self.idx..=self.idx+1].iter().collect();
+                                    if let Ok(val) = u8::from_str_radix(&hex_str, 16) {
+                                        self.idx += 2;
+                                        s.push(val as char);
+                                    } else {
+                                        return Err(format!("Invalid hex escape '\\x{}' at line {}", hex_str, self.line));
+                                    }
+                                } else {
+                                    return Err(format!("Unterminated hex escape at line {}", self.line));
+                                }
+                            }
                             _ => return Err(format!("Invalid escape character '\\{}' at line {}", e, self.line)),
                         };
-                        s.push(mapped);
                     } else {
                         if ch == '\n' {
                             self.line += 1;

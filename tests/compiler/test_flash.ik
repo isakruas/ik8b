@@ -1,5 +1,3 @@
-namespace atmega328p
-
 @main {
     # Store binary data in flash program memory
     flash str $font = "\x00\x00\x00\x00\x00\x3E\x5B\x4F\x5B\x3E\x3E\x6B"
