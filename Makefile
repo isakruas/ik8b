@@ -2,7 +2,7 @@
 
 .PHONY: all build compile test clean
 
-VM_BIN := ./bin/avr_vm
+VM_BIN := ./avr-vm/bin/avr_vm
 
 all: build
 
@@ -27,7 +27,7 @@ test: build
 	@echo "=========================================================="
 	@echo "Running Automated ik8b Test Suite across ALL fitting MCUs..."
 	@echo "=========================================================="
-	@[ -x "$(VM_BIN)" ] || (echo "Missing $(VM_BIN)." && exit 1)
+	@[ -x "$(VM_BIN)" ] || (echo "Missing $(VM_BIN). Build it with: make -C avr-vm" && exit 1)
 	@table=$$(./ik8b --list-devices | tail -n +3 | awk 'NF>=6 { print $$2","$$1","$$3 }'); \
 	total_mcus=$$(echo "$$table" | grep -c .); \
 	echo "ik8b supports $$total_mcus MCU profiles."; \
