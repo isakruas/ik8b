@@ -2355,12 +2355,20 @@ impl CodeGenerator {
             "<=" => (true, ">="),
             _    => (false, op),
         };
-        if do_swap {
-            self.compile_expr(right, 16, ty)?;
-            self.compile_expr(left, 18, ty)?;
+        // The first operand lands in r16(:r17) and the second in r18(:r19). If the
+        // second operand contains a call, evaluating it trashes the caller-saved
+        // registers (including r16:r17), so the first operand must be stacked
+        // across that evaluation.
+        let (first, second) = if do_swap { (right, left) } else { (left, right) };
+        self.compile_expr(first, 16, ty)?;
+        if expr_contains_call(second) {
+            self.emit(Pass1Inst::Op(0x920F | (17u16 << 4))); // PUSH r17
+            self.emit(Pass1Inst::Op(0x920F | (16u16 << 4))); // PUSH r16
+            self.compile_expr(second, 18, ty)?;
+            self.emit(Pass1Inst::Op(0x900F | (16u16 << 4))); // POP r16
+            self.emit(Pass1Inst::Op(0x900F | (17u16 << 4))); // POP r17
         } else {
-            self.compile_expr(left, 16, ty)?;
-            self.compile_expr(right, 18, ty)?;
+            self.compile_expr(second, 18, ty)?;
         }
         let opc1 = self.encode_rd_rr(0x1400, 16, 18);
         self.emit(Pass1Inst::Op(opc1)); // CP r16, r18
@@ -3016,39 +3024,37 @@ impl CodeGenerator {
                     }
                 }
 
-                // Spill only when the operation's temporary register footprint would exceed R31.
-                // For binary ops we need target..target+3 at most (u16 path).
-                let use_spill = target > 28;
-
-                if op == ">" || op == "<=" {
-                    if use_spill {
-                        self.compile_expr(right, target, ty)?;
-                        let addr = self.spill_push(target, ty)?;
-                        self.compile_expr(left, target, ty)?;
-                        self.spill_pop(target + 2, addr, ty)?;
-                    } else {
-                        self.compile_expr(right, target, ty)?;
-                        self.compile_expr(left, target + 2, ty)?;
-                    }
+                // Operand placement: `first` goes to target(:+1), `second` to
+                // target+2(:+3). `>`/`<=` swap the operands so the same CP/branch
+                // shape downstream yields the right relation.
+                let (first, second) = if op == ">" || op == "<=" {
+                    (&**right, &**left)
                 } else {
-                    if use_spill {
-                        self.compile_expr(left, target, ty)?;
-                        let addr = self.spill_push(target, ty)?;
-                        self.compile_expr(right, target, ty)?;
-                        if ty == "u8" {
-                            let opc = self.encode_rd_rr(0x2C00, target + 2, target);
-                            self.emit(Pass1Inst::Op(opc));
-                        } else {
-                            let opc1 = self.encode_rd_rr(0x2C00, target + 2, target);
-                            let opc2 = self.encode_rd_rr(0x2C00, target + 3, target + 1);
-                            self.emit(Pass1Inst::Op(opc1));
-                            self.emit(Pass1Inst::Op(opc2));
-                        }
-                        self.spill_pop(target, addr, ty)?;
+                    (&**left, &**right)
+                };
+
+                // Spill the first operand to SRAM while computing the second when
+                // either register pressure would exceed R31, or the second operand
+                // contains a call that would clobber the first's registers.
+                let use_spill = target > 28 || expr_contains_call(second);
+
+                if use_spill {
+                    self.compile_expr(first, target, ty)?;
+                    let addr = self.spill_push(target, ty)?;
+                    self.compile_expr(second, target, ty)?;
+                    if ty == "u8" {
+                        let opc = self.encode_rd_rr(0x2C00, target + 2, target);
+                        self.emit(Pass1Inst::Op(opc)); // MOV second -> target+2
                     } else {
-                        self.compile_expr(left, target, ty)?;
-                        self.compile_expr(right, target + 2, ty)?;
+                        let opc1 = self.encode_rd_rr(0x2C00, target + 2, target);
+                        let opc2 = self.encode_rd_rr(0x2C00, target + 3, target + 1);
+                        self.emit(Pass1Inst::Op(opc1));
+                        self.emit(Pass1Inst::Op(opc2));
                     }
+                    self.spill_pop(target, addr, ty)?; // restore first into target
+                } else {
+                    self.compile_expr(first, target, ty)?;
+                    self.compile_expr(second, target + 2, ty)?;
                 }
                 
                 if op == "+" {
@@ -3578,21 +3584,60 @@ impl CodeGenerator {
                     None
                 };
 
-                for (idx, arg) in args.iter().enumerate() {
-                    let arg_ty = if let Some(ref tys) = expected_tys {
-                        if idx < tys.len() {
-                            tys[idx].as_str()
+                // A nested call inside an argument returns in r24:r25 and trashes
+                // the caller-saved registers, which would silently clobber an
+                // earlier argument already sitting in an argument register. When
+                // that can happen, evaluate each argument and immediately stack
+                // it, then restore all argument registers right before the call.
+                let needs_arg_spill =
+                    args.len() >= 2 && args.iter().any(expr_contains_call);
+
+                if needs_arg_spill {
+                    let mut spilled: Vec<u8> = Vec::new();
+                    for (idx, arg) in args.iter().enumerate() {
+                        let arg_ty = if let Some(ref tys) = expected_tys {
+                            if idx < tys.len() {
+                                tys[idx].as_str()
+                            } else {
+                                "u16"
+                            }
                         } else {
                             "u16"
+                        };
+
+                        self.compile_expr(arg, reg_idx, arg_ty)?;
+                        // Stack the freshly computed argument pair (high then low)
+                        // so it survives any later argument's nested call.
+                        self.emit(Pass1Inst::Op(0x920F | (((reg_idx + 1) as u16) << 4))); // PUSH high
+                        self.emit(Pass1Inst::Op(0x920F | ((reg_idx as u16) << 4))); // PUSH low
+                        spilled.push(reg_idx);
+
+                        if reg_idx >= 18 {
+                            reg_idx -= 2;
                         }
-                    } else {
-                        "u16"
-                    };
+                    }
+                    // Restore in reverse: the last pushed pair is on top of the stack.
+                    for &r in spilled.iter().rev() {
+                        self.emit(Pass1Inst::Op(0x900F | ((r as u16) << 4))); // POP low
+                        self.emit(Pass1Inst::Op(0x900F | (((r + 1) as u16) << 4))); // POP high
+                    }
+                } else {
+                    for (idx, arg) in args.iter().enumerate() {
+                        let arg_ty = if let Some(ref tys) = expected_tys {
+                            if idx < tys.len() {
+                                tys[idx].as_str()
+                            } else {
+                                "u16"
+                            }
+                        } else {
+                            "u16"
+                        };
 
-                    self.compile_expr(arg, reg_idx, arg_ty)?;
+                        self.compile_expr(arg, reg_idx, arg_ty)?;
 
-                    if reg_idx >= 18 {
-                        reg_idx -= 2;
+                        if reg_idx >= 18 {
+                            reg_idx -= 2;
+                        }
                     }
                 }
                 if let Some(cv) = indirect_callee {
@@ -5401,6 +5446,26 @@ fn scale_floats(expr: &mut Expr, frac: u8) -> Result<(), String> {
         }
         Expr::StringLit(_) => Ok(()),
         Expr::AddrOf(e) | Expr::Deref(e) => scale_floats(e, frac),
+    }
+}
+
+/// Returns true if `expr` contains any function/intrinsic call.
+///
+/// Used at call sites to decide whether already-placed argument registers must
+/// be spilled across the evaluation of a later argument: a nested call returns
+/// in r24:r25 and clobbers the caller-saved registers.
+fn expr_contains_call(expr: &Expr) -> bool {
+    match expr {
+        Expr::Call { .. } => true,
+        Expr::UnaryOp { expr, .. } => expr_contains_call(expr),
+        Expr::AddrOf(e) | Expr::Deref(e) => expr_contains_call(e),
+        Expr::BinOp { left, right, .. } => {
+            expr_contains_call(left) || expr_contains_call(right)
+        }
+        Expr::Literal(_)
+        | Expr::VarRef(_)
+        | Expr::FloatLiteral(_)
+        | Expr::StringLit(_) => false,
     }
 }
 
