@@ -461,7 +461,7 @@ provides:
 | `core` | AVR core family used for instruction selection. |
 | `sram_start` | First compiler-managed SRAM address. |
 | `sram_size` | Static data budget. |
-| `flash_size` | Program budget. |
+| `flash_size` | Total on-device Flash capacity. |
 | `eeprom_size` | Reported EEPROM capacity. |
 | `boot_size` | Reserved boot section size. |
 
@@ -495,8 +495,9 @@ Storage sizes are:
 | `u16[N]` | `2 * N` |
 
 Hardware constants whose addresses overlap compiler-allocated SRAM are rejected.
-After generation, program size and static SRAM use are checked against the
-selected device budget.
+After generation, program size, static SRAM use, and static EEPROM use are
+checked against the selected device budget. Program size is checked against
+usable Flash (`flash_size - boot_size`).
 
 ### 8.4 Hardware Register Access
 
@@ -554,7 +555,16 @@ top-level namespace conditions to expose declarations for supported devices.
 | `std/uart` | USART initialization, send, receive, availability, and newline helpers. |
 | `std/spi` | SPI master initialization and byte transfer. |
 | `std/twi` | TWI/I2C initialization, start, stop, write, and read helpers. |
+| `std/eeprom` | EEPROM byte read/write helpers and busy-wait synchronization. |
+| `std/atomic` | Interrupt-safe critical-section helpers (`@atomic_start`, `@atomic_end`). |
+| `std/delay` | Cycle-based delay helpers in microseconds and milliseconds. |
 | `std/math` | Fixed-point and integer math helpers. |
+| `std/bits` | Bit rotations, popcount/parity, and bit-reversal helpers. |
+| `std/crc` | CRC-8 (Dallas/Maxim) and CRC-16 (IBM/ANSI) checksums. |
+| `std/mem` | Memory copy/fill/compare/search utilities for SRAM/flash pointers. |
+| `std/string` | NUL-terminated string and character classification utilities. |
+| `std/conv` | Numeric/string conversion helpers (decimal and hexadecimal). |
+| `std/font` | 5x8 bitmap font lookup, rendering, and streaming helpers. |
 
 `std/gpio` supports conditional register maps for `attiny85`, `atmega328p`,
 `atmega2560`, and `atmega32u4`. It exposes helpers of the form
@@ -563,8 +573,14 @@ top-level namespace conditions to expose declarations for supported devices.
 
 `std/uart`, `std/spi`, and `std/twi` currently define device-specific routines
 for `atmega328p`, `atmega2560`, and `atmega32u4`.
+`std/uart` also includes USART1 helpers for `atmega2560`
+(`@uart1_init`, `@uart1_send`, `@uart1_receive`).
 
-`std/math` uses `u16` fixed-point conventions for many functions. Public
+`std/eeprom`, `std/atomic`, and `std/delay` provide generic AVR helpers without
+namespace-conditional variants in the current tree.
+
+`std/math` primarily uses `r16` (Q8.8 signed fixed-point) conventions for many
+functions. Public
 functions include:
 
 ```ik
@@ -609,7 +625,7 @@ Compile options are:
 | Option | Meaning |
 |---|---|
 | `-o <out.hex>` | Selects the output Intel HEX path. The default is `out.hex`. |
-| `--report` | Prints `SRAM_BYTES=<n>` before the normal device memory report. |
+| `--report` | Prints a formatted build summary with Program, SRAM, EEPROM, and register usage; memory over-budget conditions fail compilation. |
 
 Unknown options or unexpected extra arguments are CLI errors.
 

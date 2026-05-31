@@ -34,6 +34,11 @@ make build
 ./ik8b <input.ik> -o <output.hex>
 ```
 
+The source must declare a top-level target namespace, for example:
+```ik
+namespace atmega328p
+```
+
 ### CLI commands
 ```bash
 ./ik8b help
@@ -48,7 +53,13 @@ Flag aliases are also supported: `-h`, `--help`, `-V`, `--version`, `--info`,
 
 #### Compilation Options
 - `-o <output.hex>`: Specifies the output Intel HEX file (defaults to `out.hex`).
-- `--report`: Prints the number of SRAM bytes the program's globals consume as `SRAM_BYTES=<n>` (useful in CI).
+- `--report`: Prints a build summary with Program/SRAM/EEPROM/register usage and fails compilation when a memory budget is exceeded.
+
+### Import resolution
+`import` paths are resolved in this order:
+1. Current working directory (`<path>.ik`)
+2. `IK8B_STD_PATH` (if set)
+3. Paths relative to the compiler executable, including `std` fallbacks for `std/*` imports
 
 ### Clean build artifacts
 ```bash
