@@ -80,6 +80,16 @@ import std/math
     @atanh($zero) -> $r
     ? $r != $zero { 0 -> $ok }
 
+    # Edge cases (Out of bounds)
+    ram imut $nan_val: r16 = -128.0
+    @acosh($zero) -> $r
+    ? $r != $nan_val { 0 -> $ok }
+
+    # atanh domain is (-1, 1). atanh(2.0) should be NaN
+    ram imut $two: r16 = 2.0
+    @atanh($two) -> $r
+    ? $r != $nan_val { 0 -> $ok }
+
     # Force success status into R16 by storing into an SRAM array
     ram mut $res_arr: u8[1] = 0
     $ok -> $res_arr[0]

@@ -31,7 +31,7 @@ for mcu in "${MCUS[@]}"; do
     mcu_fail=0
     mcu_skip=0
 
-    for f in tests/test_*.ik; do
+    for f in $(find tests -type f -name "test_*.ik" | sort); do
         name=$(basename "$f" .ik)
         if [ "$name" = "test_helper" ]; then
             continue
@@ -65,19 +65,20 @@ for mcu in "${MCUS[@]}"; do
         core=$(./ik8b list-devices | grep -w "$mcu" | awk '{print $1}' || echo "Unknown")
 
         case "$name" in
-            test_std_math_trig)
+            test_math_trigonometry)
                 if [ "$core" = "AVRe" ] || [ "$core" = "AVRrc" ]; then mcu_skip=$((mcu_skip+1)); continue; fi
                 limit=20000000 ;;
-            test_std_mem)
+            test_mem)
                 if [ "$core" = "AVRrc" ]; then mcu_skip=$((mcu_skip+1)); continue; fi
                 limit=200000 ;;
-            test_std_math_advanced) limit=60000000 ;;
-            test_std_math_basic) limit=10000000 ;;
+            test_math_algebra) limit=60000000 ;;
+            test_math_core) limit=10000000 ;;
             test_fixed_div) limit=1000000 ;;
             *) limit=200000 ;;
         esac
 
         out=$($VM_BIN "tests/$name.hex" -mmcu="$mcu" -n $limit -d 2>&1 || true)
+        rm -f "tests/$name.hex"
         if echo "$out" | grep -q "HEX overflows flash"; then
             mcu_skip=$((mcu_skip+1))
             continue

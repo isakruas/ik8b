@@ -211,6 +211,7 @@
 
 # Computes square root of a Q8.8 fixed-point value using the binary digit-by-digit extraction algorithm
 @sqrt($x: r16) -> r16 {
+    ? $x < 0.0 { return -128.0 }
     ram mut $res: u16 = 0
     ram mut $bit: u16 = 16384
     ram mut $val: u16 = $x
@@ -269,8 +270,7 @@
 # Computes the natural logarithm ln(x) using Taylor series expansion and scaling.
 # Performs scaling range reduction by multiplying/dividing by Euler's constant.
 @log($x: r16) -> r16 {
-    ram imut $raw_x: u16 = $x
-    ? $raw_x == 0 { return -128.0 }
+    ? $x <= 0.0 { return -128.0 }
     ram mut $val: r16 = $x
     ram mut $offset: r16 = 0.0
     ram imut $e_val: r16 = @e()
@@ -433,6 +433,7 @@
     ram imut $den: r16 = 1.0 - $x
     ram imut $div: r16 = $num / $den
     ram imut $ln: r16 = @log($div)
+    ? $ln == -128.0 { return -128.0 }
     return $ln / 2
 }
 

@@ -33,7 +33,7 @@ test: build
 	echo "ik8b supports $$total_mcus MCU profiles."; \
 	echo "=========================================================="; \
 	fail=0; total_runs=0; \
-	for f in tests/test_*.ik; do \
+	for f in `find tests -type f -name "test_*.ik" | sort`; do \
 	  name=$$(basename $$f .ik); \
 	  if [ "$$name" = "test_helper" ]; then continue; fi; \
 	  suite_fail=0; ran=0; \
@@ -58,14 +58,14 @@ test: build
 	      echo "  -> $$mcu: COMPILE FAIL. Error: $$compile_out"; suite_fail=1; rm -f $$hex; continue; \
 	    fi; \
 	    case "$$name" in \
-	      test_std_math_trig) \
+	      test_math_trigonometry) \
 	        if [ "$$core" = "AVRe" ] || [ "$$core" = "AVRrc" ]; then rm -f $$hex; continue; fi; \
 	        limit=20000000 ;; \
-	      test_std_mem) \
+	      test_mem) \
 	        if [ "$$core" = "AVRrc" ]; then rm -f $$hex; continue; fi; \
 	        limit=200000 ;; \
-	      test_std_math_advanced) limit=60000000 ;; \
-	      test_std_math_basic) limit=10000000 ;; \
+	      test_math_algebra) limit=60000000 ;; \
+	      test_math_core) limit=10000000 ;; \
 	      test_fixed_div) limit=1000000 ;; \
 	      *) limit=200000 ;; \
 	    esac; \

@@ -58,6 +58,19 @@ import std/math
     ram imut $log10_close: r16 = @isclose($log10_ten, 1.0, 0.01)
     ? $log10_close != 1.0 { 0 -> $ok }
 
+    # Edge cases (NaN represented as -128.0)
+    ram imut $neg_one: r16 = -1.0
+    ram imut $log_neg: r16 = @log($neg_one)
+    ram imut $nan_val: r16 = -128.0
+    ? $log_neg != $nan_val { 0 -> $ok }
+
+    ram imut $sqrt_neg: r16 = @sqrt($neg_one)
+    ? $sqrt_neg != $nan_val { 0 -> $ok }
+
+    ram imut $zero_div: r16 = @_q88_div($one, $zero)
+    ram imut $inf_val: r16 = 127.99
+    ? $zero_div != $inf_val { 0 -> $ok }
+
     # 2. Combinatorics & Number Theory
     ram imut $gcd_val: u16 = @gcd(12, 18)
     ? $gcd_val != 6 { 0 -> $ok }
