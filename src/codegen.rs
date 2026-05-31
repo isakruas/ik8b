@@ -96,6 +96,10 @@ pub enum Pass1Inst {
     // Raw data blob to embed in flash (program memory) after all code.
     // Packed as little-endian u16 words during label resolution.
     FlashDataBlob(String, Vec<u8>),
+    // Load register pair (target, target+1) with the WORD address of a function
+    // label (suitable for ICALL via Z). Resolved during label resolution.
+    // Fields: (target_register, function_label)
+    FnAddr16(u8, String),
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -145,6 +149,11 @@ pub struct CodeGenerator {
     ptr_vars: HashMap<String, (String, String)>,
     // String variables: name -> storage space ("ram" or "flash").
     str_vars: HashMap<String, String>,
+    // Function-pointer variables: name -> (argument types, return type). The
+    // value itself is stored as a u16 word address (see `variables`); this side
+    // table preserves the signature for arg coercion and return handling at
+    // indirect call sites (`@$var(...)`).
+    fn_vars: HashMap<String, (Vec<String>, String)>,
     // Intern pool for string literals materialized in SRAM: literal bytes -> base address.
     string_pool: HashMap<String, u16>,
     // Flash string data: accumulated raw bytes for all flash strings, packed
@@ -202,6 +211,7 @@ impl CodeGenerator {
             str_funcs: HashMap::new(),
             ptr_vars: HashMap::new(),
             str_vars: HashMap::new(),
+            fn_vars: HashMap::new(),
             string_pool: HashMap::new(),
             flash_data_blob: Vec::new(),
             flash_blob_label: None,
@@ -862,6 +872,9 @@ impl CodeGenerator {
             }
             if let Some(space) = param_ty.strip_prefix("str ") {
                 self.str_vars.insert(param_name.clone(), space.to_string());
+            }
+            if let Some(sig) = parse_fn_type(param_ty) {
+                self.fn_vars.insert(param_name.clone(), sig);
             }
             let norm_param = normalize_width_type(param_ty);
             let param_ty: &str = &norm_param;
@@ -1633,6 +1646,12 @@ impl CodeGenerator {
                     let space = parts.next().unwrap_or("ram").to_string();
                     let pointee = parts.next().unwrap_or("u8").to_string();
                     self.ptr_vars.insert(name.clone(), (space, pointee));
+                }
+                if let Some(sig) = parse_fn_type(ty) {
+                    // Function-pointer local: stored as a u16 word address; the
+                    // normal scalar path below allocates it and compiles the
+                    // initializer (typically `&@func`).
+                    self.fn_vars.insert(name.clone(), sig);
                 }
                 if let Some(space) = ty.strip_prefix("str ") {
                     self.str_vars.insert(name.clone(), space.to_string());
@@ -2488,6 +2507,14 @@ impl CodeGenerator {
             Expr::AddrOf(inner) => {
                 // Materialize the 16-bit SRAM address of a scalar variable or array element.
                 match &**inner {
+                    // Address of a function: `&@func` yields the function's word
+                    // address, loaded at link time (for use with indirect calls).
+                    Expr::VarRef(name) if name.starts_with('@') => {
+                        if !self.functions.contains_key(name) {
+                            return Err(format!("Cannot take address of unknown function: {}", name));
+                        }
+                        self.emit(Pass1Inst::FnAddr16(target, name.clone()));
+                    }
                     Expr::VarRef(name) => {
                         let (addr, _, _) = self.variables.get(name)
                             .ok_or_else(|| format!("Cannot take address of unknown variable: {}", name))?;
@@ -3530,9 +3557,22 @@ impl CodeGenerator {
                     }
                 }
 
-                // Standard non-intrinsic function call
+                // Standard function call: direct (`@func(...)`) or indirect
+                // through a function-pointer variable (`@$var(...)`).
+                let indirect_callee: Option<String> = if let Some(var) = name.strip_prefix("@$") {
+                    let var_name = format!("${}", var);
+                    if !self.fn_vars.contains_key(&var_name) {
+                        return Err(format!("Cannot indirectly call '{}': not a function pointer", var_name));
+                    }
+                    Some(var_name)
+                } else {
+                    None
+                };
+
                 let mut reg_idx = 24u8;
-                let expected_tys = if let Some((param_tys, _)) = self.functions.get(name) {
+                let expected_tys = if let Some(ref cv) = indirect_callee {
+                    self.fn_vars.get(cv).map(|(a, _)| a.clone())
+                } else if let Some((param_tys, _)) = self.functions.get(name) {
                     Some(param_tys.clone())
                 } else {
                     None
@@ -3548,14 +3588,21 @@ impl CodeGenerator {
                     } else {
                         "u16"
                     };
-                    
+
                     self.compile_expr(arg, reg_idx, arg_ty)?;
-                    
+
                     if reg_idx >= 18 {
                         reg_idx -= 2;
                     }
                 }
-                self.emit(Pass1Inst::RCallL(name.clone()));
+                if let Some(cv) = indirect_callee {
+                    // Load the function pointer into Z (R30:R31) after the args
+                    // are in place, then call indirectly.
+                    self.compile_expr(&Expr::VarRef(cv), 30, "u16")?;
+                    self.emit(Pass1Inst::Op(0x9509)); // ICALL (through Z)
+                } else {
+                    self.emit(Pass1Inst::RCallL(name.clone()));
+                }
                 if target != 24 {
                     let opc1 = self.encode_rd_rr(0x2C00, target, 24);
                     self.emit(Pass1Inst::Op(opc1)); // MOV target, R24
@@ -3603,6 +3650,15 @@ fn validate_type(ty: &str) -> Result<(), String> {
             return Err(format!("Type Error: string space must be ram or flash, got '{}'", space));
         }
         return Ok(());
+    }
+    // Function-pointer type: validate each argument type and the return type.
+    if ty.starts_with("fn(") {
+        let (arg_tys, ret) = parse_fn_type(ty)
+            .ok_or_else(|| format!("Type Error: malformed function type '{}'", ty))?;
+        for a in &arg_tys {
+            validate_type(a)?;
+        }
+        return validate_type(&ret);
     }
     let base = if let Some(rest) = ty.strip_prefix("flash ") {
         rest
@@ -3656,8 +3712,8 @@ fn is_signed_type(ty: &str) -> bool {
 /// whole width layer can treat `i16`/`r16` as `u16` and `i8`/`r8` as `u8`. Storage qualifiers
 /// (`flash `/`eeprom `) and array suffixes (`[N]`) are preserved.
 fn normalize_width_type(ty: &str) -> String {
-    // Pointers and string handles are 16-bit addresses regardless of pointee/space.
-    if ty.starts_with("ptr ") || ty.starts_with("str ") {
+    // Pointers, string handles and function pointers are all 16-bit addresses.
+    if ty.starts_with("ptr ") || ty.starts_with("str ") || ty.starts_with("fn(") {
         return "u16".to_string();
     }
     let (prefix, core) = if let Some(r) = ty.strip_prefix("flash ") {
@@ -3681,6 +3737,47 @@ fn normalize_width_type(ty: &str) -> String {
     format!("{}{}", prefix, normalized)
 }
 
+
+/// Parses a canonical function-pointer type string `fn(T1,T2,...)` or
+/// `fn(T1,...)->R` into its argument types and return type ("void" if absent).
+/// Argument types are split at the top paren depth so nested `fn(...)`/array
+/// types are preserved. Returns None when `ty` is not a function-pointer type.
+fn parse_fn_type(ty: &str) -> Option<(Vec<String>, String)> {
+    let rest = ty.strip_prefix("fn(")?;
+    // Find the ")" that closes the argument list (depth 0).
+    let mut depth = 0i32;
+    let mut close = None;
+    for (i, c) in rest.char_indices() {
+        match c {
+            '(' => depth += 1,
+            ')' => {
+                if depth == 0 { close = Some(i); break; }
+                depth -= 1;
+            }
+            _ => {}
+        }
+    }
+    let close = close?;
+    let args_str = &rest[..close];
+    let after = rest[close + 1..].trim();
+    let ret = if let Some(r) = after.strip_prefix("->") { r.trim().to_string() } else { "void".to_string() };
+    // Split argument list at depth 0 by commas.
+    let mut args = Vec::new();
+    if !args_str.is_empty() {
+        let mut d = 0i32;
+        let mut start = 0usize;
+        for (i, c) in args_str.char_indices() {
+            match c {
+                '(' => d += 1,
+                ')' => d -= 1,
+                ',' if d == 0 => { args.push(args_str[start..i].trim().to_string()); start = i + 1; }
+                _ => {}
+            }
+        }
+        args.push(args_str[start..].trim().to_string());
+    }
+    Some((args, ret))
+}
 
 /// Evaluates an expression to a compile-time constant, but only when the entire subtree
 /// is literal-computable (no variable, hardware, or call leaves). Wrapping mirrors the
@@ -3946,6 +4043,7 @@ pub fn resolve_labels(instructions: &[Pass1Inst]) -> Vec<u16> {
                 Pass1Inst::Op(_) | Pass1Inst::BrbsL(_, _) | Pass1Inst::BrbcL(_, _) => addr += 1,
                 Pass1Inst::RJumpL(_) | Pass1Inst::RCallL(_) => addr += if is_long[idx] { 2 } else { 1 },
                 Pass1Inst::FlashLdi16(_, _, _) => addr += 2, // Two LDI instructions
+                Pass1Inst::FnAddr16(_, _) => addr += 2, // Two LDI instructions
                 Pass1Inst::FlashDataBlob(name, data) => {
                     label_addresses.insert(name.clone(), addr);
                     addr += ((data.len() + 1) / 2) as i64; // Ceiling division: pack bytes into u16 words
@@ -3970,6 +4068,7 @@ pub fn resolve_labels(instructions: &[Pass1Inst]) -> Vec<u16> {
                     addr += if is_long[idx] { 2 } else { 1 };
                 }
                 Pass1Inst::FlashLdi16(_, _, _) => addr += 2,
+                Pass1Inst::FnAddr16(_, _) => addr += 2,
                 Pass1Inst::FlashDataBlob(_, data) => {
                     addr += ((data.len() + 1) / 2) as i64;
                 }
@@ -3987,6 +4086,7 @@ pub fn resolve_labels(instructions: &[Pass1Inst]) -> Vec<u16> {
             Pass1Inst::Op(_) | Pass1Inst::BrbsL(_, _) | Pass1Inst::BrbcL(_, _) => addr += 1,
             Pass1Inst::RJumpL(_) | Pass1Inst::RCallL(_) => addr += if is_long[idx] { 2 } else { 1 },
             Pass1Inst::FlashLdi16(_, _, _) => addr += 2,
+            Pass1Inst::FnAddr16(_, _) => addr += 2,
             Pass1Inst::FlashDataBlob(name, data) => {
                 label_addresses.insert(name.clone(), addr);
                 addr += ((data.len() + 1) / 2) as i64;
@@ -4049,6 +4149,20 @@ pub fn resolve_labels(instructions: &[Pass1Inst]) -> Vec<u16> {
                 let byte_addr = label_word_addr.wrapping_mul(2).wrapping_add(*byte_offset);
                 let lo = (byte_addr & 0xFF) as u8;
                 let hi = ((byte_addr >> 8) & 0xFF) as u8;
+                let d_lo = (*target_reg - 16) as u16;
+                let d_hi = (*target_reg + 1 - 16) as u16;
+                // LDI target_reg, lo
+                final_opcodes.push(0xE000 | (((lo >> 4) as u16) << 8) | (d_lo << 4) | ((lo & 0x0F) as u16));
+                // LDI target_reg+1, hi
+                final_opcodes.push(0xE000 | (((hi >> 4) as u16) << 8) | (d_hi << 4) | ((hi & 0x0F) as u16));
+                addr += 2;
+            }
+            Pass1Inst::FnAddr16(target_reg, label) => {
+                // Resolve the function's WORD address (for ICALL via Z) — no *2,
+                // unlike FlashLdi16 which addresses byte-wise flash data.
+                let word_addr = *label_addresses.get(label).unwrap_or(&0) as u16;
+                let lo = (word_addr & 0xFF) as u8;
+                let hi = ((word_addr >> 8) & 0xFF) as u8;
                 let d_lo = (*target_reg - 16) as u16;
                 let d_hi = (*target_reg + 1 - 16) as u16;
                 // LDI target_reg, lo
@@ -4203,7 +4317,17 @@ fn collect_calls_expr(expr: &Expr, calls: &mut std::collections::HashSet<String>
         Expr::Literal(_) => {}
         Expr::FloatLiteral(_) => {}
         Expr::StringLit(_) => {}
-        Expr::AddrOf(e) | Expr::Deref(e) => collect_calls_expr(e, calls),
+        // `&@func` references a function by address; mark it reachable so DCE
+        // keeps it even if it is never called directly.
+        Expr::AddrOf(e) => {
+            if let Expr::VarRef(n) = &**e {
+                if n.starts_with('@') {
+                    calls.insert(n.clone());
+                }
+            }
+            collect_calls_expr(e, calls);
+        }
+        Expr::Deref(e) => collect_calls_expr(e, calls),
         Expr::VarRef(_) => {}
         Expr::BinOp { left, right, .. } => {
             collect_calls_expr(left, calls);
@@ -5062,7 +5186,12 @@ fn rename_vars_expr(expr: &mut Expr, prefix: &str) {
         Expr::Deref(inner) => {
             rename_vars_expr(inner, prefix);
         }
-        Expr::Call { args, .. } => {
+        Expr::Call { name, args } => {
+            // Indirect calls encode the callee variable in the name (`@$var`);
+            // rewrite that embedded variable so inlining stays consistent.
+            if let Some(var) = name.strip_prefix("@$") {
+                *name = format!("@${}_{}", prefix, var);
+            }
             for arg in args {
                 rename_vars_expr(arg, prefix);
             }

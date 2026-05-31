@@ -146,3 +146,57 @@
     $n -> *$out_cols
     return &$scratch[0]
 }
+
+# =============================================================
+# Streaming API (no buffer; works for arbitrarily long text)
+# =============================================================
+
+# Streams the column bitmap of a NUL-terminated string to a user callback,
+# one byte at a time: 5 glyph columns followed by 1 blank spacing column per
+# character. Nothing is buffered, so SRAM use is O(1) regardless of the text
+# length -- ideal for pushing large text straight to a display.
+#
+# $sink is YOUR function `fn(u8)`; it receives each column byte in order.
+#
+#   @to_display($b: u8) { @spi_transfer($b) }
+#   @font_stream("hello world", &@to_display)
+@font_stream($str: str ram, $sink: fn(u8)) {
+    ram mut $i: u16 = 0
+    loop * {
+        ram imut $ch: u8 = *($str + $i)
+        ? $ch == 0 { return }
+        loop 0..6 -> $col {
+            ram mut $b: u8 = 0
+            ? $col < 5 {
+                @font_get_col($ch, $col) -> $b
+            }
+            @$sink($b)
+        }
+        $i + 1 -> $i
+    }
+}
+
+# Folds the column bitmap of a string through a user callback, threading an
+# accumulator: `$acc = sink($acc, $column_byte)` for every column (5 glyph +
+# 1 spacer per character), starting from $init. Returns the final accumulator.
+# Pure and allocation-free; handy for checksums/CRCs over rendered text or any
+# custom reduction.
+#
+# $sink is YOUR function `fn(u8,u8)->u8` taking (acc, byte) and returning acc.
+@font_fold($str: str ram, $init: u8, $sink: fn(u8,u8)->u8) -> u8 {
+    ram mut $acc: u8 = $init
+    ram mut $i: u16 = 0
+    loop * {
+        ram imut $ch: u8 = *($str + $i)
+        ? $ch == 0 { return $acc }
+        loop 0..6 -> $col {
+            ram mut $b: u8 = 0
+            ? $col < 5 {
+                @font_get_col($ch, $col) -> $b
+            }
+            @$sink($acc, $b) -> $acc
+        }
+        $i + 1 -> $i
+    }
+    return $acc
+}

@@ -4,6 +4,9 @@
 
 import std/font
 
+# Callback used to fold the rendered column stream into an XOR checksum.
+@fxor($acc: u8, $b: u8) -> u8 { return $acc ^ $b }
+
 @main {
     ram mut $ok: u8 = 1
     ram mut $b: u8 = 0
@@ -83,6 +86,17 @@ import std/font
     ? $n != 3 { 140 -> $ok }
     @font_get_col(65, 2) -> $b
     ? $small[2] != $b { 141 -> $ok }
+
+    # ---- font_fold (callback): XOR-checksum the column stream ----
+    # Reference: XOR over the same bytes produced by font_render.
+    ram mut $cols2: u8[16] = 0
+    @font_render("AB", &$cols2[0], 16) -> $n
+    ram mut $ref: u8 = 0
+    loop 0..$n -> $k {
+        $ref ^ $cols2[$k] -> $ref
+    }
+    ram mut $folded: u8 = @font_fold("AB", 0, &@fxor)
+    ? $folded != $ref { 180 -> $ok }
 
     # ---- font_text_cols: columns needed = chars * 6 ----
     @font_text_cols("AB") -> $n

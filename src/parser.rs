@@ -155,6 +155,35 @@ impl Parser {
                 };
                 Ok(format!("str {}", space))
             }
+            // Function-pointer type: `fn(T1, T2, ...)` with an optional `-> R`
+            // return type. Canonicalized as e.g. `fn(u8)` or `fn(u8,u16)->u8`.
+            TokenKind::Keyword(ref kw) if kw == "fn" => {
+                self.consume(Some(TokenKind::Symbol("(".to_string())))?;
+                let mut arg_tys: Vec<String> = Vec::new();
+                loop {
+                    if let Some(t) = self.peek(0) {
+                        if let TokenKind::Symbol(ref s) = t.kind {
+                            if s == ")" { break; }
+                        }
+                    }
+                    arg_tys.push(self.parse_type_spec()?);
+                    if let Some(t) = self.peek(0) {
+                        if let TokenKind::Symbol(ref s) = t.kind {
+                            if s == "," { self.consume(None)?; continue; }
+                        }
+                    }
+                    break;
+                }
+                self.consume(Some(TokenKind::Symbol(")".to_string())))?;
+                let mut ret = "void".to_string();
+                if let Some(t) = self.peek(0) {
+                    if let TokenKind::Arrow = t.kind {
+                        self.consume(Some(TokenKind::Arrow))?;
+                        ret = self.parse_type_spec()?;
+                    }
+                }
+                Ok(format!("fn({}){}", arg_tys.join(","), if ret == "void" { String::new() } else { format!("->{}", ret) }))
+            }
             _ => Err(format!("Expected type specifier, got {:?} at line {}", tok, tok.line)),
         }?;
 
@@ -515,10 +544,16 @@ impl Parser {
                     _ => return Err(format!("Variable must start with $: {:?} at line {}", name_tok, name_tok.line)),
                 };
                 self.consume(Some(TokenKind::Symbol(":".to_string())))?;
-                let ty_tok = self.consume(None)?;
-                let mut ty = match ty_tok.kind {
-                    TokenKind::Type(ref t) => t.clone(),
-                    _ => return Err(format!("Expected type: {:?} at line {}", ty_tok, ty_tok.line)),
+                // Function-pointer locals (`fn(...) [-> R]`) use the full type
+                // grammar; everything else is a primitive type token.
+                let mut ty = if matches!(self.peek(0).map(|t| &t.kind), Some(TokenKind::Keyword(k)) if k == "fn") {
+                    self.parse_type_spec()?
+                } else {
+                    let ty_tok = self.consume(None)?;
+                    match ty_tok.kind {
+                        TokenKind::Type(ref t) => t.clone(),
+                        _ => return Err(format!("Expected type: {:?} at line {}", ty_tok, ty_tok.line)),
+                    }
                 };
                 if let Some(next_tok) = self.peek(0) {
                     if let TokenKind::Symbol(ref sym) = next_tok.kind {
