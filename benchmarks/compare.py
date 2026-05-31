@@ -6,6 +6,7 @@ import sys
 import argparse
 import tempfile
 import csv
+import shlex
 from contextlib import redirect_stdout
 
 BENCHMARKS = ["bench_arithmetic", "bench_bitwise", "bench_loops", "bench_functions", "bench_io"]
@@ -19,7 +20,10 @@ CORE_FAMILIES = {
     "AVRxt": "avr128da32"
 }
 
-VM_BIN = "../bin/avr_vm"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+IK8B_BIN = os.path.join(REPO_ROOT, "ik8b")
+VM_BIN = os.path.join(REPO_ROOT, "tools", "avr-vm", "bin", "avr_vm")
 ARTIFACT_DIR = "out"
 REPORT_DIR = "reports"
 
@@ -41,7 +45,7 @@ def compile_ik_for_mcu(bench, mcu, out_hex):
         tmp.write(patched)
         tmp_path = tmp.name
     try:
-        res = run_cmd(f"../ik8b {tmp_path} -o {out_hex}", cwd=".")
+        res = run_cmd(f"{shlex.quote(IK8B_BIN)} {tmp_path} -o {out_hex}", cwd=".")
     finally:
         os.unlink(tmp_path)
     return res
@@ -57,7 +61,7 @@ def trace_and_measure(hex_path, mcu):
         return 0, 0
     
     # Step 1: Run VM in trace mode to detect terminal halt loop
-    cmd = f"{VM_BIN} {hex_path} -mmcu={mcu} -t -n 2000"
+    cmd = f"{shlex.quote(VM_BIN)} {hex_path} -mmcu={mcu} -t -n 2000"
     res = run_cmd(cmd)
     
     lines = res.stdout.strip().split("\n")
@@ -78,7 +82,7 @@ def trace_and_measure(hex_path, mcu):
         active_instr = 1
         
     # Step 2: Rerun VM to get exact cycles
-    cmd_d = f"{VM_BIN} {hex_path} -mmcu={mcu} -d -n {active_instr}"
+    cmd_d = f"{shlex.quote(VM_BIN)} {hex_path} -mmcu={mcu} -d -n {active_instr}"
     res_d = run_cmd(cmd_d)
     
     cycles = 0
@@ -135,7 +139,7 @@ def print_table(core_name, mcu, results):
         print("|-------------------|----------|-----------|---------------|------------------|------------------------|")
 
 def list_all_mcus():
-    mcus_res = run_cmd("../ik8b --list-devices")
+    mcus_res = run_cmd(f"{shlex.quote(IK8B_BIN)} --list-devices")
     out = []
     for line in mcus_res.stdout.split("\n"):
         parts = line.split()
@@ -312,7 +316,7 @@ def main():
         # Single MCU profiling mode
         mcu = args.mcu
         # Detect core family of the requested MCU
-        mcus_res = run_cmd("../ik8b --list-devices")
+        mcus_res = run_cmd(f"{shlex.quote(IK8B_BIN)} --list-devices")
         core_family = "AVRe+"
         for line in mcus_res.stdout.split("\n"):
             parts = line.split()
@@ -413,7 +417,7 @@ def main():
     
     for mcu in mcu_list:
         hex_path = "out/bench_io_ik.hex"
-        cmd = f"{VM_BIN} {hex_path} -mmcu={mcu} -d -n 20"
+        cmd = f"{shlex.quote(VM_BIN)} {hex_path} -mmcu={mcu} -d -n 20"
         res = run_cmd(cmd)
         
         # Check if Port B output R16 ends up with 0xAA correctly without core faults

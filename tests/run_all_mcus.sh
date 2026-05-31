@@ -3,7 +3,10 @@
 
 set -e
 
-VM_BIN="./bin/avr_vm"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+VM_BIN="$REPO_ROOT/tools/avr-vm/bin/avr_vm"
+IK8B_BIN="$REPO_ROOT/ik8b"
 
 MCUS=(
     "atmega328p"
@@ -18,7 +21,10 @@ MCUS=(
     "avr64da32"
 )
 
-[ -x "$VM_BIN" ] || { echo "Missing $VM_BIN. Run: make build"; exit 1; }
+[ -x "$VM_BIN" ] || { echo "Missing $VM_BIN. Run: make -C $REPO_ROOT/tools/avr-vm"; exit 1; }
+[ -x "$IK8B_BIN" ] || { echo "Missing $IK8B_BIN. Run: make -C $REPO_ROOT build"; exit 1; }
+
+cd "$REPO_ROOT"
 
 echo "=========================================================="
 echo "Running compatibility tests across ${#MCUS[@]} distinct MCUs..."
@@ -45,7 +51,7 @@ for mcu in "${MCUS[@]}"; do
         } > "$tmp"
 
         set +e
-        compile_out=$(./ik8b "$tmp" -o "tests/$name.hex" 2>&1)
+        compile_out=$("$IK8B_BIN" "$tmp" -o "tests/$name.hex" 2>&1)
         compile_rc=$?
         set -e
         rm -f "$tmp"
@@ -62,7 +68,7 @@ for mcu in "${MCUS[@]}"; do
             continue
         fi
 
-        core=$(./ik8b list-devices | grep -w "$mcu" | awk '{print $1}' || echo "Unknown")
+        core=$("$IK8B_BIN" list-devices | grep -w "$mcu" | awk '{print $1}' || echo "Unknown")
 
         case "$name" in
             test_math_trigonometry)
