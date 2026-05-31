@@ -1,6 +1,6 @@
 (* ============================================================================
    ik8b Formal Grammar (EBNF)
-   Version: 1.0
+   Version: 1.1
    Strongly-Typed Embedded Programming Language with Context Sigils
    ============================================================================ *)
 
@@ -14,7 +14,7 @@ TopLevelStatement    ::= ImportStatement
 
 ImportStatement      ::= "import" Identifier
 
-NamespaceStatement    ::= "namespace" Identifier
+NamespaceStatement   ::= "namespace" Identifier
 
 CompileTimeCondition ::= "?" "namespace" "==" Identifier "{" { TopLevelStatement } "}"
 
@@ -35,7 +35,20 @@ Statement            ::= VariableDeclaration
                        | ReturnStatement
                        | ExpressionStatement
 
-VariableDeclaration  ::= ("ram" | "eeprom" | "flash") ("mut" | "imut") VariableIdentifier ":" Type [ "[" Number "]" ] "=" Expression
+(* --- Variable declarations -------------------------------------------------
+   Three forms share a leading storage space. Pointer and string declarations
+   use a dedicated keyword and are always mutable (strings in flash are
+   immutable). Scalar/array/function-pointer declarations carry an explicit
+   mutability and a type after the ":". *)
+VariableDeclaration  ::= PointerDeclaration
+                       | StringDeclaration
+                       | ScalarDeclaration
+
+PointerDeclaration   ::= StorageSpace "ptr" PointerSpace Type VariableIdentifier "=" Expression
+StringDeclaration    ::= ("ram" | "flash") "str" VariableIdentifier "=" StringLiteral
+ScalarDeclaration    ::= StorageSpace ("mut" | "imut") VariableIdentifier ":" Type [ "[" Number "]" ] "=" Expression
+
+StorageSpace         ::= "ram" | "eeprom" | "flash"
 
 Assignment           ::= Expression ( "->" | "->+" | "->-" | "->&" | "->|" | "->^" ) TargetExpression
 
@@ -55,6 +68,7 @@ ReturnStatement      ::= "return" [ Expression ]
 
 ExpressionStatement  ::= Expression
 
+(* --- Expressions (lowest to highest precedence) --------------------------- *)
 Expression           ::= LogicalOr
 
 LogicalOr            ::= LogicalAnd { "||" LogicalAnd }
@@ -75,19 +89,34 @@ Additive             ::= Multiplicative { ( "+" | "-" ) Multiplicative }
 
 Multiplicative       ::= Unary { ( "*" | "/" | "%" ) Unary }
 
-Unary                ::= [ "!" | "~" | "-" ] Unary
+(* In operand position "&" is address-of and "*" is dereference, distinct from
+   the infix bitwise-AND / multiply consumed above. Unary operators are
+   right-associative. *)
+Unary                ::= ( "!" | "~" | "-" | "&" | "*" ) Unary
                        | Primary
 
 Primary              ::= Number
+                       | FloatLiteral
+                       | StringLiteral
                        | BooleanLiteral
                        | CharacterLiteral
+                       | CallExpression
+                       | FunctionAddress
                        | TargetExpression
-                       | FunctionIdentifier "(" [ ArgumentList ] ")"
                        | "(" Expression ")"
+
+(* A direct call names a function (@name); an indirect call names a
+   function-pointer variable (@$var). Both lex as one "@"-prefixed identifier. *)
+CallExpression       ::= ( FunctionIdentifier | IndirectCallTarget ) "(" [ ArgumentList ] ")"
+IndirectCallTarget   ::= "@" VariableIdentifier        (* "@$name" *)
+
+(* Address of a named function, yielding a function pointer value. *)
+FunctionAddress      ::= "&" FunctionIdentifier
 
 ArgumentList         ::= Expression { "," Expression }
 
 TargetExpression     ::= TargetIdentifier [ "[" Expression "]" ]
+                       | "*" Expression                (* pointer dereference target *)
 
 TargetIdentifier     ::= VariableIdentifier | RegisterIdentifier
 
@@ -95,28 +124,40 @@ VariableIdentifier   ::= "$" Identifier
 FunctionIdentifier   ::= "@" Identifier
 RegisterIdentifier   ::= "%" Identifier
 
-Type                 ::= ( PrimitiveType | PointerType | StringType ) [ "[" Number "]" ]
+(* --- Types ----------------------------------------------------------------- *)
+Type                 ::= ( PrimitiveType | PointerType | StringType | FunctionType ) [ "[" Number "]" ]
 
 PrimitiveType        ::= "u8" | "u16" | "i8" | "i16" | "bool" | "char" | "r8" | "r16" | "void"
 
 PointerType          ::= "ptr" PointerSpace Type
 
-StringType           ::= "str" "ram"
+StringType           ::= "str" ( "ram" | "flash" )
+
+FunctionType         ::= "fn" "(" [ Type { "," Type } ] ")" [ "->" Type ]
 
 PointerSpace         ::= "ram" | "eeprom" | "flash"
 
+(* --- Lexical --------------------------------------------------------------- *)
 Identifier           ::= ( Letter | "_" ) { Letter | Digit | "_" | "/" | "." }
 
 Number               ::= DecimalNumber | HexNumber
 DecimalNumber        ::= [ "-" ] Digit { Digit }
 HexNumber            ::= "0x" HexDigit { HexDigit }
 
+(* A fractional literal is resolved to a scaled fixed-point integer (r8/r16). *)
+FloatLiteral         ::= [ "-" ] Digit { Digit } "." Digit { Digit }
+
 BooleanLiteral       ::= "true" | "false"
 
+StringLiteral        ::= '"' { StringChar | EscapeSequence } '"'
 CharacterLiteral     ::= "'" ( PrintableChar | EscapeSequence ) "'"
-EscapeSequence       ::= "\" ( "n" | "r" | "t" | "0" | "\" | "'" )
+EscapeSequence       ::= "\" ( "n" | "r" | "t" | "0" | "\" | "'" | '"' )
+                       | "\x" HexDigit HexDigit
+
+Comment              ::= "#" { any character except newline }
 
 Letter               ::= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
 Digit                ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 HexDigit             ::= Digit | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F"
+StringChar           ::= any ASCII character except double quote or backslash
 PrintableChar        ::= any ASCII character except single quote or backslash

@@ -37,7 +37,7 @@ Line comments start with `#` and continue to the end of the line.
 The reserved keywords are:
 
 ```ik
-const mut imut ram eeprom flash loop return import switch namespace ptr str
+const mut imut ram eeprom flash loop return import switch namespace ptr str fn
 ```
 
 The primitive type names are:
@@ -65,6 +65,20 @@ Character literals are single quoted and evaluate to their byte value:
 ```ik
 'A' '\n' '\r' '\t' '\0' '\\' '\''
 ```
+
+String literals are double quoted. They support the same escapes as character
+literals plus `\"` and a two-digit hexadecimal byte escape `\xHH`, which makes
+them suitable for arbitrary binary data:
+
+```ik
+"hello\n"
+"\x00\x3E\x5B\x4F"
+```
+
+A string literal is lowered to a byte sequence; no NUL terminator is added
+automatically, so include `\x00` (or `\0`) when a terminator is required. String
+literals appear as `str ram`/`str flash` initializers and as `str ram`
+arguments (see §5.1).
 
 Identifiers used after sigils should be composed of letters, digits, `_`, `.`,
 and `/`, with the first unsigiled character being a letter or `_`. `/` and `.`
@@ -159,8 +173,20 @@ The context/pointer-aware complex types are:
   - `ptr flash u16` (pointer to constant `u16` in Program Flash)
   - `ptr eeprom u8` (pointer to persistent `u8` in EEPROM)
 
-- **String Types (`str ram`)**:
-  References a mutable string in SRAM (`ram`).
+- **String Types (`str ram` / `str flash`)**:
+  References a string by base address. `str ram` is a mutable string in SRAM;
+  `str flash` stores the bytes in program memory (read via `LPM`) and indexes
+  them with `$name[i]`. `str flash` is read-only and is rejected on reduced-core
+  (AVRrc) devices, which lack `LPM`.
+
+- **Function-Pointer Types (`fn(<args>)` / `fn(<args>) -> <ret>`)**:
+  A 16-bit word address of a function with the given parameter and return types.
+  Omitting `-> <ret>` means a `void` return. Examples:
+  - `fn(u8)` (pointer to a function taking one `u8`, returning nothing)
+  - `fn(u8,u8) -> u8` (two `u8` arguments, `u8` result)
+
+  A function pointer is produced with `&@func` and called indirectly with
+  `@$var(args)` (see §5.3).
 
 Array types are written as `Type[N]`, where `Type` is any valid base type and `N` is a numeric literal. Example: `u8[16]`, `i16[4]`.
 
@@ -205,6 +231,32 @@ Function calls use parentheses:
 Return values are passed in AVR registers `R24:R25`; a `u8` result uses `R24`.
 Arguments are evaluated into register pairs starting at `R24:R25`, then
 `R22:R23`, `R20:R21`, and `R18:R19`.
+
+#### Function pointers and indirect calls
+
+The address of a function is taken with `&@func`, producing a value of a
+function-pointer type (§5.1). It may be passed as an argument, stored in a
+variable, and called indirectly through the variable with `@$var(args)`:
+
+```ik
+@apply($f: fn(u8) -> u8, $v: u8) -> u8 {
+    return @$f($v)              # indirect call through Z (ICALL)
+}
+
+@inc($x: u8) -> u8 { return $x + 1 }
+
+@main {
+    ram mut $r: u8 = @apply(&@inc, 41)   # 42
+    ram mut $g: fn(u8) -> u8 = &@inc     # function pointer in a local
+    @$g(9) -> $r                         # 10
+}
+```
+
+Indirect calls use the same argument and return-value convention as direct
+calls. A function that is only ever address-taken (never called directly by
+name) is still retained by reachability analysis. Taking the address of a
+function makes it callable from anywhere holding the pointer, so it cannot be
+eliminated as dead code.
 
 ### 5.4 Variables
 
@@ -269,8 +321,10 @@ Expression ->| Target
 Expression ->^ Target
 ```
 
-`Target` may be a mutable `$` variable, a `%` hardware register, or an array
-element. Compound arrows update the target using its current value:
+`Target` may be a mutable `$` variable, a `%` hardware register, an array
+element (`$arr[i]`), or a pointer dereference (`*($p + i)`, which writes through
+a `ptr ram`/`ptr eeprom` pointer; flash is read-only). Compound arrows update
+the target using its current value:
 
 | Operator | Meaning |
 |---|---|
@@ -362,8 +416,8 @@ Expressions are parsed by precedence from highest to lowest:
 
 | Precedence | Operators and forms | Associativity |
 |---:|---|---|
-| 1 | literals, `$x`, `%REG`, `$arr[i]`, `@call(args)`, `(expr)` | primary |
-| 2 | `!`, `~`, unary `-` | right-to-left |
+| 1 | literals, string literals, `$x`, `%REG`, `$arr[i]`, `@call(args)`, `@$ptr(args)`, `&@func`, `(expr)` | primary |
+| 2 | `!`, `~`, unary `-`, address-of `&`, dereference `*` | right-to-left |
 | 3 | `*`, `/`, `%` | left-to-right |
 | 4 | `+`, `-` | left-to-right |
 | 5 | `<`, `>`, `<=`, `>=` | left-to-right |
@@ -380,6 +434,12 @@ left-hand expression of an assignment:
 ```ik
 (-$x) -> $y
 ```
+
+In operand position `&` is address-of and `*` is dereference (distinct from the
+infix bitwise-AND and multiply). `&$var`, `&$arr[i]`, and `&@func` yield 16-bit
+addresses; `*($p + i)` reads through a pointer in its target memory space
+(`ram`/`flash`/`eeprom`). `@$var(args)` is an indirect call through a
+function-pointer variable.
 
 Arithmetic, bitwise operations, division, and modulo are unsigned operations in
 the expression width selected by the surrounding context. Division by zero has
@@ -558,11 +618,13 @@ Unknown options or unexpected extra arguments are CLI errors.
 The current language intentionally omits several constructs common in larger
 languages:
 
-- No strings or string literals.
-- No structs, enums, pointers, references, or dynamic allocation.
+- No structs, enums, or dynamic allocation (no heap; all storage is static).
 - No user-defined global variables.
 - No array bounds checks.
 - No `break` or `continue` statements.
+- Function pointers are supported (`fn(...)`, `&@func`, `@$var(args)`), but
+  there are no closures: a function pointer carries only an address, not any
+  captured environment.
 - No general preprocessor; only top-level `? namespace == name { ... }`.
 - No interrupt declaration syntax beyond emitting low-level intrinsics such as
   `@reti()`.
