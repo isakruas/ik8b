@@ -6,6 +6,23 @@ The **ik8b** compiler is a Rust-based toolchain that translates source code writ
 
 ## Building and Compiling
 
+### Clone with submodules
+Clone the repository and initialize submodules in one step:
+```bash
+git clone --recurse-submodules https://github.com/isakruas/ik8b.git
+```
+
+If you already cloned the repository without submodules:
+```bash
+cd ik8b
+git submodule update --init --recursive
+```
+
+After `git pull`, if submodule pointers changed:
+```bash
+git submodule update --recursive
+```
+
 ### Build the compiler
 Builds the native binary `./ik8b` via a standard Rust container:
 ```bash
