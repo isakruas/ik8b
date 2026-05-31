@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Regression test for pointer/string types and unary statement boundaries.
-namespace atmega328p
+ 
 
 @id($p: ptr ram u8) -> ptr ram u8 {
     return $p

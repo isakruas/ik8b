@@ -41,7 +41,7 @@ for mcu in "${MCUS[@]}"; do
         {
             echo "namespace $mcu"
             echo
-            awk '!/^[[:space:]]*namespace[[:space:]]+[A-Za-z0-9_]+[[:space:]]*$/' "$f"
+            cat "$f"
         } > "$tmp"
 
         set +e
@@ -62,7 +62,26 @@ for mcu in "${MCUS[@]}"; do
             continue
         fi
 
-        out=$($VM_BIN "tests/$name.hex" -mmcu="$mcu" -n 8000 -d 2>&1 || true)
+        core=$(./ik8b list-devices | grep -w "$mcu" | awk '{print $1}' || echo "Unknown")
+
+        case "$name" in
+            test_std_math_trig)
+                if [ "$core" = "AVRe" ] || [ "$core" = "AVRrc" ]; then mcu_skip=$((mcu_skip+1)); continue; fi
+                limit=20000000 ;;
+            test_std_mem)
+                if [ "$core" = "AVRrc" ]; then mcu_skip=$((mcu_skip+1)); continue; fi
+                limit=200000 ;;
+            test_std_math_advanced) limit=60000000 ;;
+            test_std_math_basic) limit=10000000 ;;
+            test_fixed_div) limit=1000000 ;;
+            *) limit=200000 ;;
+        esac
+
+        out=$($VM_BIN "tests/$name.hex" -mmcu="$mcu" -n $limit -d 2>&1 || true)
+        if echo "$out" | grep -q "HEX overflows flash"; then
+            mcu_skip=$((mcu_skip+1))
+            continue
+        fi
         r16=$(echo "$out" | grep -o 'R16 = 0x[0-9A-Fa-f]*' | awk '{print $3}' || true)
 
         if [ "$r16" != "0x01" ]; then

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Regression test for fixed-point division semantics.
-namespace atmega328p
+
 @main {
     ram mut $ok: u8 = 1
 

@@ -12,40 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Regression for statement boundary handling when next line starts with unary operators.
+ 
+import std/delay
 
 @main {
     ram mut $ok: u8 = 1
 
-    ram mut $x: u8 = 5
-    ram mut $y: i8 = 0
-    ram mut $flag: u8 = 1
-    ram ptr u8 $p = &$x
+    # 1. delay_us
+    @delay_us(2, 8)
+    @delay_us(5, 16)
 
-    # These unary-start lines must parse as independent statements.
-    *$p -> $y
-    ? $y != 5 {
-        0 -> $ok
-    }
+    # 2. delay_ms
+    @delay_ms(1, 8)
+    @delay_ms(1, 16)
 
-    -$y -> $y
-    ? $y != -5 {
-        0 -> $ok
-    }
+    # 3. _delay_cycles
+    @_delay_cycles(10)
 
-    ~$x -> $x
-    ? $x != 250 {
-        0 -> $ok
-    }
+    # Force success status into R16 by storing into an SRAM array
+    ram mut $res_arr: u8[1] = 0
+    $ok -> $res_arr[0]
 
-    !$flag -> $flag
-    ? $flag != 0 {
-        0 -> $ok
-    }
-
-    $ok
-
-    loop * {
-        # End of test
-    }
+    loop * {}
 }

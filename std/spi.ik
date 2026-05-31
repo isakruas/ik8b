@@ -42,7 +42,7 @@
         loop * {
             ram imut $status: u8 = %SPSR
             ram imut $spif: u8 = $status & 0x80
-            ? $spif != 0 { loop_break }
+            ? $spif != 0 { return %SPDR }
         }
         return %SPDR
     }
@@ -74,7 +74,7 @@
         loop * {
             ram imut $status: u8 = %SPSR
             ram imut $spif: u8 = $status & 0x80
-            ? $spif != 0 { loop_break }
+            ? $spif != 0 { return %SPDR }
         }
         return %SPDR
     }
@@ -106,7 +106,7 @@
         loop * {
             ram imut $status: u8 = %SPSR
             ram imut $spif: u8 = $status & 0x80
-            ? $spif != 0 { loop_break }
+            ? $spif != 0 { return %SPDR }
         }
         return %SPDR
     }

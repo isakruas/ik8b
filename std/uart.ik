@@ -42,13 +42,17 @@
         0x06 -> %UCSR0C
     }
 
-    # Transmits a single byte over USART0, polling the Data Register Empty (UDRE0) flag
-    @uart_send($data: u8) {
+    @_uart_wait_tx() {
         loop * {
             ram imut $status: u8 = %UCSR0A
             ram imut $udre: u8 = $status & 0x20
-            ? $udre != 0 { loop_break }
+            ? $udre != 0 { return }
         }
+    }
+
+    # Transmits a single byte over USART0, polling the Data Register Empty (UDRE0) flag
+    @uart_send($data: u8) {
+        @_uart_wait_tx()
         $data -> %UDR0
     }
 
@@ -57,7 +61,7 @@
         loop * {
             ram imut $status: u8 = %UCSR0A
             ram imut $rxc: u8 = $status & 0x80
-            ? $rxc != 0 { loop_break }
+            ? $rxc != 0 { return %UDR0 }
         }
         return %UDR0
     }
@@ -119,13 +123,17 @@
         0x06 -> %UCSR0C
     }
 
-    # Transmits a single byte over USART0, polling the UDRE0 flag
-    @uart_send($data: u8) {
+    @_uart_wait_tx() {
         loop * {
             ram imut $status: u8 = %UCSR0A
             ram imut $udre: u8 = $status & 0x20
-            ? $udre != 0 { loop_break }
+            ? $udre != 0 { return }
         }
+    }
+
+    # Transmits a single byte over USART0, polling the UDRE0 flag
+    @uart_send($data: u8) {
+        @_uart_wait_tx()
         $data -> %UDR0
     }
 
@@ -134,7 +142,7 @@
         loop * {
             ram imut $status: u8 = %UCSR0A
             ram imut $rxc: u8 = $status & 0x80
-            ? $rxc != 0 { loop_break }
+            ? $rxc != 0 { return %UDR0 }
         }
         return %UDR0
     }
@@ -168,13 +176,17 @@
         0x06 -> %UCSR1C
     }
 
-    # Transmits a single byte over USART1, polling the UDRE1 flag
-    @uart1_send($data: u8) {
+    @_uart1_wait_tx() {
         loop * {
             ram imut $status: u8 = %UCSR1A
             ram imut $udre: u8 = $status & 0x20
-            ? $udre != 0 { loop_break }
+            ? $udre != 0 { return }
         }
+    }
+
+    # Transmits a single byte over USART1, polling the UDRE1 flag
+    @uart1_send($data: u8) {
+        @_uart1_wait_tx()
         $data -> %UDR1
     }
 
@@ -183,7 +195,7 @@
         loop * {
             ram imut $status: u8 = %UCSR1A
             ram imut $rxc: u8 = $status & 0x80
-            ? $rxc != 0 { loop_break }
+            ? $rxc != 0 { return %UDR1 }
         }
         return %UDR1
     }
@@ -215,13 +227,17 @@
         0x06 -> %UCSR1C
     }
 
-    # Transmits a single byte over USART1, polling the UDRE1 flag
-    @uart_send($data: u8) {
+    @_uart_wait_tx() {
         loop * {
             ram imut $status: u8 = %UCSR1A
             ram imut $udre: u8 = $status & 0x20
-            ? $udre != 0 { loop_break }
+            ? $udre != 0 { return }
         }
+    }
+
+    # Transmits a single byte over USART1, polling the UDRE1 flag
+    @uart_send($data: u8) {
+        @_uart_wait_tx()
         $data -> %UDR1
     }
 
@@ -230,7 +246,7 @@
         loop * {
             ram imut $status: u8 = %UCSR1A
             ram imut $rxc: u8 = $status & 0x80
-            ? $rxc != 0 { loop_break }
+            ? $rxc != 0 { return %UDR1 }
         }
         return %UDR1
     }

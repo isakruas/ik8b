@@ -15,7 +15,7 @@
 # Technical test for fixed-point types r8 (Q4.4) and r16 (Q8.8).
 # Fixed-point multiply uses the hardware multiplier; cores without one are
 # skipped by the harness (the compiler emits a Memory Error for them).
-namespace atmega328p
+
 @main {
     ram mut $ok: u8 = 1
 

@@ -15,7 +15,7 @@
 # Technical test for signed integer types i8 / i16.
 # Each case is chosen so that an UNSIGNED interpretation would give a different
 # (wrong) answer, proving the signed code paths are actually exercised.
-namespace atmega328p
+ 
 @main {
     ram mut $ok: u8 = 1
 

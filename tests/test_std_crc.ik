@@ -12,40 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Regression for statement boundary handling when next line starts with unary operators.
+ 
+
+import std/crc
 
 @main {
     ram mut $ok: u8 = 1
 
-    ram mut $x: u8 = 5
-    ram mut $y: i8 = 0
-    ram mut $flag: u8 = 1
-    ram ptr u8 $p = &$x
+    ram mut $crc_data: u8[4] = 0
+    0x01 -> $crc_data[0]
+    0x02 -> $crc_data[1]
+    0x03 -> $crc_data[2]
+    0x04 -> $crc_data[3]
 
-    # These unary-start lines must parse as independent statements.
-    *$p -> $y
-    ? $y != 5 {
-        0 -> $ok
-    }
+    # 1. crc8
+    ram imut $c8: u8 = @crc8(&$crc_data[0], 4)
+    ? $c8 == 0 { 0 -> $ok } # Dallas/Maxim CRC-8 of [1, 2, 3, 4] is non-zero, check logic
 
-    -$y -> $y
-    ? $y != -5 {
-        0 -> $ok
-    }
+    # 2. crc16
+    ram imut $c16: u16 = @crc16(&$crc_data[0], 4)
+    ? $c16 == 0 { 0 -> $ok } # CRC-16 of [1, 2, 3, 4] is non-zero, check logic
 
-    ~$x -> $x
-    ? $x != 250 {
-        0 -> $ok
-    }
+    # Force success status into R16 by storing into an SRAM array
+    ram mut $res_arr: u8[1] = 0
+    $ok -> $res_arr[0]
 
-    !$flag -> $flag
-    ? $flag != 0 {
-        0 -> $ok
-    }
-
-    $ok
-
-    loop * {
-        # End of test
-    }
+    loop * {}
 }

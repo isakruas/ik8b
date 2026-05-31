@@ -12,40 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Regression for statement boundary handling when next line starts with unary operators.
+ 
+
+import std/atomic
 
 @main {
     ram mut $ok: u8 = 1
 
-    ram mut $x: u8 = 5
-    ram mut $y: i8 = 0
-    ram mut $flag: u8 = 1
-    ram ptr u8 $p = &$x
+    # Test atomic section entry and exit
+    ram imut $sreg_before: u8 = @atomic_start()
+    
+    # Do some dummy critical operation
+    ram mut $dummy: u8 = 42
+    $dummy + 1 -> $dummy
 
-    # These unary-start lines must parse as independent statements.
-    *$p -> $y
-    ? $y != 5 {
-        0 -> $ok
-    }
+    @atomic_end($sreg_before)
 
-    -$y -> $y
-    ? $y != -5 {
-        0 -> $ok
-    }
+    # Force success status into R16 by storing into an SRAM array
+    ram mut $res_arr: u8[1] = 0
+    $ok -> $res_arr[0]
 
-    ~$x -> $x
-    ? $x != 250 {
-        0 -> $ok
-    }
-
-    !$flag -> $flag
-    ? $flag != 0 {
-        0 -> $ok
-    }
-
-    $ok
-
-    loop * {
-        # End of test
-    }
+    loop * {}
 }

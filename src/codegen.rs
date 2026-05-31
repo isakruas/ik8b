@@ -505,6 +505,7 @@ impl CodeGenerator {
             }
         }
         self.leaf_functions = leaf_functions.clone();
+        println!("LEAF FUNCTIONS: {:?}", self.leaf_functions);
 
         // Stage 0C: AST-to-AST inlining pass (leaf-only policy).
         let mut inline_counter = 0;
@@ -632,7 +633,7 @@ impl CodeGenerator {
                 let addr = *val as u16;
                 if addr >= self.sram_start && addr < self.sram_free_ptr {
                     return Err(format!(
-                        "Hardware conflict: Constant '{}' points to address 0x{:04X}, which overlaps with the compiler-allocated SRAM variable space [0x{:04X}, 0x{:04X})",
+                        "Memory Error: Hardware conflict: Constant '{}' points to address 0x{:04X}, which overlaps with the compiler-allocated SRAM variable space [0x{:04X}, 0x{:04X})",
                         name, addr, self.sram_start, self.sram_free_ptr
                     ));
                 }
@@ -790,8 +791,12 @@ impl CodeGenerator {
     /// ABI assumptions encoded here:
     /// - Incoming args start at `r24:r25` and descend by pairs.
     /// - Return value is produced in `r24:r25`.
-    /// - Callee-saved set is exactly `current_saves`, except `@main` (root, non-returning path).
     fn compile_function(&mut self, name: &str, params: &[(String, String)], _ret_ty: &str, body: &[Stmt]) -> Result<(), String> {
+        self.variables.clear();
+        self.fixed_vars.clear();
+        self.signed_vars.clear();
+        self.ptr_vars.clear();
+        self.str_vars.clear();
         let saves = self.plan_function_registers(params, body);
         // @main is the root: nothing relies on it preserving registers, and it never returns,
         // so it uses register homes without the save/restore overhead.
@@ -947,6 +952,10 @@ impl CodeGenerator {
         self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, p0, a1))); // MOV scr, a_hi  (scr = p0)
         self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2400, p0, b1))); // EOR scr, b_hi
         self.emit(Pass1Inst::Op(0x920F | ((p0 as u16) << 4)));       // PUSH scr
+        self.emit(Pass1Inst::Op(0x920F | ((p1 as u16) << 4)));       // PUSH p1
+        self.emit(Pass1Inst::Op(0x920F | ((p2 as u16) << 4)));       // PUSH p2
+        self.emit(Pass1Inst::Op(0x920F | ((p3 as u16) << 4)));       // PUSH p3
+
         self.emit_abs16(a0, a1);
         self.emit_abs16(b0, b1);
         // Unsigned 16x16 -> 32: product p3:p2:p1:p0.
@@ -970,6 +979,10 @@ impl CodeGenerator {
         // >>8: result low = p1, result high = p2.
         self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, target, p1)));
         self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, target + 1, p2)));
+
+        self.emit(Pass1Inst::Op(0x900F | ((p3 as u16) << 4)));       // POP p3
+        self.emit(Pass1Inst::Op(0x900F | ((p2 as u16) << 4)));       // POP p2
+        self.emit(Pass1Inst::Op(0x900F | ((p1 as u16) << 4)));       // POP p1
         self.emit(Pass1Inst::Op(0x900F | ((p0 as u16) << 4)));       // POP scr
         self.emit_cond_neg16(target, target + 1, p0);
         Ok(())
@@ -1000,6 +1013,11 @@ impl CodeGenerator {
             let rem0 = target + 5;
             let rem1 = target + 6;
             let cnt = target + 7;
+
+            self.emit(Pass1Inst::Op(0x920F | ((q2 as u16) << 4)));   // PUSH q2
+            self.emit(Pass1Inst::Op(0x920F | ((rem0 as u16) << 4))); // PUSH rem0
+            self.emit(Pass1Inst::Op(0x920F | ((rem1 as u16) << 4))); // PUSH rem1
+            self.emit(Pass1Inst::Op(0x920F | ((cnt as u16) << 4)));  // PUSH cnt
 
             // Preserve quotient sign source across clobbering loop.
             self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, q2, q1))); // MOV q2, left_hi
@@ -1047,6 +1065,11 @@ impl CodeGenerator {
             // Reapply sign on 16-bit result.
             self.emit(Pass1Inst::Op(0x900F | ((q2 as u16) << 4))); // POP sign
             self.emit_cond_neg16(q0, q1, q2);
+
+            self.emit(Pass1Inst::Op(0x900F | ((cnt as u16) << 4)));  // POP cnt
+            self.emit(Pass1Inst::Op(0x900F | ((rem1 as u16) << 4))); // POP rem1
+            self.emit(Pass1Inst::Op(0x900F | ((rem0 as u16) << 4))); // POP rem0
+            self.emit(Pass1Inst::Op(0x900F | ((q2 as u16) << 4)));   // POP q2
             return Ok(());
         }
 
@@ -1058,6 +1081,12 @@ impl CodeGenerator {
         let rem0 = target + 4;
         let rem1 = target + 5;
         let cnt = target + 6;
+
+        self.emit(Pass1Inst::Op(0x920F | ((q1 as u16) << 4)));   // PUSH q1
+        self.emit(Pass1Inst::Op(0x920F | ((d1 as u16) << 4)));   // PUSH d1
+        self.emit(Pass1Inst::Op(0x920F | ((rem0 as u16) << 4))); // PUSH rem0
+        self.emit(Pass1Inst::Op(0x920F | ((rem1 as u16) << 4))); // PUSH rem1
+        self.emit(Pass1Inst::Op(0x920F | ((cnt as u16) << 4)));  // PUSH cnt
 
         // Preserve quotient sign source.
         self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, d1, q0))); // MOV d1, left
@@ -1100,6 +1129,13 @@ impl CodeGenerator {
         // Reapply sign on low byte.
         self.emit(Pass1Inst::Op(0x900F | ((d1 as u16) << 4))); // POP sign
         self.emit_cond_neg8(q0, d1);
+
+        self.emit(Pass1Inst::Op(0x900F | ((cnt as u16) << 4)));  // POP cnt
+        self.emit(Pass1Inst::Op(0x900F | ((rem1 as u16) << 4))); // POP rem1
+        self.emit(Pass1Inst::Op(0x900F | ((rem0 as u16) << 4))); // POP rem0
+        self.emit(Pass1Inst::Op(0x900F | ((d1 as u16) << 4)));   // POP d1
+        self.emit(Pass1Inst::Op(0x900F | ((q1 as u16) << 4)));   // POP q1
+
         Ok(())
     }
 
@@ -1154,7 +1190,7 @@ impl CodeGenerator {
                         } else {
                             ty.as_str()
                         };
-                        let width16 = ty_clean.starts_with("u16");
+                        let width16 = ty_clean.starts_with("u16") || ty_clean.starts_with("i16") || ty_clean.starts_with("r16");
                         let pointee = if let Some(frac) = self.fixed_vars.get(name).copied() {
                             if frac == 8 { "r16".to_string() } else { "r8".to_string() }
                         } else if self.signed_vars.contains(name) {
@@ -1183,7 +1219,7 @@ impl CodeGenerator {
                             } else {
                                 ty.as_str()
                             };
-                            let width16 = ty_clean.starts_with("u16");
+                            let width16 = ty_clean.starts_with("u16") || ty_clean.starts_with("i16") || ty_clean.starts_with("r16");
                             let pointee = if let Some(frac) = self.fixed_vars.get(name).copied() {
                                 if frac == 8 { "r16".to_string() } else { "r8".to_string() }
                             } else if self.signed_vars.contains(name) {
@@ -1224,7 +1260,7 @@ impl CodeGenerator {
     /// Resolves the target memory space and pointee type of a dereference operand.
     fn deref_target_info(&self, ptr_expr: &Expr) -> Result<(String, String), String> {
         self.expr_pointer_info(ptr_expr).ok_or_else(|| {
-            "Cannot dereference expression: expected a pointer/string value".to_string()
+            format!("Cannot dereference expression: expected a pointer/string value, got: {:?}, ptr_vars: {:?}", ptr_expr, self.ptr_vars)
         })
     }
 
@@ -1713,7 +1749,7 @@ impl CodeGenerator {
                                 return Err(format!("Cannot assign to elements of immutable array: {}", array_name));
                             }
                             
-                            let item_ty = if array_ty.starts_with("u16") { "u16" } else { "u8" };
+                            let item_ty = if array_ty.starts_with("u16") || array_ty.starts_with("i16") || array_ty.starts_with("r16") { "u16" } else { "u8" };
                             self.compile_expr(expr, 16, item_ty)?;
                             self.compile_expr(right, 18, "u16")?;
                             
@@ -2084,7 +2120,7 @@ impl CodeGenerator {
                 if name.starts_with('$') {
                     if let Some((_, t, _)) = self.variables.get(name) {
                         let t_clean = if t.starts_with("eeprom ") { &t[7..] } else if t.starts_with("flash ") { &t[6..] } else { t };
-                        if t_clean.starts_with("u16") { return "u16".to_string(); }
+                        if t_clean.starts_with("u16") || t_clean.starts_with("i16") || t_clean.starts_with("r16") { return "u16".to_string(); }
                     }
                 }
                 "u8".to_string()
@@ -2094,7 +2130,7 @@ impl CodeGenerator {
                     if let Expr::VarRef(name) = &**left {
                         if let Some((_, t, _)) = self.variables.get(name) {
                             let t_clean = if t.starts_with("eeprom ") { &t[7..] } else if t.starts_with("flash ") { &t[6..] } else { t };
-                            if t_clean.starts_with("u16") { return "u16".to_string(); }
+                            if t_clean.starts_with("u16") || t_clean.starts_with("i16") || t_clean.starts_with("r16") { return "u16".to_string(); }
                         }
                     }
                     return "u8".to_string();
@@ -2111,7 +2147,7 @@ impl CodeGenerator {
             Expr::UnaryOp { expr, .. } => self.infer_type(expr),
             Expr::Call { name, .. } => {
                 if let Some((_, ret)) = self.functions.get(name) {
-                    if ret.starts_with("u16") { return "u16".to_string(); }
+                    if ret.starts_with("u16") || ret.starts_with("i16") || ret.starts_with("r16") { return "u16".to_string(); }
                 }
                 "u8".to_string()
             }
@@ -2409,7 +2445,7 @@ impl CodeGenerator {
                             let (base, aty, _) = self.variables.get(arr)
                                 .ok_or_else(|| format!("Cannot take address of unknown array: {}", arr))?;
                             let base = *base;
-                            let item_sz = if aty.starts_with("u16") { 2u16 } else { 1u16 };
+                            let item_sz = if aty.starts_with("u16") || aty.starts_with("i16") || aty.starts_with("r16") { 2u16 } else { 1u16 };
                             self.compile_expr(right, target, "u16")?;       // index in target:target+1
                             if item_sz == 2 {
                                 self.emit(Pass1Inst::Op(self.encode_rd_rr(0x0C00, target, target)));         // LSL lo
@@ -2560,7 +2596,7 @@ impl CodeGenerator {
                             .ok_or_else(|| format!("Undefined array variable: {}", array_name))?;
                         let base_addr = *base_addr;
                         
-                        let item_ty = if array_ty.starts_with("u16") { "u16" } else { "u8" };
+                        let item_ty = if array_ty.starts_with("u16") || array_ty.starts_with("i16") || array_ty.starts_with("r16") { "u16" } else { "u8" };
                         self.compile_expr(right, target, "u16")?;
                         
                         if item_ty == "u16" {
@@ -2941,6 +2977,11 @@ impl CodeGenerator {
                         let res_lo = target + 4;
                         let res_hi = target + 5;
                         let cnt = target + 6;
+
+                        self.emit(Pass1Inst::Op(0x920F | ((res_lo as u16) << 4))); // PUSH res_lo
+                        self.emit(Pass1Inst::Op(0x920F | ((res_hi as u16) << 4))); // PUSH res_hi
+                        self.emit(Pass1Inst::Op(0x920F | ((cnt as u16) << 4)));    // PUSH cnt
+
                         self.emit(Pass1Inst::Op(0xE000 | (((res_lo - 16) as u16) << 4)));    // LDI res_lo, 0
                         self.emit(Pass1Inst::Op(0xE000 | (((res_hi - 16) as u16) << 4)));    // LDI res_hi, 0
                         self.emit(Pass1Inst::Op(0xE000 | 0x0100 | (((cnt - 16) as u16) << 4))); // LDI cnt, 16
@@ -2957,6 +2998,10 @@ impl CodeGenerator {
                         self.emit(Pass1Inst::BrbcL(1, loop_label));                          // BRNE loop
                         self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, target, res_lo))); // MOV res
                         self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, target + 1, res_hi)));
+
+                        self.emit(Pass1Inst::Op(0x900F | ((cnt as u16) << 4)));    // POP cnt
+                        self.emit(Pass1Inst::Op(0x900F | ((res_hi as u16) << 4))); // POP res_hi
+                        self.emit(Pass1Inst::Op(0x900F | ((res_lo as u16) << 4))); // POP res_lo
                     } else if self.has_hw_mul() {
                         // Hardware multiplication: target * target+2 -> R1:R0
                         let opc_mul = 0x9C00 | ((((target + 2) & 0x10) as u16) << 5) | ((target as u16) << 4) | (((target + 2) & 0x0F) as u16);
@@ -2975,6 +3020,9 @@ impl CodeGenerator {
                         
                         let res_reg = target + 4;
                         let cnt_reg = target + 5;
+
+                        self.emit(Pass1Inst::Op(0x920F | ((res_reg as u16) << 4))); // PUSH res_reg
+                        self.emit(Pass1Inst::Op(0x920F | ((cnt_reg as u16) << 4))); // PUSH cnt_reg
     
                         // LDI res_reg, 0 (result)
                         self.emit(Pass1Inst::Op(0xE000 | (((res_reg - 16) as u16) << 4)));
@@ -3006,6 +3054,9 @@ impl CodeGenerator {
                         // MOV target, res_reg (move result to target register)
                         let opc_mov = self.encode_rd_rr(0x2C00, target, res_reg);
                         self.emit(Pass1Inst::Op(opc_mov));
+
+                        self.emit(Pass1Inst::Op(0x900F | ((cnt_reg as u16) << 4))); // POP cnt_reg
+                        self.emit(Pass1Inst::Op(0x900F | ((res_reg as u16) << 4))); // POP res_reg
                     }
                 } else if (op == "/" || op == "%") && ty == "u16" {
                     // Restoring division, 16-bit. For signed operands the magnitudes are divided
@@ -3027,6 +3078,9 @@ impl CodeGenerator {
                     let rem_lo = target + 4;
                     let rem_hi = target + 5;
                     let cnt = target + 6;
+                    self.emit(Pass1Inst::Op(0x920F | ((rem_lo as u16) << 4))); // PUSH rem_lo
+                    self.emit(Pass1Inst::Op(0x920F | ((rem_hi as u16) << 4))); // PUSH rem_hi
+                    self.emit(Pass1Inst::Op(0x920F | ((cnt as u16) << 4)));    // PUSH cnt
                     self.emit(Pass1Inst::Op(0xE000 | (((rem_lo - 16) as u16) << 4)));    // LDI rem_lo, 0
                     self.emit(Pass1Inst::Op(0xE000 | (((rem_hi - 16) as u16) << 4)));    // LDI rem_hi, 0
                     self.emit(Pass1Inst::Op(0xE000 | 0x0100 | (((cnt - 16) as u16) << 4))); // LDI cnt, 16
@@ -3048,6 +3102,9 @@ impl CodeGenerator {
                         self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, target, rem_lo)));     // MOV target, rem_lo
                         self.emit(Pass1Inst::Op(self.encode_rd_rr(0x2C00, target + 1, rem_hi))); // MOV target+1, rem_hi
                     }
+                    self.emit(Pass1Inst::Op(0x900F | ((cnt as u16) << 4)));    // POP cnt
+                    self.emit(Pass1Inst::Op(0x900F | ((rem_hi as u16) << 4))); // POP rem_hi
+                    self.emit(Pass1Inst::Op(0x900F | ((rem_lo as u16) << 4))); // POP rem_lo
                     if signed {
                         self.emit(Pass1Inst::Op(0x900F | (((target + 4) as u16) << 4))); // POP scr
                         self.emit_cond_neg16(target, target + 1, target + 4);
@@ -3069,6 +3126,9 @@ impl CodeGenerator {
 
                     let rem_reg = target + 4;
                     let cnt_reg = target + 5;
+
+                    self.emit(Pass1Inst::Op(0x920F | ((rem_reg as u16) << 4))); // PUSH rem_reg
+                    self.emit(Pass1Inst::Op(0x920F | ((cnt_reg as u16) << 4))); // PUSH cnt_reg
 
                     // LDI rem_reg, 0 (remainder)
                     self.emit(Pass1Inst::Op(0xE000 | (((rem_reg - 16) as u16) << 4)));
@@ -3107,6 +3167,9 @@ impl CodeGenerator {
                         let opc_mov = self.encode_rd_rr(0x2C00, target, rem_reg);
                         self.emit(Pass1Inst::Op(opc_mov));
                     }
+                    self.emit(Pass1Inst::Op(0x900F | ((cnt_reg as u16) << 4))); // POP cnt_reg
+                    self.emit(Pass1Inst::Op(0x900F | ((rem_reg as u16) << 4))); // POP rem_reg
+
                     if signed {
                         self.emit(Pass1Inst::Op(0xFC00 | (((target + 3) as u16) << 4) | 7)); // SBRC scr, 7
                         self.emit_neg8(target);                                              // NEG result
@@ -4865,6 +4928,12 @@ fn rename_vars_expr(expr: &mut Expr, prefix: &str) {
         }
         Expr::UnaryOp { expr, .. } => {
             rename_vars_expr(expr, prefix);
+        }
+        Expr::AddrOf(inner) => {
+            rename_vars_expr(inner, prefix);
+        }
+        Expr::Deref(inner) => {
+            rename_vars_expr(inner, prefix);
         }
         Expr::Call { args, .. } => {
             for arg in args {

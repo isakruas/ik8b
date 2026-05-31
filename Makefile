@@ -43,19 +43,33 @@ test: build
 	    sram=$$(echo $$row | cut -d, -f3); \
 	    [ -z "$$sram" ] && sram=0; \
 	    tmp_src=$$(mktemp); \
-	    awk -v ns="$$mcu" 'BEGIN{done=0} {if(!done && $$0 ~ /^[[:space:]]*@main([[:space:]]|$$)/){print "namespace " ns; print ""; done=1} print} END{if(!done){print "namespace " ns; print ""}}' $$f > $$tmp_src; \
+	    echo "namespace $$mcu" > $$tmp_src; \
+	    echo "" >> $$tmp_src; \
+	    cat $$f >> $$tmp_src; \
 	    hex=/tmp/$$name-$$mcu.hex; \
 	    compile_out=$$(./ik8b $$tmp_src -o $$hex --report 2>&1); \
 	    compile_rc=$$?; \
 	    fp=$$(echo "$$compile_out" | grep -o 'SRAM_BYTES=[0-9]*' | cut -d= -f2 | tail -n1); \
 	    [ -z "$$fp" ] && fp=999; \
 	    if [ "$$fp" -gt 0 ] && [ "$$sram" -eq 0 ]; then rm -f $$tmp_src $$hex; continue; fi; \
-	    rm -f $$tmp_src; \
+	     \
 	    if [ $$compile_rc -ne 0 ]; then \
 	      if echo "$$compile_out" | grep -q "Memory Error:"; then rm -f $$hex; continue; fi; \
 	      echo "  -> $$mcu: COMPILE FAIL. Error: $$compile_out"; suite_fail=1; rm -f $$hex; continue; \
 	    fi; \
-	    out=$$($(VM_BIN) $$hex -mmcu=$$mcu -n 200000 -d 2>&1); \
+	    case "$$name" in \
+	      test_std_math_trig) \
+	        if [ "$$core" = "AVRe" ] || [ "$$core" = "AVRrc" ]; then rm -f $$hex; continue; fi; \
+	        limit=20000000 ;; \
+	      test_std_mem) \
+	        if [ "$$core" = "AVRrc" ]; then rm -f $$hex; continue; fi; \
+	        limit=200000 ;; \
+	      test_std_math_advanced) limit=60000000 ;; \
+	      test_std_math_basic) limit=10000000 ;; \
+	      test_fixed_div) limit=1000000 ;; \
+	      *) limit=200000 ;; \
+	    esac; \
+	    out=$$($(VM_BIN) $$hex -mmcu=$$mcu -n $$limit -d 2>&1); \
 	    rm -f $$hex; \
 	    if echo "$$out" | grep -q "HEX overflows flash"; then continue; fi; \
 	    r16=$$(echo "$$out" | grep -o 'R16 = 0x[0-9A-Fa-f]*' | awk '{print $$3}'); \

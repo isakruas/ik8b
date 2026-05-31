@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Regression for EEPROM pointer dereference/load/store semantics.
-namespace atmega328p
+ 
 @main {
     ram mut $ok: u8 = 1
 

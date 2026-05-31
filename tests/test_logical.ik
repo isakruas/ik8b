@@ -55,7 +55,8 @@
 
     # 6. Short-circuit AND (&&) - False && True (should short-circuit and not evaluate right side)
     ram mut $eval_right: u8 = 0
-    ? $f && (@trigger_eval_right() == 1) {
+    ram ptr u8 $eval_right_ptr = &$eval_right
+    ? $f && (@trigger_eval_right($eval_right_ptr) == 1) {
         0 -> $ok
     }
     ? $eval_right != 0 {
@@ -69,7 +70,7 @@
 
     # 8. Short-circuit OR (||) - True || False (should short-circuit and not evaluate right side)
     0 -> $eval_right # reset to 0
-    ? $t || (@trigger_eval_right() == 1) {
+    ? $t || (@trigger_eval_right($eval_right_ptr) == 1) {
         # Correct
     } : {
         0 -> $ok
@@ -91,7 +92,7 @@
     }
 }
 
-@trigger_eval_right() -> u8 {
-    1 -> $eval_right
+@trigger_eval_right($ptr: ptr ram u8) -> u8 {
+    1 -> *$ptr
     return 1
 }

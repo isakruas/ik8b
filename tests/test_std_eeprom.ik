@@ -12,37 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Technical test for ik8b standardized eeprom/ram/flash storage variables
+
+import std/eeprom
 
 @main {
     ram mut $ok: u8 = 1
 
-    # 1. SRAM immutable (ram imut)
-    ram imut $const_ram: u8 = 55
-    ram mut $temp_ram: u8 = 0
-    $const_ram -> $temp_ram
-    ? $temp_ram != 55 {
-        0 -> $ok
-    }
+    # Declare a dummy eeprom variable to trigger capacity verification.
+    # MCUs without EEPROM support will be safely skipped by the compiler.
+    eeprom mut $ee_dummy: u8 = 0
 
-    # 2. Flash immutable (flash imut)
-    flash imut $const_flash: u16 = 45000
-    ram mut $temp_flash: u16 = 0
-    $const_flash -> $temp_flash
-    ? $temp_flash != 45000 {
-        0 -> $ok
-    }
+    # 1. eeprom_write & eeprom_read (safe low address)
+    @eeprom_write(0x0002, 0x99)
+    ram imut $ee_val: u8 = @eeprom_read(0x0002)
+    ? $ee_val != 0x99 { 0 -> $ok }
 
-    # 3. EEPROM mutable (eeprom mut) - Declared and compiled
-    # Reserves 3 bytes of persistent storage space.
-    eeprom mut $config_u8: u8 = 42
-    eeprom mut $config_u16: u16 = 30000
+    # Test another safe address
+    @eeprom_write(0x0004, 0xAA)
+    ram imut $ee_val2: u8 = @eeprom_read(0x0004)
+    ? $ee_val2 != 0xAA { 0 -> $ok }
 
     # Force success status into R16 by storing into an SRAM array
     ram mut $res_arr: u8[1] = 0
     $ok -> $res_arr[0]
 
-    loop * {
-        # End of test
-    }
+    loop * {}
 }

@@ -31,7 +31,7 @@
         loop * {
             ram imut $ctrl: u8 = %TWCR
             ram imut $twint: u8 = $ctrl & 0x80
-            ? $twint != 0 { loop_break }
+            ? $twint != 0 { return }
         }
     }
 
@@ -97,7 +97,7 @@
         loop * {
             ram imut $ctrl: u8 = %TWCR
             ram imut $twint: u8 = $ctrl & 0x80
-            ? $twint != 0 { loop_break }
+            ? $twint != 0 { return }
         }
     }
 
@@ -163,7 +163,7 @@
         loop * {
             ram imut $ctrl: u8 = %TWCR
             ram imut $twint: u8 = $ctrl & 0x80
-            ? $twint != 0 { loop_break }
+            ? $twint != 0 { return }
         }
     }
 

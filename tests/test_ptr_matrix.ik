@@ -13,8 +13,7 @@
 # limitations under the License.
 
 # Regression matrix for pointer dereference/load/store across widths and spaces.
-namespace atmega328p
-
+ 
 @id_ptr_u16($p: ptr ram u16) -> ptr ram u16 {
     return $p
 }

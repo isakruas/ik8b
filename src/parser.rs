@@ -420,6 +420,32 @@ impl Parser {
                     break;
                 }
             }
+
+            // Handle compile-time namespace check inside blocks
+            if let TokenKind::Symbol(ref sym) = tok.kind {
+                if sym == "?" {
+                    if let Some(next_tok) = self.peek(1) {
+                        if let TokenKind::Keyword(ref kw) = next_tok.kind {
+                            if kw == "namespace" {
+                                self.consume(None)?; // '?'
+                                self.consume(None)?; // 'namespace'
+                                self.consume(Some(TokenKind::Symbol("==".to_string())))?;
+                                let right_tok = self.consume(None)?;
+                                let right = match right_tok.kind {
+                                    TokenKind::Identifier(ref id) => id.clone(),
+                                    _ => return Err(format!("Expected identifier in compile-time check, got {:?} at line {}", right_tok, right_tok.line)),
+                                };
+                                let block_stmts = self.parse_block()?;
+                                if self.active_namespace == right {
+                                    stmts.extend(block_stmts);
+                                }
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+
             stmts.push(self.parse_statement()?);
         }
         self.consume(Some(TokenKind::Symbol("}".to_string())))?;

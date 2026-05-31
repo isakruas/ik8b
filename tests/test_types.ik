@@ -14,7 +14,7 @@
 
 # Technical test for the byte-wide primitive types bool and char.
 # Both lower identically to u8 (1 byte, unsigned).
-namespace atmega328p
+ 
 @main {
     ram mut $ok: u8 = 1
 
