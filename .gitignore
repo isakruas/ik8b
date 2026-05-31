@@ -22,6 +22,7 @@
 # Benchmark output directories
 /benchmarks/out/
 /benchmarks/reports/
+__pycache__
 
 # Logs and temporary files
 *.log
