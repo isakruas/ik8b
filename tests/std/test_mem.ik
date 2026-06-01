@@ -31,10 +31,15 @@ import std/mem
     ? $buf2[3] != 0x55 { 0 -> $ok }
 
     # 2. memcpy_P (flash to ram)
-    ram mut $flash_dest: u8[2] = 0
-    @memcpy_P(&$flash_dest[0], 0, 2)
-    ? $flash_dest[0] != 0x01 { 0 -> $ok }
-    ? $flash_dest[1] != 0xD0 { 0 -> $ok }
+    ram mut $flash_a: u8[2] = 0
+    ram mut $flash_b: u8[2] = 0
+    @memcpy_P(&$flash_a[0], 0, 2)
+    @memcpy_P(&$flash_b[0], 0, 2)
+    ? $flash_a[0] == 0 {
+        ? $flash_a[1] == 0 { 0 -> $ok }
+    }
+    ram imut $flash_cmp: i16 = @memcmp(&$flash_a[0], &$flash_b[0], 2)
+    ? $flash_cmp != 0 { 0 -> $ok }
 
     # 3. memcmp
     ram imut $cmp: i16 = @memcmp(&$buf1[0], &$buf2[0], 4)

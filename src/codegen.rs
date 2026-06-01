@@ -61,6 +61,9 @@ pub enum TargetCore {
     AVRxt,
 }
 
+const HOME_REGS_SCALAR_DEFAULT: [u8; 14] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+const HOME_REGS_PAIR_DEFAULT: [u8; 7] = [2, 4, 6, 8, 10, 12, 14];
+
 impl TargetCore {
     /// True when target core family provides hardware multiply instructions.
     pub fn supports_mul(self) -> bool {
@@ -70,6 +73,24 @@ impl TargetCore {
     /// True when target supports ADIW/SBIW word-immediate arithmetic forms.
     pub fn supports_adiw_sbiw(self) -> bool {
         !matches!(self, TargetCore::AVRrc)
+    }
+
+    /// Candidate scalar home registers for this core profile.
+    pub fn scalar_home_regs(self) -> &'static [u8] {
+        match self {
+            // AVRrc remaps low register names into the upper bank. Keeping stable
+            // homes there aliases scratch temps; keep scalar homes in SRAM.
+            TargetCore::AVRrc => &[],
+            _ => &HOME_REGS_SCALAR_DEFAULT,
+        }
+    }
+
+    /// Preferred aligned start registers for 16-bit homes.
+    pub fn pair_home_regs(self) -> &'static [u8] {
+        match self {
+            TargetCore::AVRrc => &[],
+            _ => &HOME_REGS_PAIR_DEFAULT,
+        }
     }
 }
 
@@ -258,6 +279,15 @@ impl CodeGenerator {
     /// Records the selected device name (used to resolve ISR vector names).
     pub fn set_device_name(&mut self, name: &str) {
         self.device_name = name.to_string();
+    }
+
+    /// Returns configured SRAM span in bytes, or 0 when unknown/invalid.
+    fn sram_size_bytes(&self) -> u16 {
+        if self.sram_top >= self.sram_start {
+            self.sram_top - self.sram_start + 1
+        } else {
+            0
+        }
     }
 
     /// Feature gate helper for multiplication opcode paths.
@@ -678,9 +708,9 @@ impl CodeGenerator {
         // Stage 2: emit the reset/interrupt vector table for the selected device,
         // then the startup trampoline: RCALL @main, then HALT.
         //
-        // Slot 0 is always RESET and must jump to startup. Every other unbound slot
-        // also jumps to startup (same behavior as a reset vector) so the generated
-        // image always has a complete vector table for that MCU.
+        // Slot 0 is always RESET and must jump to startup.
+        // Unbound interrupt slots jump to a shared default ISR that executes RETI.
+        // This keeps table size correct without turning spurious interrupts into resets.
         let mut isr_vectors: Vec<(u8, String)> = Vec::new();
         for node in &ast {
             if let ASTNode::Isr { vector, .. } = node {
@@ -715,17 +745,24 @@ impl CodeGenerator {
                 }
             };
 
+            let mut needs_default_isr = false;
+
             emit_vec_jump(self, "__start"); // RESET vector
             for k in 1..total_slots {
                 if let Some((_, label)) = isr_vectors.iter().find(|(i, _)| *i == k as u8) {
                     emit_vec_jump(self, label);
                 } else {
-                    emit_vec_jump(self, "__start");
+                    emit_vec_jump(self, "__default_isr");
+                    needs_default_isr = true;
                 }
             }
             self.emit(Pass1Inst::Label("__start".to_string()));
             self.emit(Pass1Inst::RCallL("@main".to_string()));
             self.emit(Pass1Inst::Op(0xFFFF));
+            if needs_default_isr {
+                self.emit(Pass1Inst::Label("__default_isr".to_string()));
+                self.emit(Pass1Inst::Op(0x9518)); // RETI
+            }
         } else {
             self.emit(Pass1Inst::RCallL("@main".to_string()));
             self.emit(Pass1Inst::Op(0xFFFF));
@@ -839,22 +876,17 @@ impl CodeGenerator {
 
         let mut saves: Vec<u8> = Vec::new();
 
-        // AVRrc only exposes a reduced register file; using low register homes aliases
-        // temporaries and can corrupt values. Keep AVRrc scalar homes in SRAM.
-        let disable_reg_homes = self.target_core == TargetCore::AVRrc;
+        let scalar_home_pool = self.target_core.scalar_home_regs();
+        let pair_home_pool = self.target_core.pair_home_regs();
+        let reg_homes_enabled = !scalar_home_pool.is_empty();
 
-        // 1. Allocate loop bound registers first from R2..R15
+        // 1. Allocate loop bound registers first from preferred pair-home pool.
         let depth = max_loop_depth(body);
-        if !disable_reg_homes {
-            let mut cursor: u8 = 2;
-            let limit: u8 = 16;
-            for _ in 0..depth {
-                if cursor + 1 < limit {
-                    self.loop_bound_regs.push(cursor);
-                    saves.push(cursor);
-                    saves.push(cursor + 1);
-                    cursor += 2;
-                }
+        if reg_homes_enabled {
+            for &pair_start in pair_home_pool.iter().take(depth) {
+                self.loop_bound_regs.push(pair_start);
+                saves.push(pair_start);
+                saves.push(pair_start + 1);
             }
         }
 
@@ -888,10 +920,16 @@ impl CodeGenerator {
         }
 
         let mut coloring_saves: Vec<u8> = Vec::new();
-        if disable_reg_homes {
+        if !reg_homes_enabled {
             self.var_homes.clear();
         } else {
-            let (colors, cs) = color_graph(&graph, &decl_types, &reserved_regs);
+            let (colors, cs) = color_graph(
+                &graph,
+                &decl_types,
+                &reserved_regs,
+                scalar_home_pool,
+                pair_home_pool,
+            );
             self.var_homes = colors;
             coloring_saves = cs;
         }
@@ -917,7 +955,7 @@ impl CodeGenerator {
         }
 
         // Combine loop bounds and coloring registers to preserve callee-saved registers
-        if !has_pointer_ops && !disable_reg_homes {
+        if !has_pointer_ops && reg_homes_enabled {
             for r in coloring_saves {
                 if !saves.contains(&r) {
                     saves.push(r);
@@ -965,7 +1003,7 @@ impl CodeGenerator {
         }
 
         for &r in &saves {
-            if r >= 2 && r <= 15 {
+            if (2..=31).contains(&r) {
                 self.total_registers_used.insert(r);
             }
         }
@@ -1728,7 +1766,7 @@ impl CodeGenerator {
         };
         if self.sram_free_ptr + size > limit {
             return Err(format!(
-                "SRAM Overflow: Allocating variable '{}' of size {} bytes would exceed the maximum safe SRAM limit (0x{:04X}) leaving insufficient space for stack",
+                "Memory Error: SRAM Overflow: Allocating variable '{}' of size {} bytes would exceed the maximum safe SRAM limit (0x{:04X}) leaving insufficient space for stack",
                 name, size, limit
             ));
         }
@@ -1805,7 +1843,12 @@ impl CodeGenerator {
     // - OUT/IN are shortest and avoid address literal words.
     // - Y+q is still 1-word and cheap for near-SRAM locals.
     fn emit_sts(&mut self, addr: u16, reg: u8) -> Result<(), String> {
-        if addr >= 0x20 && addr < 0x60 {
+        // On reduced-core parts, SRAM may start at 0x40; treat SRAM first so
+        // 0x40..0x5F are not mis-lowered as I/O OUT accesses.
+        let in_sram = self.sram_size_bytes() > 0
+            && addr >= self.sram_start
+            && (addr - self.sram_start) < self.sram_size_bytes();
+        if !in_sram && addr >= 0x20 && addr < 0x60 {
             // OUT A, reg -> 0xB800 | (((A & 0x30) as u16) << 5) | ((reg as u16) << 4) | ((A & 0x0F) as u16)
             let io_addr = addr - 0x20;
             let op = 0xB800 | (((io_addr & 0x30) as u16) << 5) | ((reg as u16) << 4) | ((io_addr & 0x0F) as u16);
@@ -1835,7 +1878,10 @@ impl CodeGenerator {
     // 2) Y-displacement window   -> LDD Y+q (1 word)
     // 3) fallback                -> LDS (2 words)
     fn emit_lds(&mut self, target: u8, addr: u16) -> Result<(), String> {
-        if addr >= 0x20 && addr < 0x60 {
+        let in_sram = self.sram_size_bytes() > 0
+            && addr >= self.sram_start
+            && (addr - self.sram_start) < self.sram_size_bytes();
+        if !in_sram && addr >= 0x20 && addr < 0x60 {
             // IN target, A -> 0xB000 | (((A & 0x30) as u16) << 5) | ((target as u16) << 4) | ((A & 0x0F) as u16)
             let io_addr = addr - 0x20;
             let op = 0xB000 | (((io_addr & 0x30) as u16) << 5) | ((target as u16) << 4) | ((io_addr & 0x0F) as u16);
@@ -4156,12 +4202,17 @@ pub fn peephole_optimize(instructions: &[Pass1Inst]) -> Vec<Pass1Inst> {
         let mut i = 0;
         let mut changed = false;
         while i < current.len() {
-            // Pattern 1: Redundant relative jump directly to the next label
+            // Pattern 1: Redundant relative jump directly to the next label.
+            //
+            // Safety carve-out: never fold jumps that land on `__start`.
+            // The interrupt vector table may intentionally contain many slots
+            // that jump to startup, and removing any of them changes vector
+            // indices (breaking hardware dispatch addresses).
             if i + 1 < current.len() {
                 if let (Pass1Inst::RJumpL(ref label), Pass1Inst::Label(ref target_label)) = 
                     (&current[i], &current[i+1])
                 {
-                    if label == target_label {
+                    if label == target_label && target_label != "__start" {
                         optimized.push(current[i+1].clone());
                         i += 2;
                         changed = true;
@@ -5370,9 +5421,12 @@ fn color_graph(
     graph: &InterferenceGraph,
     decl_types: &HashMap<String, String>,
     reserved_regs: &std::collections::HashSet<u8>,
+    scalar_home_pool: &[u8],
+    pair_home_pool: &[u8],
 ) -> (HashMap<String, u8>, Vec<u8>) {
     let mut colors: HashMap<String, u8> = HashMap::new();
     let mut used_regs = std::collections::HashSet::new();
+    let scalar_pool_set: std::collections::HashSet<u8> = scalar_home_pool.iter().copied().collect();
 
     let mut nodes: Vec<String> = graph.nodes.iter()
         .filter(|node| {
@@ -5406,24 +5460,31 @@ fn color_graph(
 
         let mut assigned_reg = None;
         if is_u16 {
-            for reg in (2..15).step_by(2) {
-                if !reserved_regs.contains(&reg) && !reserved_regs.contains(&(reg + 1))
-                   && !neighbors_regs.contains(&reg) && !neighbors_regs.contains(&(reg + 1)) {
+            for &reg in pair_home_pool {
+                if !reserved_regs.contains(&reg)
+                   && !reserved_regs.contains(&(reg + 1))
+                   && !neighbors_regs.contains(&reg)
+                   && !neighbors_regs.contains(&(reg + 1)) {
                     assigned_reg = Some(reg);
                     break;
                 }
             }
             if assigned_reg.is_none() {
-                for reg in 2..15 {
-                    if !reserved_regs.contains(&reg) && !reserved_regs.contains(&(reg + 1))
-                       && !neighbors_regs.contains(&reg) && !neighbors_regs.contains(&(reg + 1)) {
+                for &reg in scalar_home_pool {
+                    if !scalar_pool_set.contains(&(reg + 1)) {
+                        continue;
+                    }
+                    if !reserved_regs.contains(&reg)
+                       && !reserved_regs.contains(&(reg + 1))
+                       && !neighbors_regs.contains(&reg)
+                       && !neighbors_regs.contains(&(reg + 1)) {
                         assigned_reg = Some(reg);
                         break;
                     }
                 }
             }
         } else {
-            for reg in 2..16 {
+            for &reg in scalar_home_pool {
                 if !reserved_regs.contains(&reg) && !neighbors_regs.contains(&reg) {
                     assigned_reg = Some(reg);
                     break;

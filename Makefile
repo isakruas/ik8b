@@ -1,6 +1,6 @@
 # Makefile for ik8b Rust compiler
 
-.PHONY: all build compile test clean
+.PHONY: all build compile test test-interrupts clean
 
 VM_BIN := ./tools/avr-vm/bin/avr_vm
 
@@ -87,6 +87,10 @@ test: build
 	echo "Results: $$total_runs PASSED runs, $$fail FAILED test suites"; \
 	echo "=========================================================="; \
 	if [ $$fail -ne 0 ]; then exit 1; fi
+
+# Validate ISR/vector binding coverage for all devices in src/vectors.rs.
+test-interrupts: build
+	@tests/test_interrupt_vectors.sh
 
 # Clean cargo build artifacts and test HEX files
 clean:
