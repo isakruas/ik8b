@@ -675,12 +675,12 @@ impl CodeGenerator {
             }
         }
 
-        // Stage 2: emit the reset/interrupt vector table (if any ISRs exist),
+        // Stage 2: emit the reset/interrupt vector table for the selected device,
         // then the startup trampoline: RCALL @main, then HALT.
         //
-        // The vector table lives at address 0 with fixed 2-word JMP slots: slot 0
-        // jumps to startup (reset), each bound vector jumps to its ISR, and unused
-        // slots jump to a do-nothing handler.
+        // Slot 0 is always RESET and must jump to startup. Every other unbound slot
+        // also jumps to startup (same behavior as a reset vector) so the generated
+        // image always has a complete vector table for that MCU.
         let mut isr_vectors: Vec<(u8, String)> = Vec::new();
         for node in &ast {
             if let ASTNode::Isr { vector, .. } = node {
@@ -690,28 +690,45 @@ impl CodeGenerator {
                         self.device_name, vector
                     )
                 })?;
+                if idx == 0 {
+                    return Err(format!(
+                        "Interrupt Error: 'isr {}' targets RESET (vector 0). RESET is reserved for startup and cannot be bound as an ISR.",
+                        vector
+                    ));
+                }
+                if isr_vectors.iter().any(|(i, _)| *i == idx) {
+                    return Err(format!(
+                        "Interrupt Error: duplicate ISR binding for vector index {} on device '{}'.",
+                        idx, self.device_name
+                    ));
+                }
                 isr_vectors.push((idx, format!("__isr_{}", vector)));
             }
         }
 
-        if isr_vectors.is_empty() {
-            self.emit(Pass1Inst::RCallL("@main".to_string()));
-            self.emit(Pass1Inst::Op(0xFFFF));
-        } else {
-            let max_idx = isr_vectors.iter().map(|(i, _)| *i).max().unwrap_or(0);
-            self.emit(Pass1Inst::JmpAbsL("__start".to_string())); // reset vector
-            for k in 1..=max_idx {
-                if let Some((_, label)) = isr_vectors.iter().find(|(i, _)| *i == k) {
-                    self.emit(Pass1Inst::JmpAbsL(label.clone()));
+        if let Some(total_slots) = vector_slot_count(&self.device_name) {
+            let emit_vec_jump = |this: &mut CodeGenerator, label: &str| {
+                if this.target_core == TargetCore::AVRrc {
+                    this.emit(Pass1Inst::RJumpL(label.to_string()));
                 } else {
-                    self.emit(Pass1Inst::JmpAbsL("__bad_isr".to_string()));
+                    this.emit(Pass1Inst::JmpAbsL(label.to_string()));
+                }
+            };
+
+            emit_vec_jump(self, "__start"); // RESET vector
+            for k in 1..total_slots {
+                if let Some((_, label)) = isr_vectors.iter().find(|(i, _)| *i == k as u8) {
+                    emit_vec_jump(self, label);
+                } else {
+                    emit_vec_jump(self, "__start");
                 }
             }
             self.emit(Pass1Inst::Label("__start".to_string()));
             self.emit(Pass1Inst::RCallL("@main".to_string()));
             self.emit(Pass1Inst::Op(0xFFFF));
-            self.emit(Pass1Inst::Label("__bad_isr".to_string()));
-            self.emit(Pass1Inst::Op(0x9518)); // RETI: ignore spurious/unbound interrupts
+        } else {
+            self.emit(Pass1Inst::RCallL("@main".to_string()));
+            self.emit(Pass1Inst::Op(0xFFFF));
         }
 
         // Stage 3: mark reachable functions from @main (DCE frontier).
@@ -822,16 +839,22 @@ impl CodeGenerator {
 
         let mut saves: Vec<u8> = Vec::new();
 
+        // AVRrc only exposes a reduced register file; using low register homes aliases
+        // temporaries and can corrupt values. Keep AVRrc scalar homes in SRAM.
+        let disable_reg_homes = self.target_core == TargetCore::AVRrc;
+
         // 1. Allocate loop bound registers first from R2..R15
         let depth = max_loop_depth(body);
-        let mut cursor: u8 = 2;
-        let limit: u8 = 16;
-        for _ in 0..depth {
-            if cursor + 1 < limit {
-                self.loop_bound_regs.push(cursor);
-                saves.push(cursor);
-                saves.push(cursor + 1);
-                cursor += 2;
+        if !disable_reg_homes {
+            let mut cursor: u8 = 2;
+            let limit: u8 = 16;
+            for _ in 0..depth {
+                if cursor + 1 < limit {
+                    self.loop_bound_regs.push(cursor);
+                    saves.push(cursor);
+                    saves.push(cursor + 1);
+                    cursor += 2;
+                }
             }
         }
 
@@ -864,8 +887,14 @@ impl CodeGenerator {
             reserved_regs.insert(r + 1);
         }
 
-        let (colors, coloring_saves) = color_graph(&graph, &decl_types, &reserved_regs);
-        self.var_homes = colors;
+        let mut coloring_saves: Vec<u8> = Vec::new();
+        if disable_reg_homes {
+            self.var_homes.clear();
+        } else {
+            let (colors, cs) = color_graph(&graph, &decl_types, &reserved_regs);
+            self.var_homes = colors;
+            coloring_saves = cs;
+        }
 
         // Variables whose address is taken must be in SRAM (a register home has no address).
         let mut address_taken = std::collections::HashSet::new();
@@ -888,7 +917,7 @@ impl CodeGenerator {
         }
 
         // Combine loop bounds and coloring registers to preserve callee-saved registers
-        if !has_pointer_ops {
+        if !has_pointer_ops && !disable_reg_homes {
             for r in coloring_saves {
                 if !saves.contains(&r) {
                     saves.push(r);
@@ -1677,12 +1706,26 @@ impl CodeGenerator {
             1
         };
 
-        // Reserve a 64-byte stack margin below the top of usable SRAM. Use the
-        // device-reported top, but never tighten below the historical default so
-        // existing small-SRAM targets keep compiling unchanged.
-        let base_limit: u16 = if self.sram_start == 0x0100 { 0x08FF - 64 } else { 0xFFFF - 64 };
-        let dev_limit = self.sram_top.saturating_sub(64);
-        let limit = base_limit.max(dev_limit);
+        // Reserve a stack margin below the top of usable SRAM reported by the
+        // selected device. Use an adaptive margin on small MCUs so tiny parts
+        // remain compilable while still leaving headroom for call depth.
+        let fallback_limit: u16 = if self.sram_start == 0x0100 { 0x08FF - 64 } else { 0xFFFF - 64 };
+        let limit = if self.sram_top > 0 {
+            let total_sram = self
+                .sram_top
+                .saturating_sub(self.sram_start)
+                .saturating_add(1);
+            let mut stack_margin = total_sram / 4; // ~25% reserve
+            if stack_margin < 8 {
+                stack_margin = 8;
+            }
+            if stack_margin > 64 {
+                stack_margin = 64;
+            }
+            self.sram_top.saturating_sub(stack_margin)
+        } else {
+            fallback_limit
+        };
         if self.sram_free_ptr + size > limit {
             return Err(format!(
                 "SRAM Overflow: Allocating variable '{}' of size {} bytes would exceed the maximum safe SRAM limit (0x{:04X}) leaving insufficient space for stack",
@@ -5669,7 +5712,7 @@ fn scale_floats(expr: &mut Expr, frac: u8) -> Result<(), String> {
 /// For a device with a known vector table, a name must appear in that table, or
 /// a bare decimal index must fall within range; anything else returns None so
 /// the caller can reject it. For a device without a table, a bare decimal index
-/// is accepted as an escape hatch. All supported targets use 2-word vector slots.
+/// is accepted as an escape hatch.
 ///
 /// Vector data for every device lives in the generated `crate::vectors` table
 /// (see `tools/gen_vectors.sh`); each slot may list more than one accepted name.
@@ -5692,6 +5735,12 @@ fn vector_index(device: &str, name: &str) -> Option<u8> {
         }
     }
     None
+}
+
+/// Returns the interrupt vector table size (including RESET at index 0) for
+/// a known device, or None when the device has no bundled vector metadata.
+fn vector_slot_count(device: &str) -> Option<usize> {
+    crate::vectors::device_vectors(device).map(|t| t.len())
 }
 
 /// Returns true if `expr` contains any function/intrinsic call.
