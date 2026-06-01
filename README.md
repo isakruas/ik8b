@@ -65,3 +65,28 @@ Flag aliases are also supported: `-h`, `--help`, `-V`, `--version`, `--info`,
 ```bash
 make clean
 ```
+
+## Testing
+
+Run the full compiler + VM regression suite across supported MCUs:
+```bash
+make test
+```
+
+Validate interrupt vector binding coverage for all devices:
+```bash
+make test-interrupts
+```
+
+Validate runtime interrupt delivery in AVR-VM (representative cores):
+```bash
+make test-vm-interrupts
+```
+
+For exhaustive VM interrupt delivery checks across all listed devices/vectors:
+```bash
+FULL_ALL_DEVICES=1 tests/test_vm_interrupts.sh
+```
+
+AVR-VM CLI flags and interrupt injection options are documented in:
+`tools/avr-vm/README.md`

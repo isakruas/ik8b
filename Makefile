@@ -1,6 +1,6 @@
 # Makefile for ik8b Rust compiler
 
-.PHONY: all build compile test test-interrupts clean
+.PHONY: all build compile test test-interrupts test-vm-interrupts clean
 
 VM_BIN := ./tools/avr-vm/bin/avr_vm
 
@@ -91,6 +91,11 @@ test: build
 # Validate ISR/vector binding coverage for all devices in src/vectors.rs.
 test-interrupts: build
 	@tests/test_interrupt_vectors.sh
+
+# Validate runtime interrupt delivery in AVR-VM (representative cores by default).
+# Set FULL_ALL_DEVICES=1 to run across every vector of every listed device.
+test-vm-interrupts: build
+	@tests/test_vm_interrupts.sh
 
 # Clean cargo build artifacts and test HEX files
 clean:
