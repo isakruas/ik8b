@@ -22,6 +22,10 @@ pub enum ASTNode {
     Const { name: String, ty: String, value: i32 },
     /// A subroutine declaration with parameters, return type, and body.
     Func { name: String, params: Vec<(String, String)>, ret_ty: String, body: Vec<Stmt> },
+    /// An interrupt service routine bound to a named device vector (e.g.
+    /// `isr TIMER0_COMPA { ... }`). Has no parameters or return value; the
+    /// backend emits a vector-table jump, a full context save/restore, and `reti`.
+    Isr { vector: String, body: Vec<Stmt> },
 }
 
 /// Represents statements that execute sequentially in a subroutine body.
@@ -262,6 +266,9 @@ impl Parser {
                             TokenKind::Keyword(ref kw) if kw == "const" => {
                                 block_nodes.push(self.parse_const()?);
                             }
+                            TokenKind::Keyword(ref kw) if kw == "isr" => {
+                                block_nodes.push(self.parse_isr()?);
+                            }
                             TokenKind::Identifier(ref name) if name.starts_with('@') => {
                                 block_nodes.push(self.parse_function()?);
                             }
@@ -274,10 +281,13 @@ impl Parser {
                         nodes.extend(block_nodes);
                     }
                 }
+                TokenKind::Keyword(ref kw) if kw == "isr" => {
+                    nodes.push(self.parse_isr()?);
+                }
                 TokenKind::Identifier(ref name) if name.starts_with('@') => {
                     nodes.push(self.parse_function()?);
                 }
-                _ => return Err(format!("Expected top-level declaration (namespace, import, const or function), got {:?} at line {}", tok, tok.line)),
+                _ => return Err(format!("Expected top-level declaration (namespace, import, const, function or isr), got {:?} at line {}", tok, tok.line)),
             }
         }
         Ok(nodes)
@@ -437,6 +447,19 @@ impl Parser {
 
         let body = self.parse_block()?;
         Ok(ASTNode::Func { name, params, ret_ty, body })
+    }
+
+    /// Parses an interrupt service routine declaration.
+    /// Syntax: `isr VECTOR_NAME { Block }`
+    fn parse_isr(&mut self) -> Result<ASTNode, String> {
+        self.consume(Some(TokenKind::Keyword("isr".to_string())))?;
+        let vec_tok = self.consume(None)?;
+        let vector = match vec_tok.kind {
+            TokenKind::Identifier(ref v) => v.clone(),
+            _ => return Err(format!("Expected an interrupt vector name after 'isr', got {:?} at line {}", vec_tok, vec_tok.line)),
+        };
+        let body = self.parse_block()?;
+        Ok(ASTNode::Isr { vector, body })
     }
 
     /// Parses a curly-bracket enclosed block containing zero or more statements.

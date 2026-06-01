@@ -86,6 +86,9 @@ pub enum Pass1Inst {
     Label(String),
     RJumpL(String),
     RCallL(String),
+    // Absolute 2-word JMP to a label. Always two words (never relaxed), so it is
+    // safe inside the fixed-stride interrupt vector table.
+    JmpAbsL(String),
     // Conditional branches encoded later with 7-bit relative displacement.
     BrbsL(u8, String),
     BrbcL(u8, String),
@@ -132,6 +135,17 @@ pub struct CodeGenerator {
     leaf_functions: std::collections::HashSet<String>,
     func_bodies: std::collections::HashMap<String, (Vec<(String, String)>, String, Vec<Stmt>)>,
     imut_constants: HashMap<String, i64>,
+    // Nullary functions whose body is a single `return <const-expr>`. Their calls
+    // fold to immediates at every use site, so layout/ABI accessors cost nothing.
+    const_funcs: HashMap<String, i64>,
+    // Highest usable SRAM byte address for the selected device (for the
+    // stack/heap-collision guard). Defaults to the classic 2 KB top.
+    sram_top: u16,
+    // Selected device name, used to resolve interrupt vector names to indices.
+    device_name: String,
+    // True while compiling an ISR body, so `emit_return` restores the full
+    // interrupt context and ends with RETI instead of RET.
+    in_isr: bool,
     // Names of variables whose declared type is signed (i8/i16/r8/r16). Width is normalized to
     // u8/u16 in `variables`, so signedness is tracked here and consulted only where instruction
     // selection differs (comparisons, division/modulo, sign-extension, constant folding).
@@ -203,6 +217,10 @@ impl CodeGenerator {
             func_bodies: std::collections::HashMap::new(),
             total_registers_used: std::collections::HashSet::new(),
             imut_constants: HashMap::new(),
+            const_funcs: HashMap::new(),
+            sram_top: 0x08FF,
+            device_name: String::new(),
+            in_isr: false,
             signed_vars: std::collections::HashSet::new(),
             signed_funcs: std::collections::HashSet::new(),
             fixed_vars: HashMap::new(),
@@ -229,6 +247,17 @@ impl CodeGenerator {
     pub fn set_sram_start(&mut self, addr: u16) {
         self.sram_start = addr;
         self.sram_free_ptr = addr;
+    }
+
+    /// Records the highest usable SRAM byte for the selected device so the
+    /// stack/heap-collision guard scales with parts that have more than 2 KB.
+    pub fn set_sram_top(&mut self, top: u16) {
+        self.sram_top = top;
+    }
+
+    /// Records the selected device name (used to resolve ISR vector names).
+    pub fn set_device_name(&mut self, name: &str) {
+        self.device_name = name.to_string();
     }
 
     /// Feature gate helper for multiplication opcode paths.
@@ -607,12 +636,83 @@ impl CodeGenerator {
                     let param_tys: Vec<String> = params.iter().map(|(_, ty)| normalize_width_type(ty)).collect();
                     self.functions.insert(name.clone(), (param_tys, normalize_width_type(ret_ty)));
                 }
+                // ISRs declare no signature and take no parameters; nothing to
+                // register here. They are compiled in Stage 4b.
+                ASTNode::Isr { .. } => {}
             }
         }
 
-        // Stage 2: emit startup trampoline: RCALL @main, then HALT.
-        self.emit(Pass1Inst::RCallL("@main".to_string()));
-        self.emit(Pass1Inst::Op(0xFFFF));
+        // Stage 1b: fold nullary constant-returning functions. A function with no
+        // parameters whose body is a single `return <const-expr>` is a named
+        // compile-time constant; its calls become immediates everywhere, so
+        // layout/ABI accessors cost no program space or registers. Iterate to a
+        // fixpoint so a constant function may reference another.
+        {
+            let empty: HashMap<String, i64> = HashMap::new();
+            loop {
+                let mut changed = false;
+                for node in &ast {
+                    if let ASTNode::Func { name, params, ret_ty, body } = node {
+                        if !params.is_empty() || self.const_funcs.contains_key(name) {
+                            continue;
+                        }
+                        if body.len() != 1 {
+                            continue;
+                        }
+                        if let Stmt::Return { val: Some(expr) } = &body[0] {
+                            let rty = normalize_width_type(ret_ty);
+                            let signed = is_signed_type(&rty);
+                            if let Some(v) = eval_const(expr, &rty, signed, &empty, &self.const_funcs) {
+                                self.const_funcs.insert(name.clone(), v);
+                                changed = true;
+                            }
+                        }
+                    }
+                }
+                if !changed {
+                    break;
+                }
+            }
+        }
+
+        // Stage 2: emit the reset/interrupt vector table (if any ISRs exist),
+        // then the startup trampoline: RCALL @main, then HALT.
+        //
+        // The vector table lives at address 0 with fixed 2-word JMP slots: slot 0
+        // jumps to startup (reset), each bound vector jumps to its ISR, and unused
+        // slots jump to a do-nothing handler.
+        let mut isr_vectors: Vec<(u8, String)> = Vec::new();
+        for node in &ast {
+            if let ASTNode::Isr { vector, .. } = node {
+                let idx = vector_index(&self.device_name, vector).ok_or_else(|| {
+                    format!(
+                        "Interrupt Error: device '{}' has no interrupt vector '{}'. Use a vector name supported by this device (per its datasheet), or a numeric index within range.",
+                        self.device_name, vector
+                    )
+                })?;
+                isr_vectors.push((idx, format!("__isr_{}", vector)));
+            }
+        }
+
+        if isr_vectors.is_empty() {
+            self.emit(Pass1Inst::RCallL("@main".to_string()));
+            self.emit(Pass1Inst::Op(0xFFFF));
+        } else {
+            let max_idx = isr_vectors.iter().map(|(i, _)| *i).max().unwrap_or(0);
+            self.emit(Pass1Inst::JmpAbsL("__start".to_string())); // reset vector
+            for k in 1..=max_idx {
+                if let Some((_, label)) = isr_vectors.iter().find(|(i, _)| *i == k) {
+                    self.emit(Pass1Inst::JmpAbsL(label.clone()));
+                } else {
+                    self.emit(Pass1Inst::JmpAbsL("__bad_isr".to_string()));
+                }
+            }
+            self.emit(Pass1Inst::Label("__start".to_string()));
+            self.emit(Pass1Inst::RCallL("@main".to_string()));
+            self.emit(Pass1Inst::Op(0xFFFF));
+            self.emit(Pass1Inst::Label("__bad_isr".to_string()));
+            self.emit(Pass1Inst::Op(0x9518)); // RETI: ignore spurious/unbound interrupts
+        }
 
         // Stage 3: mark reachable functions from @main (DCE frontier).
         let mut call_map = std::collections::HashMap::new();
@@ -629,6 +729,20 @@ impl CodeGenerator {
         let mut reachable = std::collections::HashSet::new();
         reachable.insert("@main".to_string());
         let mut queue = vec!["@main".to_string()];
+        // ISR bodies are additional roots: seed the frontier with whatever they call.
+        for node in &ast {
+            if let ASTNode::Isr { body, .. } = node {
+                let mut calls = std::collections::HashSet::new();
+                for stmt in body {
+                    collect_calls_stmt(stmt, &mut calls);
+                }
+                for call in calls {
+                    if reachable.insert(call.clone()) {
+                        queue.push(call);
+                    }
+                }
+            }
+        }
         while let Some(current) = queue.pop() {
             if let Some(calls) = call_map.get(&current) {
                 for call in calls {
@@ -654,6 +768,14 @@ impl CodeGenerator {
                 if name != "@main" && reachable.contains(name) {
                     self.compile_function(name, params, ret_ty, body)?;
                 }
+            }
+        }
+
+        // Stage 4b: compile interrupt service routines (always emitted; they are
+        // entry points reached by hardware, not by call graph).
+        for node in &ast {
+            if let ASTNode::Isr { vector, body } = node {
+                self.compile_isr(vector, body)?;
             }
         }
 
@@ -909,15 +1031,78 @@ impl CodeGenerator {
         Ok(())
     }
 
-    /// Emits function epilogue and RET.
+    /// Emits function epilogue and RET (or the full ISR restore + RETI).
     ///
     /// Invariant:
     /// - Register pop order is strict reverse of prologue push order.
     fn emit_return(&mut self) {
+        if self.in_isr {
+            self.emit_isr_epilogue();
+            return;
+        }
         for &reg in self.current_saves.clone().iter().rev() {
             self.emit(Pass1Inst::Op(0x900F | ((reg as u16) << 4))); // POP reg
         }
         self.emit(Pass1Inst::Op(0x9508)); // RET
+    }
+
+    /// ISR entry: save SREG and every register so the interrupted code is never
+    /// disturbed. Order (bottom..top of stack): origR0, SREG, R1, R2..R31.
+    fn emit_isr_prologue(&mut self) {
+        self.emit(Pass1Inst::Op(0x920F | (0u16 << 4)));   // PUSH R0 (original R0)
+        self.emit(Pass1Inst::Op(0xB60F));                 // IN R0, SREG (0x3F)
+        self.emit(Pass1Inst::Op(0x920F | (0u16 << 4)));   // PUSH R0 (SREG)
+        self.emit(Pass1Inst::Op(0x920F | (1u16 << 4)));   // PUSH R1
+        self.emit(Pass1Inst::Op(0x2411));                 // CLR R1 (codegen assumes R1==0)
+        for r in 2u16..=31 {
+            self.emit(Pass1Inst::Op(0x920F | (r << 4)));  // PUSH r
+        }
+    }
+
+    /// ISR exit: strict reverse of `emit_isr_prologue`, restore SREG, then RETI.
+    fn emit_isr_epilogue(&mut self) {
+        let mut r = 31u16;
+        while r >= 2 {
+            self.emit(Pass1Inst::Op(0x900F | (r << 4)));  // POP r
+            r -= 1;
+        }
+        self.emit(Pass1Inst::Op(0x900F | (1u16 << 4)));   // POP R1
+        self.emit(Pass1Inst::Op(0x900F | (0u16 << 4)));   // POP R0 (= SREG)
+        self.emit(Pass1Inst::Op(0xBE0F));                 // OUT SREG, R0
+        self.emit(Pass1Inst::Op(0x900F | (0u16 << 4)));   // POP R0 (original)
+        self.emit(Pass1Inst::Op(0x9518));                 // RETI
+    }
+
+    /// Lowers an interrupt service routine: full context save, body, RETI.
+    /// Has no parameters; the full save lets the body use any register freely.
+    fn compile_isr(&mut self, vector: &str, body: &[Stmt]) -> Result<(), String> {
+        self.variables.clear();
+        self.fixed_vars.clear();
+        self.signed_vars.clear();
+        self.ptr_vars.clear();
+        self.str_vars.clear();
+
+        let saves = self.plan_function_registers(&[], body);
+        // The full context save covers every register, so there is no separate
+        // callee-saved set to push/pop here.
+        self.current_saves = Vec::new();
+        self.in_isr = true;
+
+        self.emit(Pass1Inst::Label(format!("__isr_{}", vector)));
+        self.emit_isr_prologue();
+
+        // Re-establish the frame pointer if the body spills locals through Y+q.
+        if saves.contains(&28) {
+            let sram_lo = (self.sram_start & 0xFF) as u8;
+            let sram_hi = ((self.sram_start >> 8) & 0xFF) as u8;
+            self.emit(Pass1Inst::Op(0xE000 | (((sram_lo >> 4) as u16) << 8) | (12 << 4) | ((sram_lo & 0x0F) as u16))); // LDI R28
+            self.emit(Pass1Inst::Op(0xE000 | (((sram_hi >> 4) as u16) << 8) | (13 << 4) | ((sram_hi & 0x0F) as u16))); // LDI R29
+        }
+
+        self.compile_block(body)?;
+        self.emit_return(); // ISR epilogue + RETI (in_isr is set)
+        self.in_isr = false;
+        Ok(())
     }
 
     /// Reads scalar `$` variable `name` into `target`, widening a u8 source to `ctx_ty`.
@@ -1492,7 +1677,12 @@ impl CodeGenerator {
             1
         };
 
-        let limit = if self.sram_start == 0x0100 { 0x08FF - 64 } else { 0xFFFF - 64 };
+        // Reserve a 64-byte stack margin below the top of usable SRAM. Use the
+        // device-reported top, but never tighten below the historical default so
+        // existing small-SRAM targets keep compiling unchanged.
+        let base_limit: u16 = if self.sram_start == 0x0100 { 0x08FF - 64 } else { 0xFFFF - 64 };
+        let dev_limit = self.sram_top.saturating_sub(64);
+        let limit = base_limit.max(dev_limit);
         if self.sram_free_ptr + size > limit {
             return Err(format!(
                 "SRAM Overflow: Allocating variable '{}' of size {} bytes would exceed the maximum safe SRAM limit (0x{:04X}) leaving insufficient space for stack",
@@ -1691,11 +1881,15 @@ impl CodeGenerator {
                 }
                 let norm_ty = normalize_width_type(ty);
                 let ty: &str = &norm_ty;
-                let is_scalar_imut = !*is_mut && !ty.contains('[') && !ty.starts_with("eeprom");
+                // Pointer/string/function-pointer initializers are 16-bit addresses;
+                // they must not be folded through the scalar (width-masking) path,
+                // which would truncate e.g. 0x0500 to 0x00.
+                let is_addr_ty = ty.starts_with("ptr ") || ty.starts_with("str ") || ty.starts_with("fn(");
+                let is_scalar_imut = !*is_mut && !ty.contains('[') && !ty.starts_with("eeprom") && !is_addr_ty;
                 let mut const_val = None;
                 if is_scalar_imut {
                     let ty_clean = if ty.starts_with("flash ") { &ty[6..] } else { ty };
-                    if let Some(v) = eval_const(expr, ty_clean, signed, &self.imut_constants) {
+                    if let Some(v) = eval_const(expr, ty_clean, signed, &self.imut_constants, &self.const_funcs) {
                         const_val = Some(v);
                     }
                 }
@@ -2496,7 +2690,7 @@ impl CodeGenerator {
         // single immediate, matching the runtime's type-width wrapping semantics.
         if !matches!(expr, Expr::Literal(_)) {
             let signed = self.expr_is_signed(expr);
-            if let Some(v) = eval_const(expr, ty, signed, &self.imut_constants) {
+            if let Some(v) = eval_const(expr, ty, signed, &self.imut_constants, &self.const_funcs) {
                 return self.compile_expr(&Expr::Literal(v as i32), target, ty);
             }
         }
@@ -3401,6 +3595,14 @@ impl CodeGenerator {
                             self.emit(Pass1Inst::Op(0x9518));
                             return Ok(());
                         }
+                        "sei" => {
+                            self.emit(Pass1Inst::Op(0x9478)); // SEI: set global interrupt enable
+                            return Ok(());
+                        }
+                        "cli" => {
+                            self.emit(Pass1Inst::Op(0x94F8)); // CLI: clear global interrupt enable
+                            return Ok(());
+                        }
                         "lpm" => {
                             self.emit(Pass1Inst::Op(0x95C8));
                             return Ok(());
@@ -3845,7 +4047,7 @@ fn fit_ty(v: i64, ty: &str, signed: bool) -> i64 {
     }
 }
 
-fn eval_const(expr: &Expr, ty: &str, signed: bool, imut_constants: &HashMap<String, i64>) -> Option<i64> {
+fn eval_const(expr: &Expr, ty: &str, signed: bool, imut_constants: &HashMap<String, i64>, const_funcs: &HashMap<String, i64>) -> Option<i64> {
     match expr {
         Expr::Literal(v) => Some(fit_ty(*v as i64, ty, signed)),
         Expr::VarRef(ref name) => {
@@ -3855,8 +4057,12 @@ fn eval_const(expr: &Expr, ty: &str, signed: bool, imut_constants: &HashMap<Stri
                 None
             }
         }
+        // A call to a nullary constant function folds to its value.
+        Expr::Call { name, args } if args.is_empty() => {
+            const_funcs.get(name).map(|&v| fit_ty(v, ty, signed))
+        }
         Expr::UnaryOp { op, expr } => {
-            let x = eval_const(expr, ty, signed, imut_constants)?;
+            let x = eval_const(expr, ty, signed, imut_constants, const_funcs)?;
             match op.as_str() {
                 "-" => Some(fit_ty(x.wrapping_neg(), ty, signed)),
                 "~" => Some(fit_ty(!x, ty, signed)),
@@ -3864,8 +4070,8 @@ fn eval_const(expr: &Expr, ty: &str, signed: bool, imut_constants: &HashMap<Stri
             }
         }
         Expr::BinOp { left, op, right } => {
-            let l = eval_const(left, ty, signed, imut_constants)?;
-            let r = eval_const(right, ty, signed, imut_constants)?;
+            let l = eval_const(left, ty, signed, imut_constants, const_funcs)?;
+            let r = eval_const(right, ty, signed, imut_constants, const_funcs)?;
             let res = match op.as_str() {
                 "+" => l.wrapping_add(r),
                 "-" => l.wrapping_sub(r),
@@ -4089,6 +4295,7 @@ pub fn resolve_labels(instructions: &[Pass1Inst]) -> Vec<u16> {
                 Pass1Inst::RJumpL(_) | Pass1Inst::RCallL(_) => addr += if is_long[idx] { 2 } else { 1 },
                 Pass1Inst::FlashLdi16(_, _, _) => addr += 2, // Two LDI instructions
                 Pass1Inst::FnAddr16(_, _) => addr += 2, // Two LDI instructions
+                Pass1Inst::JmpAbsL(_) => addr += 2, // fixed 2-word JMP
                 Pass1Inst::FlashDataBlob(name, data) => {
                     label_addresses.insert(name.clone(), addr);
                     addr += ((data.len() + 1) / 2) as i64; // Ceiling division: pack bytes into u16 words
@@ -4114,6 +4321,7 @@ pub fn resolve_labels(instructions: &[Pass1Inst]) -> Vec<u16> {
                 }
                 Pass1Inst::FlashLdi16(_, _, _) => addr += 2,
                 Pass1Inst::FnAddr16(_, _) => addr += 2,
+                Pass1Inst::JmpAbsL(_) => addr += 2,
                 Pass1Inst::FlashDataBlob(_, data) => {
                     addr += ((data.len() + 1) / 2) as i64;
                 }
@@ -4132,6 +4340,7 @@ pub fn resolve_labels(instructions: &[Pass1Inst]) -> Vec<u16> {
             Pass1Inst::RJumpL(_) | Pass1Inst::RCallL(_) => addr += if is_long[idx] { 2 } else { 1 },
             Pass1Inst::FlashLdi16(_, _, _) => addr += 2,
             Pass1Inst::FnAddr16(_, _) => addr += 2,
+            Pass1Inst::JmpAbsL(_) => addr += 2,
             Pass1Inst::FlashDataBlob(name, data) => {
                 label_addresses.insert(name.clone(), addr);
                 addr += ((data.len() + 1) / 2) as i64;
@@ -4147,6 +4356,12 @@ pub fn resolve_labels(instructions: &[Pass1Inst]) -> Vec<u16> {
             Pass1Inst::Op(opcode) => {
                 final_opcodes.push(*opcode);
                 addr += 1;
+            }
+            Pass1Inst::JmpAbsL(label) => {
+                let target = *label_addresses.get(label).unwrap_or(&0) as u32;
+                final_opcodes.push(0x940C | ((((target >> 17) & 0x1F) as u16) << 4) | ((target >> 16) & 0x01) as u16); // JMP
+                final_opcodes.push((target & 0xFFFF) as u16);
+                addr += 2;
             }
             Pass1Inst::RJumpL(label) => {
                 let target = *label_addresses.get(label).unwrap_or(&0);
@@ -5449,6 +5664,36 @@ fn scale_floats(expr: &mut Expr, frac: u8) -> Result<(), String> {
     }
 }
 
+/// Resolves an interrupt vector name to its 0-based table index for a device.
+///
+/// For a device with a known vector table, a name must appear in that table, or
+/// a bare decimal index must fall within range; anything else returns None so
+/// the caller can reject it. For a device without a table, a bare decimal index
+/// is accepted as an escape hatch. All supported targets use 2-word vector slots.
+///
+/// Vector data for every device lives in the generated `crate::vectors` table
+/// (see `tools/gen_vectors.sh`); each slot may list more than one accepted name.
+fn vector_index(device: &str, name: &str) -> Option<u8> {
+    let table = match crate::vectors::device_vectors(device) {
+        Some(t) => t,
+        // Device not tabled: accept only a bare numeric index as an escape hatch.
+        None => return name.parse::<u8>().ok(),
+    };
+    // A named vector must appear (under any accepted spelling) in the table.
+    for (i, slot) in table.iter().enumerate() {
+        if slot.iter().any(|v| *v == name) {
+            return Some(i as u8);
+        }
+    }
+    // A bare numeric index is allowed only if within the device's table.
+    if let Ok(n) = name.parse::<u8>() {
+        if (n as usize) < table.len() {
+            return Some(n);
+        }
+    }
+    None
+}
+
 /// Returns true if `expr` contains any function/intrinsic call.
 ///
 /// Used at call sites to decide whether already-placed argument registers must
@@ -5649,8 +5894,12 @@ fn propagate_constants_stmts(
         match stmt {
             Stmt::VarDecl { name, ty, expr, .. } => {
                 propagate_constants_expr(expr, known);
-                if !ty.contains('[') {
-                    if let Some(v) = eval_const(expr, ty, is_signed_type(ty), &HashMap::new()) {
+                // Pointer/string/function-pointer initializers are 16-bit addresses;
+                // never fold them through the width-masking scalar path (it would
+                // truncate e.g. 0x0500 to 0x00).
+                let is_addr_ty = ty.starts_with("ptr ") || ty.starts_with("str ") || ty.starts_with("fn(");
+                if !ty.contains('[') && !is_addr_ty {
+                    if let Some(v) = eval_const(expr, ty, is_signed_type(ty), &HashMap::new(), &HashMap::new()) {
                         *expr = Expr::Literal(v as i32);
                         // Do not propagate signed variables as bare literals: a substituted literal
                         // loses its signedness, so later comparisons/divisions would be lowered as

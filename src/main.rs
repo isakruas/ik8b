@@ -20,6 +20,7 @@ mod lexer;
 mod parser;
 mod codegen;
 mod devices;
+mod vectors;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const LICENSE: &str = "Apache-2.0";
@@ -246,6 +247,13 @@ fn main() {
     let mut codegen = codegen::CodeGenerator::new();
     codegen.target_core = target_core;
     codegen.set_sram_start(sram_start);
+    codegen.set_device_name(device.name);
+    // Highest usable SRAM byte for this device, so the stack-collision guard
+    // scales with parts that have more than the classic 2 KB.
+    if device.sram_size > 0 {
+        let top = (sram_start as u32 + device.sram_size - 1).min(0xFFFF) as u16;
+        codegen.set_sram_top(top);
+    }
     let insts = match codegen.compile(&ast) {
         Ok(i) => i,
         Err(e) => {

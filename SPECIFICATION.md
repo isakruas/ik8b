@@ -479,6 +479,12 @@ little-endian AVR instruction words.
 Leaf user functions may be inlined as an optimization. This must not change the
 observable result of a valid program.
 
+A parameterless function whose body is a single `return <constant-expression>`
+is treated as a named compile-time constant: calls to it fold to an immediate at
+every use site, costing no program space or registers. This makes accessor-style
+functions (e.g. layout/ABI offset helpers) free to use in place of magic numbers.
+Folding applies transitively (such a function may call another).
+
 ### 8.3 Storage
 
 Compiler-managed SRAM allocation starts at the selected device's `sram_start`.
