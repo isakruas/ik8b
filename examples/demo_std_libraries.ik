@@ -14,7 +14,7 @@
 
 # Example demonstrating the use of the unified ik8b Standard Library on ATmega328p
 
-namespace atmega328p
+target atmega328p
 
 import std/gpio
 import std/uart
@@ -30,7 +30,11 @@ import std/math
     @uart_init(103)
     
     # 3. SPI: Initialize SPI Master Mode
-    @spi_init_master()
+    # On atmega328p, SPI requires MOSI (PB3), SCK (PB5), and SS (PB2) as outputs
+    @pin_mode_b(3, 1)
+    @pin_mode_b(5, 1)
+    @pin_mode_b(2, 1)
+    @spi_init_master_raw()
     
     # 4. TWI: Initialize I2C Master at 100KHz (72)
     @twi_init(72)

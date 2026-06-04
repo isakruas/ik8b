@@ -14,9 +14,13 @@
 
 # Comprehensive demonstration of the unified ik8b Standard Mathematics Library
 
-namespace atmega328p
+target atmega328p
 
 import std/math
+
+@break() {
+    loop * {}
+}
 
 @main {
     # 1. Test basic algebra helpers

@@ -16,7 +16,7 @@
 # Unary operators (!, ~, -), boolean literals (true, false),
 # character literals ('c'), and compound array assignments (->+).
 
-namespace atmega328p
+target atmega328p
 
 @main {
     ram mut $res: u8 = 0

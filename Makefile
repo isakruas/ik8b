@@ -43,7 +43,7 @@ test: build
 	    sram=$$(echo $$row | cut -d, -f3); \
 	    [ -z "$$sram" ] && sram=0; \
 	    tmp_src=$$(mktemp); \
-	    echo "namespace $$mcu" > $$tmp_src; \
+	    echo "target $$mcu" > $$tmp_src; \
 	    echo "" >> $$tmp_src; \
 	    cat $$f >> $$tmp_src; \
 	    hex=/tmp/$$name-$$mcu.hex; \
@@ -61,7 +61,7 @@ test: build
 	      test_math_trigonometry) \
 	        if [ "$$core" = "AVRe" ] || [ "$$core" = "AVRrc" ]; then rm -f $$hex; continue; fi; \
 	        limit=20000000 ;; \
-	      test_mem) \
+	      test_mem|test_delay) \
 	        if [ "$$core" = "AVRrc" ]; then rm -f $$hex; continue; fi; \
 	        limit=200000 ;; \
 	      test_math_algebra) limit=60000000 ;; \

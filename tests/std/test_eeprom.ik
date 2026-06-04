@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# -------------------------------------------------------------
+# EEPROM Hardware Interface Test
+# -------------------------------------------------------------
 
 import std/eeprom
 
@@ -22,15 +25,17 @@ import std/eeprom
     # MCUs without EEPROM support will be safely skipped by the compiler.
     eeprom mut $ee_dummy: u8 = 0
 
-    # 1. eeprom_write & eeprom_read (safe low address)
-    @eeprom_write(0x0002, 0x99)
-    ram imut $ee_val: u8 = @eeprom_read(0x0002)
-    ? $ee_val != 0x99 { 0 -> $ok }
+    ? %EEPROM_CTRL_REG != 0 {
+        # 1. eeprom_write & eeprom_read (safe low address)
+        @eeprom_write(0x0002, 0x99)
+        ram imut $ee_val: u8 = @eeprom_read(0x0002)
+        ? $ee_val != 0x99 { 0 -> $ok }
 
-    # Test another safe address
-    @eeprom_write(0x0004, 0xAA)
-    ram imut $ee_val2: u8 = @eeprom_read(0x0004)
-    ? $ee_val2 != 0xAA { 0 -> $ok }
+        # Test another safe address
+        @eeprom_write(0x0004, 0xAA)
+        ram imut $ee_val2: u8 = @eeprom_read(0x0004)
+        ? $ee_val2 != 0xAA { 0 -> $ok }
+    }
 
     # Force success status into R16 by storing into an SRAM array
     ram mut $res_arr: u8[1] = 0

@@ -31,7 +31,7 @@
 # self-checking on the VM, it instead tallies what it "sent" into EEPROM so
 # @main can confirm the whole stream flowed through correctly.
 
-namespace atmega328p
+target atmega328p
 import std/font
 import std/eeprom
 

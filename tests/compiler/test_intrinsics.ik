@@ -35,7 +35,8 @@
     # 4. @mul intrinsic (unsigned multiply of R16 and R18)
     @mul(16, 18)
 
-    $ok -> $res
+    ram mut $res_arr: u8[1] = 0
+    $ok -> $res_arr[0]
     loop * {
         # End of test
     }

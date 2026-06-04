@@ -15,7 +15,7 @@
 # Blink LED modular implementation in ik8b
 # Imports the delay subroutine from examples/demo_delay.ik
 
-namespace atmega328p
+target atmega328p
 
 import examples/demo_delay
 

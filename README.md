@@ -34,9 +34,9 @@ make build
 ./ik8b <input.ik> -o <output.hex>
 ```
 
-The source must declare a top-level target namespace, for example:
+The source must declare a top-level target target, for example:
 ```ik
-namespace atmega328p
+target atmega328p
 ```
 
 ### CLI commands

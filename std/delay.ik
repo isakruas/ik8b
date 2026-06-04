@@ -13,37 +13,55 @@
 # limitations under the License.
 
 # -------------------------------------------------------------
-# Dynamic Cycle-Accurate Delay Library
+# Delay Library (portable across all AVR cores)
 # -------------------------------------------------------------
+# For precise, cycle-accurate timing (e.g. bit-banging SPI/I2C), you can use the
+# `@burn(N)` intrinsic directly. It accepts either:
+# 1. A literal constant (e.g. `@burn(4)`), emitting exact padding instructions.
+# 2. A variable, generating a precise inline loop (exactly 4 cycles per iteration).
+#
+# Note: real-world timing also depends on the chip actually running at the clock
+# returned by @cpu_mhz(). ATmega parts ship on the internal RC oscillator (often
+# 1 MHz); set the fuses for your crystal, or return the clock the chip is really
+# using.
+#
+# Projects using @delay_ms/@delay_us must define:
+#
+#     @cpu_mhz() -> u16 { return 16 }
+#
+# Use @_delay_ms/@_delay_us directly when one call needs an explicit clock.
 
-# Internal delay loop consuming ~4 clock cycles per iteration.
-@_delay_cycles($cycles: u16) {
-    ram mut $i: u16 = $cycles
-    loop * {
-        ? $i == 0 { return }
-        $i - 1 -> $i
-        @nop()
-    }
-}
-
-# Delays for $ms milliseconds given a CPU clock frequency in MHz (e.g. 8 or 16).
-@delay_ms($ms: u16, $clock_mhz: u16) {
+# Delays ~$ms milliseconds at a CPU clock of $clock_mhz MHz (e.g. 8 or 16).
+@_delay_ms($ms: u16, $clock_mhz: u16) {
+    # One ms at $clock_mhz MHz is clock_mhz*1000 cycles.
+    # The dynamic `@burn($iters)` loop guarantees exactly 4 cycles per iteration.
+    # Therefore, we need (clock_mhz*1000/4) iterations per ms.
+    # The total would overflow u16, so it is spent in $ms chunks.
+    ram imut $iters_per_ms: u16 = $clock_mhz * 1000 / 4
     loop 0..$ms -> $x {
-        # clock_mhz * 1000 is the number of cycles per millisecond.
-        # Loop consumes ~4 cycles per iteration, so cycles / 4 = clock_mhz * 250.
-        ram imut $cycles_per_ms: u16 = $clock_mhz * 250
-        @_delay_cycles($cycles_per_ms)
+        @burn($iters_per_ms)
     }
 }
 
-# Delays for $us microseconds given a CPU clock frequency in MHz (e.g. 8 or 16).
-@delay_us($us: u16, $clock_mhz: u16) {
-    # clock_mhz is the number of cycles per microsecond.
-    # Loop consumes ~4 cycles per iteration, so cycles / 4 = clock_mhz / 4.
-    ram imut $cycles_per_us: u16 = $clock_mhz / 4
-    ram mut $final_cycles: u16 = $cycles_per_us * $us
-    ? $final_cycles == 0 {
-        1 -> $final_cycles
+# Delays ~$ms milliseconds using the project-wide CPU clock from @cpu_mhz().
+@delay_ms($ms: u16) {
+    @_delay_ms($ms, @cpu_mhz())
+}
+
+# Delays ~$us microseconds at a CPU clock of $clock_mhz MHz.
+# Range: $us * $clock_mhz must fit in 16 bits (~16000 us at 16 MHz); for longer
+# waits use @delay_ms. Very short waits are dominated by call overhead.
+@_delay_us($us: u16, $clock_mhz: u16) {
+    # One us at $clock_mhz MHz is clock_mhz cycles.
+    # The dynamic `@burn($iters)` loop guarantees exactly 4 cycles per iteration.
+    ram mut $iters: u16 = $us * $clock_mhz / 4
+    ? $iters == 0 {
+        1 -> $iters
     }
-    @_delay_cycles($final_cycles)
+    @burn($iters)
+}
+
+# Delays ~$us microseconds using the project-wide CPU clock from @cpu_mhz().
+@delay_us($us: u16) {
+    @_delay_us($us, @cpu_mhz())
 }

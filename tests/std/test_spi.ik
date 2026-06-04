@@ -19,24 +19,9 @@ import std/spi
 @main {
     ram mut $ok: u8 = 1
 
-    # 1. SPI master mode transfer (Available on atmega328p, atmega2560, and atmega32u4 namespaces)
-    ? namespace == atmega328p {
-        ? 0 == 1 {
-            @spi_init_master()
-            ram imut $ret: u8 = @spi_transfer(0x55)
-        }
-    }
-    ? namespace == atmega2560 {
-        ? 0 == 1 {
-            @spi_init_master()
-            ram imut $ret: u8 = @spi_transfer(0x55)
-        }
-    }
-    ? namespace == atmega32u4 {
-        ? 0 == 1 {
-            @spi_init_master()
-            ram imut $ret: u8 = @spi_transfer(0x55)
-        }
+    ? %SPI0_CTRL_REG != 0 {
+        @spi_init_master_raw()
+        ram imut $ret: u8 = @spi_transfer(0x55)
     }
 
     # Force success status into R16 by storing into an SRAM array

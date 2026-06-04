@@ -15,19 +15,27 @@
  
 import std/delay
 
+@cpu_mhz() -> u16 { return 16 }
+
 @main {
     ram mut $ok: u8 = 1
 
-    # 1. delay_us
-    @delay_us(2, 8)
-    @delay_us(5, 16)
+    # 1. Global-clock delay_us
+    @delay_us(5)
 
-    # 2. delay_ms
-    @delay_ms(1, 8)
-    @delay_ms(1, 16)
+    # 2. Explicit-clock delay_us
+    @_delay_us(2, 8)
+    @_delay_us(5, 16)
 
-    # 3. _delay_cycles
-    @_delay_cycles(10)
+    # 3. Global-clock delay_ms
+    @delay_ms(1)
+
+    # 4. Explicit-clock delay_ms
+    @_delay_ms(1, 8)
+    @_delay_ms(1, 16)
+
+    # 5. burn intrinsic
+    @burn(10)
 
     # Force success status into R16 by storing into an SRAM array
     ram mut $res_arr: u8[1] = 0

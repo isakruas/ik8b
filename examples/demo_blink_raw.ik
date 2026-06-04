@@ -15,7 +15,7 @@
 # Blink LED on pin PB0 (Arduino Uno) in ik8b
 # Based on the hardware register mapping described in SPECIFICATION.md
 
-namespace atmega328p
+target atmega328p
 
 const %PORTB: u16 = 0x0025
 const %DDRB: u16 = 0x0024

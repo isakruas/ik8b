@@ -66,7 +66,7 @@ while IFS= read -r line; do
 
   src_base="$tmpdir/${dev}_base.ik"
   {
-    echo "namespace $dev"
+    echo "target $dev"
     echo
     echo "@main {"
     echo "  loop * {}"
@@ -76,7 +76,7 @@ while IFS= read -r line; do
 
   src_reset="$tmpdir/${dev}_reset_forbidden.ik"
   {
-    echo "namespace $dev"
+    echo "target $dev"
     echo
     echo "isr RESET {"
     echo "}"
@@ -100,7 +100,7 @@ while IFS= read -r line; do
   if [ -n "$first_non_reset" ]; then
     src_dup="$tmpdir/${dev}_dup.ik"
     {
-      echo "namespace $dev"
+      echo "target $dev"
       echo
       echo "isr $first_non_reset {"
       echo "}"
@@ -121,7 +121,7 @@ while IFS= read -r line; do
       checked_vectors=$((checked_vectors + 1))
       src_vec="$tmpdir/${dev}_${idx}_${name}.ik"
       {
-        echo "namespace $dev"
+        echo "target $dev"
         echo
         echo "isr $name {"
         echo "}"

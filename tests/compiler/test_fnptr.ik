@@ -47,6 +47,7 @@
     ram mut $x: u8 = @reduce(0, &@xor2)
     ? $x != 7 { 14 -> $ok }
 
-    $ok -> $ok
+    ram mut $res_arr: u8[1] = 0
+    $ok -> $res_arr[0]
     loop * {}
 }

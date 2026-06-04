@@ -47,10 +47,6 @@ pub enum Stmt {
     Return { val: Option<Expr> },
     /// An expression executed solely for its side effects (e.g. a subroutine call).
     ExprStmt { expr: Expr },
-    /// An internal jump statement to support leaf function inlining at AST level.
-    Goto(String),
-    /// An internal label statement to support leaf function inlining at AST level.
-    Label(String),
 }
 
 /// Represents an expression that evaluates to a value.
@@ -80,7 +76,7 @@ pub enum Expr {
 pub struct Parser {
     tokens: Vec<Token>,
     idx: usize,
-    pub active_namespace: String,
+    pub active_target: String,
 }
 
 impl Parser {
@@ -89,7 +85,7 @@ impl Parser {
         Self {
             tokens,
             idx: 0,
-            active_namespace: "".to_string(),
+            active_target: "".to_string(),
         }
     }
 
@@ -225,21 +221,21 @@ impl Parser {
                 TokenKind::Keyword(ref kw) if kw == "const" => {
                     nodes.push(self.parse_const()?);
                 }
-                TokenKind::Keyword(ref kw) if kw == "namespace" => {
-                    self.consume(Some(TokenKind::Keyword("namespace".to_string())))?;
+                TokenKind::Keyword(ref kw) if kw == "target" => {
+                    self.consume(Some(TokenKind::Keyword("target".to_string())))?;
                     let name_tok = self.consume(None)?;
                     let ns_name = match name_tok.kind {
                         TokenKind::Identifier(ref n) => n.clone(),
-                        _ => return Err(format!("Expected namespace name, got {:?} at line {}", name_tok, name_tok.line)),
+                        _ => return Err(format!("Expected target name, got {:?} at line {}", name_tok, name_tok.line)),
                     };
-                    self.active_namespace = ns_name;
+                    self.active_target = ns_name;
                 }
                 TokenKind::Symbol(ref sym) if sym == "?" => {
                     self.consume(Some(TokenKind::Symbol("?".to_string())))?;
                     let left_tok = self.consume(None)?;
                     let _left = match left_tok.kind {
-                        TokenKind::Keyword(ref kw) if kw == "namespace" => kw.clone(),
-                        _ => return Err(format!("Expected 'namespace' in compile-time check, got {:?} at line {}", left_tok, left_tok.line)),
+                        TokenKind::Keyword(ref kw) if kw == "target" => kw.clone(),
+                        _ => return Err(format!("Expected 'target' in compile-time check, got {:?} at line {}", left_tok, left_tok.line)),
                     };
                     self.consume(Some(TokenKind::Symbol("==".to_string())))?;
                     let right_tok = self.consume(None)?;
@@ -277,7 +273,7 @@ impl Parser {
                     }
                     self.consume(Some(TokenKind::Symbol("}".to_string())))?;
                     
-                    if self.active_namespace == right {
+                    if self.active_target == right {
                         nodes.extend(block_nodes);
                     }
                 }
@@ -287,7 +283,7 @@ impl Parser {
                 TokenKind::Identifier(ref name) if name.starts_with('@') => {
                     nodes.push(self.parse_function()?);
                 }
-                _ => return Err(format!("Expected top-level declaration (namespace, import, const, function or isr), got {:?} at line {}", tok, tok.line)),
+                _ => return Err(format!("Expected top-level declaration (target, import, const, function or isr), got {:?} at line {}", tok, tok.line)),
             }
         }
         Ok(nodes)
@@ -365,7 +361,7 @@ impl Parser {
         let tokens = lexer.tokenize()?;
         
         let mut parser = Parser::new(tokens);
-        parser.active_namespace = self.active_namespace.clone();
+        parser.active_target = self.active_target.clone();
         let ast = parser.parse()?;
         
         Ok(ast)
@@ -473,14 +469,14 @@ impl Parser {
                 }
             }
 
-            // Handle compile-time namespace check inside blocks
+            // Handle compile-time target check inside blocks
             if let TokenKind::Symbol(ref sym) = tok.kind {
                 if sym == "?" {
                     if let Some(next_tok) = self.peek(1) {
                         if let TokenKind::Keyword(ref kw) = next_tok.kind {
-                            if kw == "namespace" {
+                            if kw == "target" {
                                 self.consume(None)?; // '?'
-                                self.consume(None)?; // 'namespace'
+                                self.consume(None)?; // 'target'
                                 self.consume(Some(TokenKind::Symbol("==".to_string())))?;
                                 let right_tok = self.consume(None)?;
                                 let right = match right_tok.kind {
@@ -488,7 +484,7 @@ impl Parser {
                                     _ => return Err(format!("Expected identifier in compile-time check, got {:?} at line {}", right_tok, right_tok.line)),
                                 };
                                 let block_stmts = self.parse_block()?;
-                                if self.active_namespace == right {
+                                if self.active_target == right {
                                     stmts.extend(block_stmts);
                                 }
                                 continue;

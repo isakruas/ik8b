@@ -26,68 +26,63 @@ import std/gpio
     # Result verification is omitted as the VM does not simulate I/O hardware registers (PINx).
 
     # Port B (Available on many MCUs like attiny85, atmega328p, atmega2560, atmega32u4)
-    ? namespace == attiny85 {
+    ? target == attiny85 {
         @pin_mode_b(1, 1)
         @digital_write_b(1, 1)
         @toggle_b(1)
     }
-    ? namespace == atmega328p {
+    ? target == atmega328p {
         @pin_mode_b(1, 1)
         @digital_write_b(1, 1)
         @toggle_b(1)
     }
-    ? namespace == atmega2560 {
+    ? target == atmega2560 {
         @pin_mode_b(1, 1)
         @digital_write_b(1, 1)
         @toggle_b(1)
     }
-    ? namespace == atmega32u4 {
+    ? target == atmega32u4 {
         @pin_mode_b(1, 1)
         @digital_write_b(1, 1)
         @toggle_b(1)
     }
 
-    # Port A (Available on atmega328p and atmega2560)
-    ? namespace == atmega328p {
-        @pin_mode_a(2, 1)
-        @digital_write_a(2, 1)
-        @toggle_a(2)
-    }
-    ? namespace == atmega2560 {
+    # Port A (Available on atmega2560)
+    ? target == atmega2560 {
         @pin_mode_a(2, 1)
         @digital_write_a(2, 1)
         @toggle_a(2)
     }
 
     # Port C (Available on atmega328p, atmega2560, and atmega32u4)
-    ? namespace == atmega328p {
+    ? target == atmega328p {
         @pin_mode_c(1, 1)
         @digital_write_c(1, 1)
         @toggle_c(1)
     }
-    ? namespace == atmega2560 {
+    ? target == atmega2560 {
         @pin_mode_c(1, 1)
         @digital_write_c(1, 1)
         @toggle_c(1)
     }
-    ? namespace == atmega32u4 {
+    ? target == atmega32u4 {
         @pin_mode_c(1, 1)
         @digital_write_c(1, 1)
         @toggle_c(1)
     }
 
     # Port D (Available on atmega328p, atmega2560, and atmega32u4)
-    ? namespace == atmega328p {
+    ? target == atmega328p {
         @pin_mode_d(0, 1)
         @digital_write_d(0, 1)
         @toggle_d(0)
     }
-    ? namespace == atmega2560 {
+    ? target == atmega2560 {
         @pin_mode_d(0, 1)
         @digital_write_d(0, 1)
         @toggle_d(0)
     }
-    ? namespace == atmega32u4 {
+    ? target == atmega32u4 {
         @pin_mode_d(0, 1)
         @digital_write_d(0, 1)
         @toggle_d(0)

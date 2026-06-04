@@ -6,9 +6,9 @@ AVR_OBJCOPY = avr-objcopy
 MCU = atmega328p
 IK8B = ../ik8b
 
-define compile_ik_with_namespace
+define compile_ik_with_target
 	@tmp=$$(mktemp); \
-	awk -v ns="$(MCU)" 'BEGIN{done=0} {if(!done && $$0 ~ /^[[:space:]]*@main([[:space:]]|$$)/){print "namespace " ns; print ""; done=1} print} END{if(!done){print "namespace " ns; print ""}}' "$(1)" > "$$tmp"; \
+	awk -v target="$(MCU)" 'BEGIN{has_target=0} /^[[:space:]]*target[[:space:]]+[A-Za-z_][A-Za-z0-9_]*/{has_target=1} {lines[NR]=$$0} END{if(!has_target){print "target " target; print ""} for(i=1;i<=NR;i++){print lines[i]}}' "$(1)" > "$$tmp"; \
 	$(IK8B) "$$tmp" -o "$(2)"; \
 	rm -f "$$tmp"
 endef
@@ -17,11 +17,11 @@ all: build compare
 
 build:
 	@mkdir -p out
-	$(call compile_ik_with_namespace,bench_arithmetic.ik,out/bench_arithmetic_ik.hex)
-	$(call compile_ik_with_namespace,bench_bitwise.ik,out/bench_bitwise_ik.hex)
-	$(call compile_ik_with_namespace,bench_loops.ik,out/bench_loops_ik.hex)
-	$(call compile_ik_with_namespace,bench_functions.ik,out/bench_functions_ik.hex)
-	$(call compile_ik_with_namespace,bench_io.ik,out/bench_io_ik.hex)
+	$(call compile_ik_with_target,bench_arithmetic.ik,out/bench_arithmetic_ik.hex)
+	$(call compile_ik_with_target,bench_bitwise.ik,out/bench_bitwise_ik.hex)
+	$(call compile_ik_with_target,bench_loops.ik,out/bench_loops_ik.hex)
+	$(call compile_ik_with_target,bench_functions.ik,out/bench_functions_ik.hex)
+	$(call compile_ik_with_target,bench_io.ik,out/bench_io_ik.hex)
 
 	$(AVR_GCC) -mmcu=$(MCU) -Os bench_arithmetic.c -o out/bench_arithmetic_c.elf
 	$(AVR_OBJCOPY) -O ihex -R .eeprom out/bench_arithmetic_c.elf out/bench_arithmetic_c.hex

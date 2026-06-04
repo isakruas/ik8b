@@ -43,20 +43,20 @@ pub struct Token {
 }
 
 /// Lexical analyzer that scans ik8b source code and produces a stream of tokens.
-pub struct Lexer {
-    /// The source code character array.
-    source: Vec<char>,
-    /// The current scanning index.
+pub struct Lexer<'a> {
+    /// The source code string slice.
+    source: &'a str,
+    /// The current scanning byte index.
     idx: usize,
     /// The current source line number.
     line: usize,
 }
 
-impl Lexer {
+impl<'a> Lexer<'a> {
     /// Instantiates a new Lexer for the provided source code.
-    pub fn new(source: &str) -> Self {
+    pub fn new(source: &'a str) -> Self {
         Self {
-            source: source.chars().collect(),
+            source,
             idx: 0,
             line: 1,
         }
@@ -67,74 +67,78 @@ impl Lexer {
     pub fn tokenize(&mut self) -> Result<Vec<Token>, String> {
         let mut tokens = Vec::new();
         while self.idx < self.source.len() {
-            let c = self.source[self.idx];
+            let c = self.source[self.idx..].chars().next().unwrap();
             
             // Handle line tracking
             if c == '\n' {
                 self.line += 1;
                 self.idx += 1;
             } else if c.is_whitespace() {
-                self.idx += 1;
+                self.idx += c.len_utf8();
             } else if c == '#' {
                 // Comments begin with '#' and extend to the end of the line
-                while self.idx < self.source.len() && self.source[self.idx] != '\n' {
-                    self.idx += 1;
+                while let Some(ch) = self.source[self.idx..].chars().next() {
+                    if ch == '\n' {
+                        break;
+                    }
+                    self.idx += ch.len_utf8();
                 }
-            } else if self.starts_with("->+") {
+            } else if self.source[self.idx..].starts_with("->+") {
                 tokens.push(Token { kind: TokenKind::CompoundArrow("->+".to_string()), line: self.line });
                 self.idx += 3;
-            } else if self.starts_with("->-") {
+            } else if self.source[self.idx..].starts_with("->-") {
                 tokens.push(Token { kind: TokenKind::CompoundArrow("->-".to_string()), line: self.line });
                 self.idx += 3;
-            } else if self.starts_with("->&") {
+            } else if self.source[self.idx..].starts_with("->&") {
                 tokens.push(Token { kind: TokenKind::CompoundArrow("->&".to_string()), line: self.line });
                 self.idx += 3;
-            } else if self.starts_with("->|") {
+            } else if self.source[self.idx..].starts_with("->|") {
                 tokens.push(Token { kind: TokenKind::CompoundArrow("->|".to_string()), line: self.line });
                 self.idx += 3;
-            } else if self.starts_with("->^") {
+            } else if self.source[self.idx..].starts_with("->^") {
                 tokens.push(Token { kind: TokenKind::CompoundArrow("->^".to_string()), line: self.line });
                 self.idx += 3;
-            } else if self.starts_with("->") {
+            } else if self.source[self.idx..].starts_with("->") {
                 tokens.push(Token { kind: TokenKind::Arrow, line: self.line });
                 self.idx += 2;
-            } else if self.starts_with("..") {
+            } else if self.source[self.idx..].starts_with("..") {
                 tokens.push(Token { kind: TokenKind::Symbol("..".to_string()), line: self.line });
                 self.idx += 2;
-            } else if self.starts_with("==") {
+            } else if self.source[self.idx..].starts_with("==") {
                 tokens.push(Token { kind: TokenKind::Symbol("==".to_string()), line: self.line });
                 self.idx += 2;
-            } else if self.starts_with("!=") {
+            } else if self.source[self.idx..].starts_with("!=") {
                 tokens.push(Token { kind: TokenKind::Symbol("!=".to_string()), line: self.line });
                 self.idx += 2;
-            } else if self.starts_with("<=") {
+            } else if self.source[self.idx..].starts_with("<=") {
                 tokens.push(Token { kind: TokenKind::Symbol("<=".to_string()), line: self.line });
                 self.idx += 2;
-            } else if self.starts_with(">=") {
+            } else if self.source[self.idx..].starts_with(">=") {
                 tokens.push(Token { kind: TokenKind::Symbol(">=".to_string()), line: self.line });
                 self.idx += 2;
-            } else if self.starts_with("&&") {
+            } else if self.source[self.idx..].starts_with("&&") {
                 tokens.push(Token { kind: TokenKind::Symbol("&&".to_string()), line: self.line });
                 self.idx += 2;
-            } else if self.starts_with("||") {
+            } else if self.source[self.idx..].starts_with("||") {
                 tokens.push(Token { kind: TokenKind::Symbol("||".to_string()), line: self.line });
                 self.idx += 2;
             } else if "{}():=?*<>,+-/&|^[]!~".contains(c) {
                 tokens.push(Token { kind: TokenKind::Symbol(c.to_string()), line: self.line });
-                self.idx += 1;
+                self.idx += c.len_utf8();
             } else if c == '\'' {
                 // Character literals enclosed in single quotes (e.g. 'A', '\n')
                 self.idx += 1;
                 if self.idx >= self.source.len() {
                     return Err(format!("Unterminated character literal at line {}", self.line));
                 }
-                let char_val = if self.source[self.idx] == '\\' {
+                let next_char = self.source[self.idx..].chars().next().unwrap();
+                let char_val = if next_char == '\\' {
                     self.idx += 1;
                     if self.idx >= self.source.len() {
                         return Err(format!("Unterminated escape sequence in character literal at line {}", self.line));
                     }
-                    let escape_char = self.source[self.idx];
-                    self.idx += 1;
+                    let escape_char = self.source[self.idx..].chars().next().unwrap();
+                    self.idx += escape_char.len_utf8();
                     match escape_char {
                         'n' => '\n' as i32,
                         'r' => '\r' as i32,
@@ -145,25 +149,23 @@ impl Lexer {
                         _ => return Err(format!("Invalid escape character '\\{}' at line {}", escape_char, self.line)),
                     }
                 } else {
-                    let cv = self.source[self.idx] as i32;
-                    self.idx += 1;
-                    cv
+                    self.idx += next_char.len_utf8();
+                    next_char as i32
                 };
-                if self.idx >= self.source.len() || self.source[self.idx] != '\'' {
+                if !self.source[self.idx..].starts_with('\'') {
                     return Err(format!("Expected closing single quote at line {}", self.line));
                 }
                 self.idx += 1;
                 tokens.push(Token { kind: TokenKind::Number(char_val), line: self.line });
             } else if c == '"' {
-                // String literals enclosed in double quotes (e.g. "hello\n"), with the same escape
-                // set as character literals. The closing NUL terminator is added by the backend.
+                // String literals enclosed in double quotes (e.g. "hello\n")
                 self.idx += 1;
                 let mut s = String::new();
                 loop {
                     if self.idx >= self.source.len() {
                         return Err(format!("Unterminated string literal at line {}", self.line));
                     }
-                    let ch = self.source[self.idx];
+                    let ch = self.source[self.idx..].chars().next().unwrap();
                     if ch == '"' {
                         self.idx += 1;
                         break;
@@ -172,8 +174,8 @@ impl Lexer {
                         if self.idx >= self.source.len() {
                             return Err(format!("Unterminated escape sequence in string literal at line {}", self.line));
                         }
-                        let e = self.source[self.idx];
-                        self.idx += 1;
+                        let e = self.source[self.idx..].chars().next().unwrap();
+                        self.idx += e.len_utf8();
                         match e {
                             'n' => { s.push('\n'); },
                             'r' => { s.push('\r'); },
@@ -182,9 +184,9 @@ impl Lexer {
                             '\\' => { s.push('\\'); },
                             '"' => { s.push('"'); },
                             'x' => {
-                                if self.idx + 1 < self.source.len() {
-                                    let hex_str: String = self.source[self.idx..=self.idx+1].iter().collect();
-                                    if let Ok(val) = u8::from_str_radix(&hex_str, 16) {
+                                if self.idx + 2 <= self.source.len() {
+                                    let hex_str = &self.source[self.idx..self.idx+2];
+                                    if let Ok(val) = u8::from_str_radix(hex_str, 16) {
                                         self.idx += 2;
                                         s.push(val as char);
                                     } else {
@@ -201,40 +203,48 @@ impl Lexer {
                             self.line += 1;
                         }
                         s.push(ch);
-                        self.idx += 1;
+                        self.idx += ch.len_utf8();
                     }
                 }
                 tokens.push(Token { kind: TokenKind::Str(s), line: self.line });
-            } else if c.is_digit(10) || (c == '-' && self.idx + 1 < self.source.len() && self.source[self.idx+1].is_digit(10)) {
+            } else if c.is_digit(10) || (c == '-' && self.source[self.idx..].chars().nth(1).map_or(false, |ch| ch.is_digit(10))) {
                 // Numeric Literals: matches base-10 decimals or base-16 hexadecimals (starting with 0x)
                 let mut val_str = String::new();
-                if self.starts_with("0x") {
+                if self.source[self.idx..].starts_with("0x") {
                     val_str.push_str("0x");
                     self.idx += 2;
-                    while self.idx < self.source.len() && self.source[self.idx].is_ascii_hexdigit() {
-                        val_str.push(self.source[self.idx]);
-                        self.idx += 1;
+                    while let Some(ch) = self.source[self.idx..].chars().next() {
+                        if ch.is_ascii_hexdigit() {
+                            val_str.push(ch);
+                            self.idx += ch.len_utf8();
+                        } else {
+                            break;
+                        }
                     }
                 } else {
                     if c == '-' {
                         val_str.push('-');
                         self.idx += 1;
                     }
-                    while self.idx < self.source.len() && self.source[self.idx].is_digit(10) {
-                        val_str.push(self.source[self.idx]);
-                        self.idx += 1;
+                    while let Some(ch) = self.source[self.idx..].chars().next() {
+                        if ch.is_digit(10) {
+                            val_str.push(ch);
+                            self.idx += ch.len_utf8();
+                        } else {
+                            break;
+                        }
                     }
-                    // Fractional part: a '.' immediately followed by at least one digit produces a
-                    // floating literal (resolved to fixed-point at the declaration site).
-                    if self.idx + 1 < self.source.len()
-                        && self.source[self.idx] == '.'
-                        && self.source[self.idx + 1].is_digit(10)
-                    {
+                    // Fractional part
+                    if self.source[self.idx..].starts_with('.') && self.source[self.idx+1..].chars().next().map_or(false, |ch| ch.is_digit(10)) {
                         val_str.push('.');
                         self.idx += 1;
-                        while self.idx < self.source.len() && self.source[self.idx].is_digit(10) {
-                            val_str.push(self.source[self.idx]);
-                            self.idx += 1;
+                        while let Some(ch) = self.source[self.idx..].chars().next() {
+                            if ch.is_digit(10) {
+                                val_str.push(ch);
+                                self.idx += ch.len_utf8();
+                            } else {
+                                break;
+                            }
                         }
                         let fval = val_str.parse::<f64>().map_err(|e| e.to_string())?;
                         tokens.push(Token { kind: TokenKind::Float(fval), line: self.line });
@@ -251,16 +261,20 @@ impl Lexer {
             } else if c.is_alphabetic() || "$@%_".contains(c) {
                 // Identifiers: matches names, potentially including context sigils ($, %, @)
                 let mut ident = String::new();
-                while self.idx < self.source.len() && (self.source[self.idx].is_alphanumeric() || "$@%_./".contains(self.source[self.idx])) {
-                    ident.push(self.source[self.idx]);
-                    self.idx += 1;
+                while let Some(ch) = self.source[self.idx..].chars().next() {
+                    if ch.is_alphanumeric() || "$@%_./".contains(ch) {
+                        ident.push(ch);
+                        self.idx += ch.len_utf8();
+                    } else {
+                        break;
+                    }
                 }
                 
                 if ident == "%" {
                     tokens.push(Token { kind: TokenKind::Symbol("%".to_string()), line: self.line });
                 } else {
                     match ident.as_str() {
-                        "mut" | "loop" | "return" | "import" | "switch" | "namespace" | "imut" | "ram" | "eeprom" | "flash" | "const" | "ptr" | "str" | "fn" | "isr" => {
+                        "mut" | "loop" | "return" | "import" | "switch" | "target" | "imut" | "ram" | "eeprom" | "flash" | "const" | "ptr" | "str" | "fn" | "isr" => {
                             tokens.push(Token { kind: TokenKind::Keyword(ident), line: self.line });
                         }
                         "u8" | "u16" | "void" | "i8" | "i16" | "bool" | "char" | "r8" | "r16" => {
@@ -282,19 +296,5 @@ impl Lexer {
             }
         }
         Ok(tokens)
-    }
-
-    /// Non-destructive check to see if the source code starting at the current index
-    /// matches a prefix sequence.
-    fn starts_with(&self, s: &str) -> bool {
-        if self.idx + s.len() > self.source.len() {
-            return false;
-        }
-        for (i, c) in s.chars().enumerate() {
-            if self.source[self.idx + i] != c {
-                return false;
-            }
-        }
-        true
     }
 }

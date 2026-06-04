@@ -15,7 +15,7 @@
 # Math, Bitwise, Comparison, Switch, Array, and Logical Test in ik8b
 # Fully testing division, modulo, bitwise operators, relational swaps, switch cases, arrays, and logical boolean short-circuits.
 
-namespace atmega328p
+target atmega328p
 
 @main {
     ram mut $res: u8 = 0

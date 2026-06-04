@@ -1,7 +1,5 @@
-# Technical test for ik8b subroutines and imports
-# Verifies parameter passing, return values, nested subroutines, and import resolution.
-
-import tests/test_helper
+# Technical test for ik8b subroutines.
+# Verifies parameter passing, return values, and nested subroutines.
 
 @main {
     ram mut $ok: u8 = 1
@@ -25,7 +23,7 @@ import tests/test_helper
         30 -> $ok
     }
 
-    # 4. Imported function call
+    # 4. Local function call
     @square(12) -> $res
     ? $res != 144 {
         40 -> $ok
@@ -43,6 +41,10 @@ import tests/test_helper
 
 @multiply_u16($a: u16, $b: u16) -> u16 {
     return $a * $b
+}
+
+@square($n: u16) -> u16 {
+    return $n * $n
 }
 
 @nested_ops($x: u16, $y: u16) -> u16 {

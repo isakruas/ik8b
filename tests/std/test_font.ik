@@ -120,6 +120,7 @@ import std/font
     ? *($rp + 10) != $b { 172 -> $ok }
     ? *($rp + 11) != 0 { 173 -> $ok }   # trailing spacing column
 
-    $ok -> $ok
+    ram mut $res_arr: u8[1] = 0
+    $ok -> $res_arr[0]
     loop * {}
 }

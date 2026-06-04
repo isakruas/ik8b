@@ -17,13 +17,16 @@ import std/eeprom
 @main {
     ram mut $ok: u8 = 1
 
-    @eeprom_write(0, 0)
-    @font_stream("Hi", &@ee_sink)
-    ram imut $streamed: u8 = @eeprom_read(0)
+    ? %EEPROM_CTRL_REG != 0 {
+        @eeprom_write(0, 0)
+        @font_stream("Hi", &@ee_sink)
+        ram imut $streamed: u8 = @eeprom_read(0)
 
-    ram imut $folded: u8 = @font_fold("Hi", 0, &@fxor)
-    ? $streamed != $folded { 0 -> $ok }
+        ram imut $folded: u8 = @font_fold("Hi", 0, &@fxor)
+        ? $streamed != $folded { 0 -> $ok }
+    }
 
-    $ok -> $ok
+    ram mut $res_arr: u8[1] = 0
+    $ok -> $res_arr[0]
     loop * {}
 }

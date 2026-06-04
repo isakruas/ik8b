@@ -32,6 +32,7 @@
     ? $b != 62 { 0 -> $ok }
 
     # Validate output
-    $ok -> $ok
+    ram mut $res_arr: u8[1] = 0
+    $ok -> $res_arr[0]
     loop * {}
 }

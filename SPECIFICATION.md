@@ -22,7 +22,7 @@ explicit context sigils:
 | `@` | Function | User-defined subroutine or compiler intrinsic. |
 
 Every variable, hardware register, and function reference must use its sigil.
-Unsigiled identifiers are used for keywords, type names, device namespaces, and
+Unsigiled identifiers are used for keywords, type names, device targets, and
 import paths.
 
 ## 2. Lexical Structure
@@ -37,7 +37,7 @@ Line comments start with `#` and continue to the end of the line.
 The reserved keywords are:
 
 ```ik
-const mut imut ram eeprom flash loop return import switch namespace ptr str fn
+const mut imut ram eeprom flash loop return import switch target ptr str fn
 ```
 
 The primitive type names are:
@@ -93,21 +93,21 @@ Program ::= { TopLevelStatement }
 
 TopLevelStatement ::=
       ImportStatement
-    | NamespaceStatement
+    | targetStatement
     | CompileTimeCondition
     | ConstDeclaration
     | FunctionDeclaration
 ```
 
-The compiler driver requires one top-level device namespace before code
+The compiler driver requires one top-level device target before code
 generation:
 
 ```ik
-namespace atmega328p
+target atmega328p
 ```
 
-The namespace selects the device entry from the compiler device table. If no
-namespace is present, or if the selected device is unknown, compilation fails.
+The target selects the device entry from the compiler device table. If no
+target is present, or if the selected device is unknown, compilation fails.
 Use `ik8b --list-devices` to list supported names.
 
 The program entry point is `@main`. Code generation emits a call to `@main` at
@@ -131,19 +131,19 @@ appends `.ik` during lookup. Resolution is attempted in this order:
 3. Directories relative to the compiler executable, including `std` fallbacks
    for paths starting with `std/`.
 
-Imported files are parsed using the active namespace of the importing parser.
+Imported files are parsed using the active target of the importing parser.
 
-Top-level namespace conditions select declarations at parse time:
+Top-level target conditions select declarations at parse time:
 
 ```ik
-? namespace == atmega328p {
+? target == atmega328p {
     const %PORTB: u16 = 0x0025
     @board_init() { }
 }
 ```
 
 Only `import`, `const`, and function declarations are accepted inside a
-top-level namespace condition. Conditions compare the active namespace against a
+top-level target condition. Conditions compare the active target against a
 single identifier using `==`; arbitrary compile-time expressions are not
 supported.
 
@@ -453,7 +453,7 @@ Logical `&&` and `||` use zero/nonzero truthiness and short-circuit evaluation.
 
 ### 8.1 Target Device
 
-The active `namespace` selects a device from `src/devices.rs`. Each device entry
+The active `target` selects a device from `src/devices.rs`. Each device entry
 provides:
 
 | Field | Purpose |
@@ -553,7 +553,7 @@ must pass literal register numbers in the ranges above.
 ## 10. Standard Library
 
 The standard library is ordinary ik8b source under `std/`. Modules use
-top-level namespace conditions to expose declarations for supported devices.
+top-level target conditions to expose declarations for supported devices.
 
 | Module | Purpose |
 |---|---|
@@ -583,7 +583,7 @@ for `atmega328p`, `atmega2560`, and `atmega32u4`.
 (`@uart1_init`, `@uart1_send`, `@uart1_receive`).
 
 `std/eeprom`, `std/atomic`, and `std/delay` provide generic AVR helpers without
-namespace-conditional variants in the current tree.
+target-conditional variants in the current tree.
 
 `std/math` primarily uses `r16` (Q8.8 signed fixed-point) conventions for many
 functions. Public
@@ -647,7 +647,7 @@ languages:
 - Function pointers are supported (`fn(...)`, `&@func`, `@$var(args)`), but
   there are no closures: a function pointer carries only an address, not any
   captured environment.
-- No general preprocessor; only top-level `? namespace == name { ... }`.
+- No general preprocessor; only top-level `? target == name { ... }`.
 - No interrupt declaration syntax beyond emitting low-level intrinsics such as
   `@reti()`.
 

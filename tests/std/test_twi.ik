@@ -18,36 +18,13 @@ import std/twi
 @main {
     ram mut $ok: u8 = 1
 
-    # TWI/I2C (Available on atmega328p, atmega2560, and atmega32u4 namespaces)
-    ? namespace == atmega328p {
-        ? 0 == 1 {
-            @twi_init(12)
-            ram imut $start_status: u8 = @twi_start()
-            ram imut $write_status: u8 = @twi_write(0x55)
-            ram imut $ack_data: u8 = @twi_read_ack()
-            ram imut $nack_data: u8 = @twi_read_nack()
-            @twi_stop()
-        }
-    }
-    ? namespace == atmega2560 {
-        ? 0 == 1 {
-            @twi_init(12)
-            ram imut $start_status: u8 = @twi_start()
-            ram imut $write_status: u8 = @twi_write(0x55)
-            ram imut $ack_data: u8 = @twi_read_ack()
-            ram imut $nack_data: u8 = @twi_read_nack()
-            @twi_stop()
-        }
-    }
-    ? namespace == atmega32u4 {
-        ? 0 == 1 {
-            @twi_init(12)
-            ram imut $start_status: u8 = @twi_start()
-            ram imut $write_status: u8 = @twi_write(0x55)
-            ram imut $ack_data: u8 = @twi_read_ack()
-            ram imut $nack_data: u8 = @twi_read_nack()
-            @twi_stop()
-        }
+    ? %TWI0_CTRL_REG != 0 {
+        @twi_init(12)
+        @twi_start()
+        @twi_write(0x55)
+        ram imut $ack_data: u8 = @twi_read_ack()
+        ram imut $nack_data: u8 = @twi_read_nack()
+        @twi_stop()
     }
 
     # Force success status into R16 by storing into an SRAM array

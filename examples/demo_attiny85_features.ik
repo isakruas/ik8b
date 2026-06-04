@@ -14,7 +14,7 @@
 
 # Example demonstrating the use of the unified ik8b Standard Library on ATtiny85
 
-namespace attiny85
+target attiny85
 
 import std/gpio
 import std/math

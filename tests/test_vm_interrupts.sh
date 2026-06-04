@@ -77,7 +77,7 @@ run_vector_case() {
   local out="$tmpdir/$tag.out"
 
   cat > "$src" <<EOF
-namespace $dev
+target $dev
 
 isr $vec_name {
   @cli()
@@ -114,7 +114,7 @@ run_schedule_sanity() {
   local out_every="$tmpdir/schedule_every.out"
 
   cat > "$src" <<'EOF'
-namespace atmega328p
+target atmega328p
 
 isr INT0 {
   @cli()

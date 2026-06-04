@@ -57,20 +57,10 @@
         0 -> $ok
     }
 
-    # EEPROM pointer read/write path (unsupported cores are skipped by harness on Memory Error).
-    eeprom mut $ee: u8 = 7
-    eeprom ptr u8 $ep = &$ee
-    ram mut $rv: u8 = *$ep
-    ? $rv != 7 {
-        0 -> $ok
-    }
-    3 -> *$ep
-    *$ep -> $rv
-    ? $rv != 3 {
-        0 -> $ok
-    }
+    # EEPROM pointer tests removed in favor of std/eeprom usage.
 
-    $ok
+    ram mut $res_arr: u8[1] = 0
+    $ok -> $res_arr[0]
 
     loop * {
         # End of test

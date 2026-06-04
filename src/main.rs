@@ -47,8 +47,8 @@ fn print_help(program: &str) {
     println!("  -o <out.hex>        Output Intel HEX file (default: out.hex)");
     println!("  --report            Print SRAM_BYTES=<n> before the normal build report");
     println!();
-    println!("The target device is selected by a mandatory top-level namespace,");
-    println!("e.g. declare `namespace atmega328p` at the top of the source file.");
+    println!("The target device is selected by a mandatory top-level target,");
+    println!("e.g. declare `target atmega328p` at the top of the source file.");
 }
 
 fn print_version() {
@@ -102,10 +102,11 @@ fn print_device_table() {
     }
 }
 
-fn parse_compile_args(args: &[String]) -> Result<(String, String, bool), String> {
+fn parse_compile_args(args: &[String]) -> Result<(String, String, bool, bool), String> {
     let input_file = args[1].clone();
     let mut output_file = "out.hex".to_string();
     let mut report = false;
+    let mut emit_ir = false;
     let mut idx = 2;
 
     while idx < args.len() {
@@ -119,6 +120,9 @@ fn parse_compile_args(args: &[String]) -> Result<(String, String, bool), String>
             }
             "--report" => {
                 report = true;
+            }
+            "--emit-ir" => {
+                emit_ir = true;
             }
             "-h" | "--help" | "help" => {
                 return Err("Help must be requested without an input file".to_string());
@@ -145,7 +149,7 @@ fn parse_compile_args(args: &[String]) -> Result<(String, String, bool), String>
         idx += 1;
     }
 
-    Ok((input_file, output_file, report))
+    Ok((input_file, output_file, report, emit_ir))
 }
 
 fn main() {
@@ -186,7 +190,7 @@ fn main() {
         _ => {}
     }
 
-    let (input_file, output_file, report) = match parse_compile_args(&args) {
+    let (input_file, output_file, report, emit_ir) = match parse_compile_args(&args) {
         Ok(parsed) => parsed,
         Err(e) => {
             eprintln!("CLI Error: {}", e);
@@ -223,13 +227,28 @@ fn main() {
         }
     };
     
-    // The target device is selected by the mandatory top-level `namespace`
-    // declaration (e.g. `namespace atmega328p`). Core and memory layout are
+    // `--emit-ir`: dump the SSA IR for the program and exit. Drives the new
+    // middle-end without running AVR code generation.
+    if emit_ir {
+        match codegen::emit_ir_text(&ast) {
+            Ok(text) => {
+                print!("{}", text);
+                process::exit(0);
+            }
+            Err(e) => {
+                eprintln!("IR Error: {}", e);
+                process::exit(1);
+            }
+        }
+    }
+
+    // The target device is selected by the mandatory top-level `target`
+    // declaration (e.g. `target atmega328p`). Core and memory layout are
     // resolved from the device table, so no --core/--sram-start flags are needed.
-    let device_name = parser.active_namespace.trim().to_string();
+    let device_name = parser.active_target.trim().to_string();
     if device_name.is_empty() {
-        eprintln!("Device Error: a top-level device namespace is required.");
-        eprintln!("  Declare the target at the top of the source, e.g.: namespace atmega328p");
+        eprintln!("Device Error: a top-level device target is required.");
+        eprintln!("  Declare the target at the top of the source, e.g.: target atmega328p");
         process::exit(1);
     }
     let device = match devices::lookup_device(&device_name) {
@@ -248,12 +267,6 @@ fn main() {
     codegen.target_core = target_core;
     codegen.set_sram_start(sram_start);
     codegen.set_device_name(device.name);
-    // Highest usable SRAM byte for this device, so the stack-collision guard
-    // scales with parts that have more than the classic 2 KB.
-    if device.sram_size > 0 {
-        let top = (sram_start as u32 + device.sram_size - 1).min(0xFFFF) as u16;
-        codegen.set_sram_top(top);
-    }
     let insts = match codegen.compile(&ast) {
         Ok(i) => i,
         Err(e) => {
@@ -263,7 +276,13 @@ fn main() {
     };
     
     // 4. Resolve Labels
-    let opcodes = codegen::resolve_labels(&insts);
+    let opcodes = match codegen::resolve_labels(&insts) {
+        Ok(opcodes) => opcodes,
+        Err(e) => {
+            eprintln!("Assembly Error: {}", e);
+            process::exit(1);
+        }
+    };
     
     // 4b. Device memory-budget check + usage report.
     let prog_bytes = opcodes.len() as u32 * 2;
@@ -276,7 +295,7 @@ fn main() {
     };
     
     if report {
-     
+        println!("SRAM_BYTES={}", sram_bytes);
         println!();
         println!("ik8b Build Summary");
         println!("┌──────────────────────────────────────────────────────────────┐");
@@ -331,13 +350,6 @@ fn main() {
             }
         }
         
-        let regs_used = codegen.total_registers_used.len() as u32;
-        println!(
-            "  Registers: {:5} /    14 R  [{}]  {:3}%",
-            regs_used,
-            make_progress_bar(regs_used, 14),
-            pct_val(regs_used, 14)
-        );
         println!("└──────────────────────────────────────────────────────────────┘");
         println!();
         

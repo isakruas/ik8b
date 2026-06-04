@@ -45,7 +45,7 @@ for mcu in "${MCUS[@]}"; do
 
         tmp=$(mktemp)
         {
-            echo "namespace $mcu"
+            echo "target $mcu"
             echo
             cat "$f"
         } > "$tmp"

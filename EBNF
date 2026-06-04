@@ -1,31 +1,45 @@
 (* ============================================================================
    ik8b Formal Grammar (EBNF)
-   Version: 1.1
+   Version: 1.0
    Strongly-Typed Embedded Programming Language with Context Sigils
    ============================================================================ *)
 
 Program              ::= { TopLevelStatement }
 
 TopLevelStatement    ::= ImportStatement
-                       | NamespaceStatement
+                       | targetStatement
                        | CompileTimeCondition
                        | ConstDeclaration
                        | FunctionDeclaration
+                       | IsrDeclaration
 
 ImportStatement      ::= "import" Identifier
 
-NamespaceStatement   ::= "namespace" Identifier
+targetStatement   ::= "target" Identifier
 
-CompileTimeCondition ::= "?" "namespace" "==" Identifier "{" { TopLevelStatement } "}"
+CompileTimeCondition ::= "?" "target" "==" Identifier "{" { TopLevelStatement } "}"
 
-ConstDeclaration     ::= "const" RegisterIdentifier ":" Type "=" Number
+ConstDeclaration     ::= "const" RegisterIdentifier ":" PrimitiveType "=" Number
 
 FunctionDeclaration  ::= FunctionIdentifier [ "(" [ ParameterList ] ")" ] [ "->" Type ] Block
+
+(* An interrupt service routine bound to a named device vector. Has no
+   parameters or return value; the backend emits a vector-table jump,
+   a full context save/restore, and reti. *)
+IsrDeclaration       ::= "isr" Identifier Block
 
 ParameterList        ::= Parameter { "," Parameter }
 Parameter            ::= VariableIdentifier ":" Type
 
-Block                ::= "{" { Statement } "}"
+Block                ::= "{" { BlockItem } "}"
+
+(* Inside a block, a compile-time condition may appear alongside regular
+   statements.  The condition gates a nested block of statements, not
+   top-level declarations. *)
+BlockItem            ::= CompileTimeBlockCondition
+                       | Statement
+
+CompileTimeBlockCondition ::= "?" "target" "==" Identifier Block
 
 Statement            ::= VariableDeclaration
                        | Assignment
@@ -37,20 +51,27 @@ Statement            ::= VariableDeclaration
 
 (* --- Variable declarations -------------------------------------------------
    Three forms share a leading storage space. Pointer and string declarations
-   use a dedicated keyword and are always mutable (strings in flash are
-   immutable). Scalar/array/function-pointer declarations carry an explicit
-   mutability and a type after the ":". *)
+   use a dedicated keyword. Scalar/array/function-pointer declarations carry
+   an explicit mutability and a type after the ":". *)
 VariableDeclaration  ::= PointerDeclaration
                        | StringDeclaration
                        | ScalarDeclaration
 
-PointerDeclaration   ::= StorageSpace "ptr" PointerSpace Type VariableIdentifier "=" Expression
-StringDeclaration    ::= ("ram" | "flash") "str" VariableIdentifier "=" StringLiteral
-ScalarDeclaration    ::= StorageSpace ("mut" | "imut") VariableIdentifier ":" Type [ "[" Number "]" ] "=" Expression
+(* The storage-space keyword in a pointer declaration names the memory space
+   the pointer points into. The pointer variable itself lives in SRAM. *)
+PointerDeclaration   ::= StorageSpace "ptr" Type VariableIdentifier "=" Expression
+
+StringDeclaration    ::= ( "ram" | "flash" ) "str" VariableIdentifier "=" Expression
+
+(* For scalar declarations, the type is either a primitive type token or a
+   function-pointer type `fn(...)`. Pointer and string types use their
+   own dedicated declaration forms above. *)
+ScalarDeclaration    ::= StorageSpace ( "mut" | "imut" ) VariableIdentifier ":" ScalarType [ "[" Number "]" ] "=" Expression
+ScalarType           ::= PrimitiveType | FunctionType
 
 StorageSpace         ::= "ram" | "eeprom" | "flash"
 
-Assignment           ::= Expression ( "->" | "->+" | "->-" | "->&" | "->|" | "->^" ) TargetExpression
+Assignment           ::= Expression ( "->" | "->+" | "->-" | "->&" | "->|" | "->^" ) Expression
 
 LoopStatement        ::= InfiniteLoop | RangeLoop
 
@@ -68,7 +89,8 @@ ReturnStatement      ::= "return" [ Expression ]
 
 ExpressionStatement  ::= Expression
 
-(* --- Expressions (lowest to highest precedence) --------------------------- *)
+(* --- Expressions (lowest to highest precedence) ----------------------------
+   All binary levels are left-associative and allow chaining. *)
 Expression           ::= LogicalOr
 
 LogicalOr            ::= LogicalAnd { "||" LogicalAnd }
@@ -81,9 +103,9 @@ BitwiseXor           ::= BitwiseAnd { "^" BitwiseAnd }
 
 BitwiseAnd           ::= Equality { "&" Equality }
 
-Equality             ::= Relational [ ( "==" | "!=" ) Relational ]
+Equality             ::= Relational { ( "==" | "!=" ) Relational }
 
-Relational           ::= Additive [ ( "<" | ">" | "<=" | ">=" ) Additive ]
+Relational           ::= Additive { ( "<" | ">" | "<=" | ">=" ) Additive }
 
 Additive             ::= Multiplicative { ( "+" | "-" ) Multiplicative }
 
@@ -98,27 +120,22 @@ Unary                ::= ( "!" | "~" | "-" | "&" | "*" ) Unary
 Primary              ::= Number
                        | FloatLiteral
                        | StringLiteral
-                       | BooleanLiteral
-                       | CharacterLiteral
                        | CallExpression
-                       | FunctionAddress
-                       | TargetExpression
+                       | IdentifierExpression
                        | "(" Expression ")"
 
-(* A direct call names a function (@name); an indirect call names a
-   function-pointer variable (@$var). Both lex as one "@"-prefixed identifier. *)
-CallExpression       ::= ( FunctionIdentifier | IndirectCallTarget ) "(" [ ArgumentList ] ")"
-IndirectCallTarget   ::= "@" VariableIdentifier        (* "@$name" *)
+(* A function call: direct @name(...) or indirect @$name(...).  Both lex as
+   a single "@"-prefixed Identifier token followed by parenthesised args. *)
+CallExpression       ::= FunctionCallTarget "(" [ ArgumentList ] ")"
+FunctionCallTarget   ::= FunctionIdentifier          (* "@name"  — direct call  *)
+                       | "@" VariableIdentifier       (* "@$name" — indirect call *)
 
-(* Address of a named function, yielding a function pointer value. *)
-FunctionAddress      ::= "&" FunctionIdentifier
+(* A variable, register, or array-element reference. Array indexing is valid
+   in any expression position (both reads and assignment targets). *)
+IdentifierExpression ::= ( VariableIdentifier | RegisterIdentifier ) [ "[" Expression "]" ]
+                       | FunctionIdentifier           (* bare @name without call — e.g. for &@name *)
 
 ArgumentList         ::= Expression { "," Expression }
-
-TargetExpression     ::= TargetIdentifier [ "[" Expression "]" ]
-                       | "*" Expression                (* pointer dereference target *)
-
-TargetIdentifier     ::= VariableIdentifier | RegisterIdentifier
 
 VariableIdentifier   ::= "$" Identifier
 FunctionIdentifier   ::= "@" Identifier
@@ -131,7 +148,9 @@ PrimitiveType        ::= "u8" | "u16" | "i8" | "i16" | "bool" | "char" | "r8" | 
 
 PointerType          ::= "ptr" PointerSpace Type
 
-StringType           ::= "str" ( "ram" | "flash" )
+(* In type-specifier position (parameters, returns), only "str ram" is accepted.
+   "str flash" is valid only as a variable declaration form. *)
+StringType           ::= "str" "ram"
 
 FunctionType         ::= "fn" "(" [ Type { "," Type } ] ")" [ "->" Type ]
 
@@ -147,12 +166,21 @@ HexNumber            ::= "0x" HexDigit { HexDigit }
 (* A fractional literal is resolved to a scaled fixed-point integer (r8/r16). *)
 FloatLiteral         ::= [ "-" ] Digit { Digit } "." Digit { Digit }
 
+(* Boolean literals are lexed directly as numeric constants (true = 1, false = 0),
+   so they appear as Number tokens to the parser. *)
 BooleanLiteral       ::= "true" | "false"
 
-StringLiteral        ::= '"' { StringChar | EscapeSequence } '"'
-CharacterLiteral     ::= "'" ( PrintableChar | EscapeSequence ) "'"
-EscapeSequence       ::= "\" ( "n" | "r" | "t" | "0" | "\" | "'" | '"' )
+StringLiteral        ::= '"' { StringChar | StringEscape } '"'
+CharacterLiteral     ::= "'" ( PrintableChar | CharEscape ) "'"
+
+(* String escape sequences support \xHH hex escapes in addition to the
+   common named escapes. *)
+StringEscape         ::= "\" ( "n" | "r" | "t" | "0" | "\" | '"' )
                        | "\x" HexDigit HexDigit
+
+(* Character escape sequences: a subset of string escapes.  Hex escapes
+   (\xHH) and double-quote escapes (\") are NOT supported in char literals. *)
+CharEscape           ::= "\" ( "n" | "r" | "t" | "0" | "\" | "'" )
 
 Comment              ::= "#" { any character except newline }
 
