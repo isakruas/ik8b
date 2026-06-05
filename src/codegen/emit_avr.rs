@@ -57,12 +57,14 @@ pub fn emit_function(
     label_base: usize,
     consts: &HashMap<String, u16>,
     str_data: &HashMap<String, u16>,
-) -> Result<(Vec<Pass1Inst>, u16, u16), String> {
+) -> Result<EmittedFunction, String> {
     // Allocate; on spill, rewrite the function to materialize spilled values through stack
     // slots and re-allocate, iterating to a fixpoint (the classic Chaitin spill loop).
     let mut owned: Option<IrFunction> = None;
     let alloc;
     let mut iters = 0;
+    // Distinct values spilled to memory across all spill iterations (a usage stat).
+    let mut spill_nodes: std::collections::HashSet<usize> = std::collections::HashSet::new();
     loop {
         let fref: &IrFunction = owned.as_ref().unwrap_or(f);
         let (alloc_pool, callee_saved) = register_sets(target_core);
@@ -70,6 +72,9 @@ pub fn emit_function(
         if a.spilled.is_empty() {
             alloc = a;
             break;
+        }
+        for &n in &a.spilled {
+            spill_nodes.insert(n);
         }
         iters += 1;
         if iters > 10 {
@@ -97,7 +102,34 @@ pub fn emit_function(
     e.run(name, is_main)?;
     let sram_used = e.sram_used;
     let eeprom_used = e.eeprom_used;
-    Ok((e.out, sram_used, eeprom_used))
+
+    // Distinct hardware registers occupied by this function. A 16-bit value
+    // holds both its color register and the next one, so count the high half.
+    let mut regs: std::collections::HashSet<u8> = std::collections::HashSet::new();
+    for (&node, &reg) in &e.alloc.colors {
+        regs.insert(reg);
+        if fref.value_type(Value(node as u32)).width() == Width::W16 {
+            regs.insert(reg + 1);
+        }
+    }
+
+    Ok(EmittedFunction {
+        insts: e.out,
+        sram_used,
+        eeprom_used,
+        regs_used: regs.len() as u32,
+        spills: spill_nodes.len() as u32,
+    })
+}
+
+/// What `emit_function` produces: the instruction stream plus the resource and
+/// register-allocation usage figures the IDE's stats panel reports.
+pub struct EmittedFunction {
+    pub insts: Vec<Pass1Inst>,
+    pub sram_used: u16,
+    pub eeprom_used: u16,
+    pub regs_used: u32,
+    pub spills: u32,
 }
 
 fn register_sets(target_core: TargetCore) -> (&'static [u8], &'static [u8]) {

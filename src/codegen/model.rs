@@ -103,4 +103,9 @@ pub struct CodeGenerator {
     pub target_core: TargetCore,
     // Selected device name, used to resolve interrupt vector names to indices.
     pub(super) device_name: String,
+    // Backend register-usage stats, accumulated as functions are emitted:
+    // peak distinct hardware registers used by any single function, and the
+    // total number of values that had to be spilled to memory.
+    pub(super) regs_used: u32,
+    pub(super) spills: u32,
 }

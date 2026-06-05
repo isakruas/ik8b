@@ -26,6 +26,8 @@ impl CodeGenerator {
             eeprom_free_ptr: 0,
             target_core: TargetCore::Generic,
             device_name: String::new(),
+            regs_used: 0,
+            spills: 0,
         }
     }
 
@@ -59,6 +61,21 @@ impl CodeGenerator {
     /// Bytes of EEPROM allocated for persistent `imut` variables.
     pub fn eeprom_used(&self) -> u16 {
         self.eeprom_free_ptr
+    }
+
+    /// Peak number of distinct hardware registers occupied by any single
+    /// function (out of the 32 GP registers). Populated during `compile`.
+    /// Consumed by tooling (the IDE) rather than the compiler binary.
+    #[allow(dead_code)]
+    pub fn registers_used(&self) -> u32 {
+        self.regs_used
+    }
+
+    /// Total number of values the register allocator had to spill to memory
+    /// across the whole program. Populated during `compile`.
+    #[allow(dead_code)]
+    pub fn spills(&self) -> u32 {
+        self.spills
     }
 
     /// Appends one symbolic instruction to the pass-1 stream.

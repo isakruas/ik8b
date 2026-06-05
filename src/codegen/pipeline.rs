@@ -251,7 +251,7 @@ impl CodeGenerator {
             let f = ir_funcs
                 .get(name)
                 .ok_or_else(|| format!("no IR for {}", name))?;
-            let (insts, sram_used, eeprom_used) = emit_avr::emit_function(
+            let emitted = emit_avr::emit_function(
                 f,
                 name,
                 self.target_core,
@@ -264,9 +264,12 @@ impl CodeGenerator {
                 &str_data,
             )?;
             // Reserve the SRAM region the function actually used, including spill slots.
-            sram_cursor += sram_used;
-            eeprom_cursor += eeprom_used;
-            for inst in insts {
+            sram_cursor += emitted.sram_used;
+            eeprom_cursor += emitted.eeprom_used;
+            // Peak register pressure across functions; total spills program-wide.
+            self.regs_used = self.regs_used.max(emitted.regs_used);
+            self.spills += emitted.spills;
+            for inst in emitted.insts {
                 self.emit(inst);
             }
         }
