@@ -21,7 +21,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0000
     const %EEPROM_CTRL_REG: u8 = 0x0000
     const %EEPROM_DATA_REG: u8 = 0x0000
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -30,7 +30,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0000
     const %EEPROM_CTRL_REG: u8 = 0x0000
     const %EEPROM_DATA_REG: u8 = 0x0000
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -39,7 +39,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0000
     const %EEPROM_CTRL_REG: u8 = 0x0000
     const %EEPROM_DATA_REG: u8 = 0x0000
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -48,7 +48,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0000
     const %EEPROM_CTRL_REG: u8 = 0x0000
     const %EEPROM_DATA_REG: u8 = 0x0000
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -57,7 +57,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -66,7 +66,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -75,7 +75,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -84,7 +84,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -93,7 +93,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -102,7 +102,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -111,7 +111,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -120,7 +120,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -129,7 +129,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -138,7 +138,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -147,7 +147,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -156,7 +156,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -165,7 +165,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -174,7 +174,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -183,7 +183,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -192,7 +192,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -201,7 +201,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -210,7 +210,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -219,7 +219,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -228,7 +228,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -237,7 +237,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -246,7 +246,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -255,7 +255,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -264,7 +264,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -273,7 +273,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -282,7 +282,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -291,7 +291,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -300,7 +300,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -309,7 +309,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -318,7 +318,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -327,7 +327,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0000
     const %EEPROM_CTRL_REG: u8 = 0x0000
     const %EEPROM_DATA_REG: u8 = 0x0000
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -336,7 +336,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -345,7 +345,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -354,7 +354,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -363,7 +363,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -372,7 +372,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -381,7 +381,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -390,7 +390,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -399,7 +399,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -408,7 +408,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -417,7 +417,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -426,7 +426,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -435,7 +435,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -444,7 +444,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -453,7 +453,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -462,7 +462,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -471,7 +471,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -480,7 +480,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -489,7 +489,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -498,7 +498,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -507,7 +507,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -516,7 +516,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -525,7 +525,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -534,7 +534,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -543,7 +543,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -552,7 +552,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -561,7 +561,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -570,7 +570,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -579,7 +579,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -588,7 +588,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -597,7 +597,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -606,7 +606,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -615,7 +615,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -624,7 +624,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -633,7 +633,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -642,7 +642,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -651,7 +651,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -660,7 +660,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -669,7 +669,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -678,7 +678,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -687,7 +687,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -696,7 +696,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -705,7 +705,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -714,7 +714,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -723,7 +723,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -732,7 +732,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -741,7 +741,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -750,7 +750,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -759,7 +759,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -768,7 +768,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -777,7 +777,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -786,7 +786,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -795,7 +795,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -804,7 +804,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -813,7 +813,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -822,7 +822,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -831,7 +831,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -840,7 +840,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -849,7 +849,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -858,7 +858,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -867,7 +867,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -876,7 +876,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -885,7 +885,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -894,7 +894,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -903,7 +903,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -912,7 +912,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -921,7 +921,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -930,7 +930,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -939,7 +939,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -948,7 +948,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -957,7 +957,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -966,7 +966,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -975,7 +975,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -984,7 +984,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -993,7 +993,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1002,7 +1002,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1011,7 +1011,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1020,7 +1020,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1029,7 +1029,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1038,7 +1038,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1047,7 +1047,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1056,7 +1056,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1065,7 +1065,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1074,7 +1074,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1083,7 +1083,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1092,7 +1092,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1101,7 +1101,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1110,7 +1110,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1119,7 +1119,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1128,7 +1128,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1137,7 +1137,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1146,7 +1146,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1155,7 +1155,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1164,7 +1164,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1173,7 +1173,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1182,7 +1182,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1191,7 +1191,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1200,7 +1200,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1209,7 +1209,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1218,7 +1218,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1227,7 +1227,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1236,7 +1236,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1245,7 +1245,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1254,7 +1254,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1263,7 +1263,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1272,7 +1272,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1281,7 +1281,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1290,7 +1290,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1299,7 +1299,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1308,7 +1308,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1317,7 +1317,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1326,7 +1326,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1335,7 +1335,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1344,7 +1344,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1353,7 +1353,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1362,7 +1362,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1371,7 +1371,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1380,7 +1380,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1389,7 +1389,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1398,7 +1398,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1407,7 +1407,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1416,7 +1416,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1425,7 +1425,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1434,7 +1434,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1443,7 +1443,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1452,7 +1452,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1461,7 +1461,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1470,7 +1470,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1479,7 +1479,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1488,7 +1488,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1497,7 +1497,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1506,7 +1506,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1515,7 +1515,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1524,7 +1524,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1533,7 +1533,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1542,7 +1542,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1551,7 +1551,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1560,7 +1560,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1569,7 +1569,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1578,7 +1578,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1587,7 +1587,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1596,7 +1596,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1605,7 +1605,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1614,7 +1614,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0000
     const %EEPROM_CTRL_REG: u8 = 0x0000
     const %EEPROM_DATA_REG: u8 = 0x0000
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1623,7 +1623,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0000
     const %EEPROM_CTRL_REG: u8 = 0x0000
     const %EEPROM_DATA_REG: u8 = 0x0000
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1632,7 +1632,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1641,7 +1641,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1650,7 +1650,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1659,7 +1659,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1668,7 +1668,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1677,7 +1677,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1686,7 +1686,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1695,7 +1695,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1704,7 +1704,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1713,7 +1713,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1722,7 +1722,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1731,7 +1731,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1740,7 +1740,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1749,7 +1749,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1758,7 +1758,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1767,7 +1767,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0000
     const %EEPROM_CTRL_REG: u8 = 0x0000
     const %EEPROM_DATA_REG: u8 = 0x0000
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1776,7 +1776,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1785,7 +1785,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1794,7 +1794,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1803,7 +1803,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1812,7 +1812,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1821,7 +1821,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1830,7 +1830,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1839,7 +1839,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1848,7 +1848,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1857,7 +1857,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1866,7 +1866,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1875,7 +1875,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1884,7 +1884,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1893,7 +1893,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0000
     const %EEPROM_CTRL_REG: u8 = 0x0000
     const %EEPROM_DATA_REG: u8 = 0x0000
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1902,7 +1902,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1911,7 +1911,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1920,7 +1920,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1929,7 +1929,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1938,7 +1938,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1947,7 +1947,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1956,7 +1956,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0000
     const %EEPROM_CTRL_REG: u8 = 0x0000
     const %EEPROM_DATA_REG: u8 = 0x0000
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1965,7 +1965,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0000
     const %EEPROM_CTRL_REG: u8 = 0x0000
     const %EEPROM_DATA_REG: u8 = 0x0000
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -1974,7 +1974,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1983,7 +1983,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -1992,7 +1992,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2001,7 +2001,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2010,7 +2010,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2019,7 +2019,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2028,7 +2028,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2037,7 +2037,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2046,7 +2046,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2055,7 +2055,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2064,7 +2064,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -2073,7 +2073,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -2082,7 +2082,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -2091,7 +2091,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -2100,7 +2100,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -2109,7 +2109,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -2118,7 +2118,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -2127,7 +2127,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -2136,7 +2136,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -2145,7 +2145,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0000
     const %EEPROM_CTRL_REG: u8 = 0x0000
     const %EEPROM_DATA_REG: u8 = 0x0000
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -2154,7 +2154,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2163,7 +2163,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2172,7 +2172,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2181,7 +2181,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2190,7 +2190,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2199,7 +2199,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2208,7 +2208,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2217,7 +2217,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2226,7 +2226,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2235,7 +2235,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -2244,7 +2244,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -2253,7 +2253,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -2262,7 +2262,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -2271,7 +2271,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -2280,7 +2280,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -2289,7 +2289,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x003E
     const %EEPROM_CTRL_REG: u8 = 0x003C
     const %EEPROM_DATA_REG: u8 = 0x003D
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -2298,7 +2298,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -2307,7 +2307,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0041
     const %EEPROM_CTRL_REG: u8 = 0x003F
     const %EEPROM_DATA_REG: u8 = 0x0040
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -2316,7 +2316,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0000
     const %EEPROM_CTRL_REG: u8 = 0x0000
     const %EEPROM_DATA_REG: u8 = 0x0000
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
@@ -2325,7 +2325,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2334,7 +2334,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2343,7 +2343,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2352,7 +2352,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2361,7 +2361,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2370,7 +2370,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2379,7 +2379,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2388,7 +2388,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2397,7 +2397,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2406,7 +2406,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2415,7 +2415,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2424,7 +2424,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2433,7 +2433,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2442,7 +2442,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2451,7 +2451,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2460,7 +2460,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2469,7 +2469,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2478,7 +2478,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2487,7 +2487,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2496,7 +2496,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2505,7 +2505,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2514,7 +2514,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2523,7 +2523,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2532,7 +2532,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2541,7 +2541,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2550,7 +2550,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2559,7 +2559,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2568,7 +2568,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2577,7 +2577,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2586,7 +2586,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2595,7 +2595,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2604,7 +2604,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2613,7 +2613,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2622,7 +2622,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2631,7 +2631,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2640,7 +2640,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2649,7 +2649,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2658,7 +2658,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2667,7 +2667,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2676,7 +2676,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2685,7 +2685,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2694,7 +2694,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2703,7 +2703,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2712,7 +2712,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x01C0
     const %EEPROM_CTRL_REG: u8 = 0x01CB
     const %EEPROM_DATA_REG: u8 = 0x01C4
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x01CF
 }
 
@@ -2721,7 +2721,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2730,7 +2730,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2739,7 +2739,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2748,7 +2748,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2757,7 +2757,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2766,7 +2766,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2775,7 +2775,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2784,7 +2784,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2793,7 +2793,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2802,7 +2802,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2811,7 +2811,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2820,7 +2820,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2829,7 +2829,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x100C
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1008
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1006
 }
 
@@ -2838,7 +2838,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x100C
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1008
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1006
 }
 
@@ -2847,7 +2847,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x100C
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1008
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1006
 }
 
@@ -2856,7 +2856,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x100C
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1008
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1006
 }
 
@@ -2865,7 +2865,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x100C
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1008
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1006
 }
 
@@ -2874,7 +2874,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x100C
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1008
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1006
 }
 
@@ -2883,7 +2883,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x100C
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1008
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1006
 }
 
@@ -2892,7 +2892,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2901,7 +2901,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2910,7 +2910,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2919,7 +2919,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2928,7 +2928,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2937,7 +2937,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2946,7 +2946,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2955,7 +2955,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2964,7 +2964,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2973,7 +2973,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -2982,7 +2982,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x100C
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1008
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1006
 }
 
@@ -2991,7 +2991,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x100C
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1008
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1006
 }
 
@@ -3000,7 +3000,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x100C
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1008
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1006
 }
 
@@ -3009,7 +3009,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -3018,7 +3018,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -3027,7 +3027,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -3036,7 +3036,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -3045,7 +3045,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -3054,7 +3054,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -3063,7 +3063,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -3072,7 +3072,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -3081,7 +3081,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -3090,7 +3090,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -3099,7 +3099,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -3108,7 +3108,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x1008
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1006
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1002
 }
 
@@ -3117,7 +3117,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x100C
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x0000
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1006
 }
 
@@ -3126,7 +3126,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x100C
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x0000
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1006
 }
 
@@ -3135,7 +3135,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x100C
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1008
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1006
 }
 
@@ -3144,7 +3144,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x100C
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1008
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1006
 }
 
@@ -3153,7 +3153,7 @@
     const %EEPROM_ADDRL_REG: u8 = 0x100C
     const %EEPROM_CTRL_REG: u8 = 0x1000
     const %EEPROM_DATA_REG: u8 = 0x1008
-    const %EEPROM_IS_MODERN: u8 = 0x0001
+    const EEPROM_IS_MODERN: u8 = 0x0001
     const %EEPROM_STATUS_REG: u8 = 0x1006
 }
 
@@ -3162,13 +3162,13 @@
     const %EEPROM_ADDRL_REG: u8 = 0x0000
     const %EEPROM_CTRL_REG: u8 = 0x0000
     const %EEPROM_DATA_REG: u8 = 0x0000
-    const %EEPROM_IS_MODERN: u8 = 0x0000
+    const EEPROM_IS_MODERN: u8 = 0x0000
     const %EEPROM_STATUS_REG: u8 = 0x0000
 }
 
 
 @_eeprom_wait() {
-    ? %EEPROM_IS_MODERN == 1 {
+    ? EEPROM_IS_MODERN == 1 {
         loop * {
             ram imut $status: u8 = %EEPROM_STATUS_REG
             ? ($status & 1) == 0 { return }
@@ -3185,7 +3185,7 @@
     @_eeprom_wait()
     $addr & 255 -> %EEPROM_ADDRL_REG
     ($addr / 256) & 3 -> %EEPROM_ADDRH_REG
-    ? %EEPROM_IS_MODERN == 1 {
+    ? EEPROM_IS_MODERN == 1 {
         0x00 -> %EEPROM_CTRL_REG
     } : {
         ram imut $curr: u8 = %EEPROM_CTRL_REG
@@ -3199,7 +3199,7 @@
     $addr & 255 -> %EEPROM_ADDRL_REG
     ($addr / 256) & 3 -> %EEPROM_ADDRH_REG
     $val -> %EEPROM_DATA_REG
-    ? %EEPROM_IS_MODERN == 1 {
+    ? EEPROM_IS_MODERN == 1 {
         0x04 -> %EEPROM_CTRL_REG # CMD = EEPROM Erase & Write
     } : {
         ram imut $curr: u8 = %EEPROM_CTRL_REG

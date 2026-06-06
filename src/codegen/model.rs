@@ -37,6 +37,13 @@ impl TargetCore {
         !matches!(self, TargetCore::AVRe | TargetCore::AVRrc)
     }
 
+    /// True when the core can self-program flash with the SPM instruction.
+    /// Available on the classic/extended/XMEGA/megaAVR-0 cores; the reduced
+    /// core (AVRrc) generally cannot, so it is excluded.
+    pub fn supports_spm(self) -> bool {
+        !matches!(self, TargetCore::AVRrc)
+    }
+
 }
 
 /// Compiler intrinsics that are valid direct call targets even though they have no
@@ -44,7 +51,7 @@ impl TargetCore {
 pub(super) fn is_intrinsic_function(name: &str) -> bool {
     matches!(
         name,
-        "@nop" | "@cli" | "@sei" | "@swap" | "@movw" | "@mul" | "@burn"
+        "@nop" | "@cli" | "@sei" | "@swap" | "@movw" | "@mul" | "@burn" | "@spm" | "@goto" | "@sleep" | "@wdr" | "@break"
     )
 }
 

@@ -77,6 +77,10 @@ pub struct Parser {
     tokens: Vec<Token>,
     idx: usize,
     pub active_target: String,
+    /// Set by the top-level `boot <addr>` directive: the program is a bootloader
+    /// located at flash byte address `addr` (the Boot Loader Section start, which
+    /// must match the device's BOOTSZ fuse).
+    pub boot_origin: Option<u32>,
 }
 
 impl Parser {
@@ -86,6 +90,7 @@ impl Parser {
             tokens,
             idx: 0,
             active_target: "".to_string(),
+            boot_origin: None,
         }
     }
 
@@ -230,6 +235,22 @@ impl Parser {
                     };
                     self.active_target = ns_name;
                 }
+                TokenKind::Keyword(ref kw) if kw == "boot" => {
+                    // Top-level `boot <addr>` directive: locate this program at
+                    // flash byte address <addr> (the Boot Loader Section start).
+                    self.consume(Some(TokenKind::Keyword("boot".to_string())))?;
+                    let addr_tok = self.consume(None)?;
+                    let addr = match addr_tok.kind {
+                        TokenKind::Number(n) => n as u32,
+                        _ => {
+                            return Err(format!(
+                                "Expected boot section address after `boot`, got {:?} at line {}",
+                                addr_tok, addr_tok.line
+                            ))
+                        }
+                    };
+                    self.boot_origin = Some(addr);
+                }
                 TokenKind::Symbol(ref sym) if sym == "?" => {
                     self.consume(Some(TokenKind::Symbol("?".to_string())))?;
                     let left_tok = self.consume(None)?;
@@ -367,14 +388,18 @@ impl Parser {
         Ok(ast)
     }
 
-    /// Parses a hardware register or address constant declaration.
-    /// Syntax: `const %NAME: Type = Value`
+    /// Parses a constant declaration. Two kinds, distinguished by the `%` sigil:
+    ///   `const %NAME: Type = Addr`  — a hardware register / memory-mapped address
+    ///                                 (read/written at runtime via `%NAME`).
+    ///   `const NAME: Type = Value`  — a plain compile-time value constant that
+    ///                                 folds to an immediate wherever `NAME` is used
+    ///                                 (bit masks, command words, feature flags...).
     fn parse_const(&mut self) -> Result<ASTNode, String> {
         self.consume(Some(TokenKind::Keyword("const".to_string())))?;
         let name_tok = self.consume(None)?;
         let name = match name_tok.kind {
-            TokenKind::Identifier(ref n) if n.starts_with('%') => n.clone(),
-            _ => return Err(format!("Constant name must start with %: {:?} at line {}", name_tok, name_tok.line)),
+            TokenKind::Identifier(ref n) => n.clone(),
+            _ => return Err(format!("Expected constant name: {:?} at line {}", name_tok, name_tok.line)),
         };
         self.consume(Some(TokenKind::Symbol(":".to_string())))?;
         let ty_tok = self.consume(None)?;

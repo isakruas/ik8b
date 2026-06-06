@@ -5,7 +5,6 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-VM_BIN="$REPO_ROOT/tools/avr-vm/bin/avr_vm"
 IK8B_BIN="$REPO_ROOT/ik8b"
 
 MCUS=(
@@ -21,7 +20,6 @@ MCUS=(
     "avr64da32"
 )
 
-[ -x "$VM_BIN" ] || { echo "Missing $VM_BIN. Run: make -C $REPO_ROOT/tools/avr-vm"; exit 1; }
 [ -x "$IK8B_BIN" ] || { echo "Missing $IK8B_BIN. Run: make -C $REPO_ROOT build"; exit 1; }
 
 cd "$REPO_ROOT"
@@ -51,7 +49,7 @@ for mcu in "${MCUS[@]}"; do
         } > "$tmp"
 
         set +e
-        compile_out=$("$IK8B_BIN" "$tmp" -o "tests/$name.hex" 2>&1)
+        compile_out=$("$IK8B_BIN" build "$tmp" -o "tests/$name.hex" 2>&1)
         compile_rc=$?
         set -e
         rm -f "$tmp"
@@ -83,7 +81,7 @@ for mcu in "${MCUS[@]}"; do
             *) limit=200000 ;;
         esac
 
-        out=$($VM_BIN "tests/$name.hex" -mmcu="$mcu" -n $limit -d 2>&1 || true)
+        out=$("$IK8B_BIN" sim "tests/$name.hex" --mcu "$mcu" --limit $limit --dump 2>&1 || true)
         rm -f "tests/$name.hex"
         if echo "$out" | grep -q "HEX overflows flash"; then
             mcu_skip=$((mcu_skip+1))

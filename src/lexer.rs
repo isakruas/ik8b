@@ -274,7 +274,7 @@ impl<'a> Lexer<'a> {
                     tokens.push(Token { kind: TokenKind::Symbol("%".to_string()), line: self.line });
                 } else {
                     match ident.as_str() {
-                        "mut" | "loop" | "return" | "import" | "switch" | "target" | "imut" | "ram" | "eeprom" | "flash" | "const" | "ptr" | "str" | "fn" | "isr" => {
+                        "mut" | "loop" | "return" | "import" | "switch" | "target" | "boot" | "imut" | "ram" | "eeprom" | "flash" | "const" | "ptr" | "str" | "fn" | "isr" => {
                             tokens.push(Token { kind: TokenKind::Keyword(ident), line: self.line });
                         }
                         "u8" | "u16" | "void" | "i8" | "i16" | "bool" | "char" | "r8" | "r16" => {

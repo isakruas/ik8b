@@ -22,7 +22,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -31,7 +31,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -44,7 +44,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -53,7 +53,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -66,7 +66,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0056
     const %TMR0_IMASK: u16 = 0x0057
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -75,7 +75,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0056
     const %TMR1_IMASK: u16 = 0x0057
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -88,7 +88,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -97,7 +97,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -110,7 +110,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -119,7 +119,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -132,7 +132,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -141,7 +141,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -154,7 +154,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -163,7 +163,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -176,7 +176,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -185,7 +185,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -198,7 +198,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -207,7 +207,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -220,7 +220,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -229,7 +229,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -242,7 +242,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -251,7 +251,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -264,7 +264,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -273,7 +273,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -286,7 +286,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -295,7 +295,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -308,7 +308,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -317,7 +317,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -330,7 +330,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -339,7 +339,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -352,7 +352,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -361,7 +361,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -374,7 +374,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -383,7 +383,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -396,7 +396,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -405,7 +405,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -418,7 +418,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -427,7 +427,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0000
@@ -440,7 +440,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -449,7 +449,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -462,7 +462,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -471,7 +471,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -484,7 +484,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -493,7 +493,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -506,7 +506,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -515,7 +515,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -528,7 +528,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -537,7 +537,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -550,7 +550,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -559,7 +559,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -572,7 +572,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -581,7 +581,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -594,7 +594,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -603,7 +603,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -616,7 +616,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -625,7 +625,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -638,7 +638,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -647,7 +647,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -660,7 +660,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -669,7 +669,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -682,7 +682,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -691,7 +691,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -704,7 +704,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -713,7 +713,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -726,7 +726,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -735,7 +735,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -748,7 +748,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -757,7 +757,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -770,7 +770,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0051
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -779,7 +779,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -792,7 +792,7 @@
     const %TMR0_CTRLB: u16 = 0x0046
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0048
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -801,7 +801,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -814,7 +814,7 @@
     const %TMR0_CTRLB: u16 = 0x0046
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0048
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -823,7 +823,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -836,7 +836,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -845,7 +845,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -858,7 +858,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -867,7 +867,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -880,7 +880,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -889,7 +889,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -902,7 +902,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -911,7 +911,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -924,7 +924,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -933,7 +933,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -946,7 +946,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -955,7 +955,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -968,7 +968,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -977,7 +977,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -990,7 +990,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -999,7 +999,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -1012,7 +1012,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -1021,7 +1021,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -1034,7 +1034,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -1043,7 +1043,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1056,7 +1056,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -1065,7 +1065,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1078,7 +1078,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -1087,7 +1087,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1100,7 +1100,7 @@
     const %TMR0_CTRLB: u16 = 0x0046
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0048
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -1109,7 +1109,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1122,7 +1122,7 @@
     const %TMR0_CTRLB: u16 = 0x0046
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0048
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -1131,7 +1131,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1144,7 +1144,7 @@
     const %TMR0_CTRLB: u16 = 0x0046
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0048
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -1153,7 +1153,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1166,7 +1166,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0056
     const %TMR0_IMASK: u16 = 0x0057
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0051
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -1175,7 +1175,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0056
     const %TMR1_IMASK: u16 = 0x0057
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -1188,7 +1188,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0056
     const %TMR0_IMASK: u16 = 0x0057
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0051
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -1197,7 +1197,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0056
     const %TMR1_IMASK: u16 = 0x0057
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -1210,7 +1210,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -1219,7 +1219,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1232,7 +1232,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -1241,7 +1241,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1254,7 +1254,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -1263,7 +1263,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1276,7 +1276,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -1285,7 +1285,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1298,7 +1298,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -1307,7 +1307,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1320,7 +1320,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0056
     const %TMR0_IMASK: u16 = 0x0057
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0051
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -1329,7 +1329,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0056
     const %TMR1_IMASK: u16 = 0x0057
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -1342,7 +1342,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -1351,7 +1351,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1364,7 +1364,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -1373,7 +1373,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1386,7 +1386,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x005C
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -1395,7 +1395,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -1408,7 +1408,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -1417,7 +1417,7 @@
     const %TMR1_CTRLB: u16 = 0x0A81
     const %TMR1_IFLAG: u16 = 0x0A86
     const %TMR1_IMASK: u16 = 0x0A85
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A8C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -1430,7 +1430,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -1439,7 +1439,7 @@
     const %TMR1_CTRLB: u16 = 0x0A81
     const %TMR1_IFLAG: u16 = 0x0A86
     const %TMR1_IMASK: u16 = 0x0A85
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A8C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -1452,7 +1452,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0051
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -1461,7 +1461,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -1474,7 +1474,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0051
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -1483,7 +1483,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -1496,7 +1496,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -1505,7 +1505,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -1518,7 +1518,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -1527,7 +1527,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1540,7 +1540,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -1549,7 +1549,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1562,7 +1562,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -1571,7 +1571,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1584,7 +1584,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -1593,7 +1593,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1606,7 +1606,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -1615,7 +1615,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1628,7 +1628,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -1637,7 +1637,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1650,7 +1650,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -1659,7 +1659,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1672,7 +1672,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -1681,7 +1681,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -1694,7 +1694,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -1703,7 +1703,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -1716,7 +1716,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -1725,7 +1725,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1738,7 +1738,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -1747,7 +1747,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1760,7 +1760,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -1769,7 +1769,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1782,7 +1782,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -1791,7 +1791,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1804,7 +1804,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -1813,7 +1813,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1826,7 +1826,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -1835,7 +1835,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1848,7 +1848,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -1857,7 +1857,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -1870,7 +1870,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x005C
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -1879,7 +1879,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -1892,7 +1892,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0048
     const %TMR0_OCRB: u16 = 0x0049
     const %TMR1_CNTH: u16 = 0x0085
@@ -1901,7 +1901,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x0000
@@ -1914,7 +1914,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0048
     const %TMR0_OCRB: u16 = 0x0049
     const %TMR1_CNTH: u16 = 0x0085
@@ -1923,7 +1923,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x0000
@@ -1936,7 +1936,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0048
     const %TMR0_OCRB: u16 = 0x0049
     const %TMR1_CNTH: u16 = 0x0085
@@ -1945,7 +1945,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x0000
@@ -1958,7 +1958,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0048
     const %TMR0_OCRB: u16 = 0x0049
     const %TMR1_CNTH: u16 = 0x0085
@@ -1967,7 +1967,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x0000
@@ -1980,7 +1980,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -1989,7 +1989,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2002,7 +2002,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -2011,7 +2011,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2024,7 +2024,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -2033,7 +2033,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2046,7 +2046,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -2055,7 +2055,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2068,7 +2068,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -2077,7 +2077,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2090,7 +2090,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -2099,7 +2099,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2112,7 +2112,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -2121,7 +2121,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2134,7 +2134,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x005C
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -2143,7 +2143,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -2156,7 +2156,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -2165,7 +2165,7 @@
     const %TMR1_CTRLB: u16 = 0x0A81
     const %TMR1_IFLAG: u16 = 0x0A86
     const %TMR1_IMASK: u16 = 0x0A85
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A8C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -2178,7 +2178,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -2187,7 +2187,7 @@
     const %TMR1_CTRLB: u16 = 0x0A81
     const %TMR1_IFLAG: u16 = 0x0A86
     const %TMR1_IMASK: u16 = 0x0A85
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A8C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -2200,7 +2200,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x005C
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -2209,7 +2209,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -2222,7 +2222,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -2231,7 +2231,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2244,7 +2244,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -2253,7 +2253,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2266,7 +2266,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -2275,7 +2275,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2288,7 +2288,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -2297,7 +2297,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2310,7 +2310,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -2319,7 +2319,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2332,7 +2332,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -2341,7 +2341,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2354,7 +2354,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -2363,7 +2363,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2376,7 +2376,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -2385,7 +2385,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2398,7 +2398,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -2407,7 +2407,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2420,7 +2420,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -2429,7 +2429,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2442,7 +2442,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -2451,7 +2451,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2464,7 +2464,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -2473,7 +2473,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2486,7 +2486,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -2495,7 +2495,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2508,7 +2508,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -2517,7 +2517,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2530,7 +2530,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -2539,7 +2539,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2552,7 +2552,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -2561,7 +2561,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2574,7 +2574,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -2583,7 +2583,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2596,7 +2596,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -2605,7 +2605,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2618,7 +2618,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -2627,7 +2627,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2640,7 +2640,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -2649,7 +2649,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2662,7 +2662,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -2671,7 +2671,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2684,7 +2684,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -2693,7 +2693,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2706,7 +2706,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -2715,7 +2715,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2728,7 +2728,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x005C
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -2737,7 +2737,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -2750,7 +2750,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -2759,7 +2759,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2772,7 +2772,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0048
     const %TMR0_OCRB: u16 = 0x0049
     const %TMR1_CNTH: u16 = 0x0085
@@ -2781,7 +2781,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x0000
@@ -2794,7 +2794,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0048
     const %TMR0_OCRB: u16 = 0x0049
     const %TMR1_CNTH: u16 = 0x0085
@@ -2803,7 +2803,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x0000
@@ -2816,7 +2816,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -2825,7 +2825,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2838,7 +2838,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -2847,7 +2847,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2860,7 +2860,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -2869,7 +2869,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2882,7 +2882,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -2891,7 +2891,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -2904,7 +2904,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0000
@@ -2913,7 +2913,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -2926,7 +2926,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -2935,7 +2935,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -2948,7 +2948,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -2957,7 +2957,7 @@
     const %TMR1_CTRLB: u16 = 0x0A81
     const %TMR1_IFLAG: u16 = 0x0A86
     const %TMR1_IMASK: u16 = 0x0A85
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A8C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -2970,7 +2970,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -2979,7 +2979,7 @@
     const %TMR1_CTRLB: u16 = 0x0A81
     const %TMR1_IFLAG: u16 = 0x0A86
     const %TMR1_IMASK: u16 = 0x0A85
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A8C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -2992,7 +2992,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -3001,7 +3001,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -3014,7 +3014,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -3023,7 +3023,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3036,7 +3036,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -3045,7 +3045,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3058,7 +3058,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -3067,7 +3067,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3080,7 +3080,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0056
     const %TMR0_IMASK: u16 = 0x0057
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0051
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -3089,7 +3089,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0056
     const %TMR1_IMASK: u16 = 0x0057
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -3102,7 +3102,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -3111,7 +3111,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3124,7 +3124,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -3133,7 +3133,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3146,7 +3146,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -3155,7 +3155,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3168,7 +3168,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -3177,7 +3177,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3190,7 +3190,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -3199,7 +3199,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3212,7 +3212,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -3221,7 +3221,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3234,7 +3234,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -3243,7 +3243,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3256,7 +3256,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -3265,7 +3265,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3278,7 +3278,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -3287,7 +3287,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3300,7 +3300,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -3309,7 +3309,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3322,7 +3322,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -3331,7 +3331,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3344,7 +3344,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -3353,7 +3353,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3366,7 +3366,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -3375,7 +3375,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3388,7 +3388,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -3397,7 +3397,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3410,7 +3410,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -3419,7 +3419,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3432,7 +3432,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -3441,7 +3441,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3454,7 +3454,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -3463,7 +3463,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3476,7 +3476,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -3485,7 +3485,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3498,7 +3498,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0056
     const %TMR0_IMASK: u16 = 0x0057
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0051
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -3507,7 +3507,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0056
     const %TMR1_IMASK: u16 = 0x0057
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -3520,7 +3520,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -3529,7 +3529,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3542,7 +3542,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0048
     const %TMR0_OCRB: u16 = 0x0049
     const %TMR1_CNTH: u16 = 0x0085
@@ -3551,7 +3551,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x0000
@@ -3564,7 +3564,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0048
     const %TMR0_OCRB: u16 = 0x0049
     const %TMR1_CNTH: u16 = 0x0085
@@ -3573,7 +3573,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x0000
@@ -3586,7 +3586,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -3595,7 +3595,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3608,7 +3608,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -3617,7 +3617,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3630,7 +3630,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -3639,7 +3639,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -3652,7 +3652,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -3661,7 +3661,7 @@
     const %TMR1_CTRLB: u16 = 0x0A81
     const %TMR1_IFLAG: u16 = 0x0A86
     const %TMR1_IMASK: u16 = 0x0A85
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A8C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -3674,7 +3674,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -3683,7 +3683,7 @@
     const %TMR1_CTRLB: u16 = 0x0A81
     const %TMR1_IFLAG: u16 = 0x0A86
     const %TMR1_IMASK: u16 = 0x0A85
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A8C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -3696,7 +3696,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0051
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -3705,7 +3705,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -3718,7 +3718,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x005C
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -3727,7 +3727,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -3740,7 +3740,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -3749,7 +3749,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -3762,7 +3762,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -3771,7 +3771,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -3784,7 +3784,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -3793,7 +3793,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3806,7 +3806,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -3815,7 +3815,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3828,7 +3828,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -3837,7 +3837,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3850,7 +3850,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x004D
@@ -3859,7 +3859,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -3872,7 +3872,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0048
     const %TMR0_OCRB: u16 = 0x0049
     const %TMR1_CNTH: u16 = 0x0085
@@ -3881,7 +3881,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x0000
@@ -3894,7 +3894,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -3903,7 +3903,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -3916,7 +3916,7 @@
     const %TMR0_CTRLB: u16 = 0x004D
     const %TMR0_IFLAG: u16 = 0x004A
     const %TMR0_IMASK: u16 = 0x004B
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0046
     const %TMR0_OCRB: u16 = 0x0044
     const %TMR1_CNTH: u16 = 0x0000
@@ -3925,7 +3925,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -3938,7 +3938,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -3947,7 +3947,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -3960,7 +3960,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -3969,7 +3969,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -3982,7 +3982,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0056
     const %TMR0_OCRB: u16 = 0x0049
     const %TMR1_CNTH: u16 = 0x0000
@@ -3991,7 +3991,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4004,7 +4004,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0056
     const %TMR0_OCRB: u16 = 0x0049
     const %TMR1_CNTH: u16 = 0x0000
@@ -4013,7 +4013,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4026,7 +4026,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -4035,7 +4035,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4048,7 +4048,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4057,7 +4057,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4070,7 +4070,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4079,7 +4079,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4092,7 +4092,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4101,7 +4101,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4114,7 +4114,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4123,7 +4123,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4136,7 +4136,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4145,7 +4145,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4158,7 +4158,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4167,7 +4167,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4180,7 +4180,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4189,7 +4189,7 @@
     const %TMR1_CTRLB: u16 = 0x0A81
     const %TMR1_IFLAG: u16 = 0x0A86
     const %TMR1_IMASK: u16 = 0x0A85
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A8C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4202,7 +4202,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4211,7 +4211,7 @@
     const %TMR1_CTRLB: u16 = 0x0A81
     const %TMR1_IFLAG: u16 = 0x0A86
     const %TMR1_IMASK: u16 = 0x0A85
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A8C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4224,7 +4224,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4233,7 +4233,7 @@
     const %TMR1_CTRLB: u16 = 0x0A81
     const %TMR1_IFLAG: u16 = 0x0A86
     const %TMR1_IMASK: u16 = 0x0A85
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A8C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4246,7 +4246,7 @@
     const %TMR0_CTRLB: u16 = 0x003A
     const %TMR0_IFLAG: u16 = 0x0059
     const %TMR0_IMASK: u16 = 0x005A
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0038
     const %TMR0_OCRB: u16 = 0x0037
     const %TMR1_CNTH: u16 = 0x006F
@@ -4255,7 +4255,7 @@
     const %TMR1_CTRLB: u16 = 0x0071
     const %TMR1_IFLAG: u16 = 0x0059
     const %TMR1_IMASK: u16 = 0x005A
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x006D
     const %TMR1_OCRAL: u16 = 0x006C
     const %TMR1_OCRBH: u16 = 0x006B
@@ -4268,7 +4268,7 @@
     const %TMR0_CTRLB: u16 = 0x0046
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0048
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -4277,7 +4277,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -4290,7 +4290,7 @@
     const %TMR0_CTRLB: u16 = 0x0038
     const %TMR0_IFLAG: u16 = 0x0045
     const %TMR0_IMASK: u16 = 0x0046
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0036
     const %TMR0_OCRB: u16 = 0x0035
     const %TMR1_CNTH: u16 = 0x0041
@@ -4299,7 +4299,7 @@
     const %TMR1_CTRLB: u16 = 0x0043
     const %TMR1_IFLAG: u16 = 0x0045
     const %TMR1_IMASK: u16 = 0x0046
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x003F
     const %TMR1_OCRAL: u16 = 0x003E
     const %TMR1_OCRBH: u16 = 0x003D
@@ -4312,7 +4312,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4321,7 +4321,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4334,7 +4334,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4343,7 +4343,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4356,7 +4356,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4365,7 +4365,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4378,7 +4378,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4387,7 +4387,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4400,7 +4400,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -4409,7 +4409,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4422,7 +4422,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0056
     const %TMR0_OCRB: u16 = 0x005C
     const %TMR1_CNTH: u16 = 0x004D
@@ -4431,7 +4431,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -4444,7 +4444,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0056
     const %TMR0_OCRB: u16 = 0x005C
     const %TMR1_CNTH: u16 = 0x004D
@@ -4453,7 +4453,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -4466,7 +4466,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0056
     const %TMR0_OCRB: u16 = 0x005C
     const %TMR1_CNTH: u16 = 0x004D
@@ -4475,7 +4475,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x002B
     const %TMR1_IMASK: u16 = 0x002C
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -4488,7 +4488,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0056
     const %TMR0_OCRB: u16 = 0x005C
     const %TMR1_CNTH: u16 = 0x004D
@@ -4497,7 +4497,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x002B
     const %TMR1_IMASK: u16 = 0x002C
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -4510,7 +4510,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0049
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0000
@@ -4519,7 +4519,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4532,7 +4532,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -4541,7 +4541,7 @@
     const %TMR1_CTRLB: u16 = 0x004F
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x004D
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4554,7 +4554,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0033
     const %TMR0_OCRB: u16 = 0x0032
     const %TMR1_CNTH: u16 = 0x0000
@@ -4563,7 +4563,7 @@
     const %TMR1_CTRLB: u16 = 0x004F
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x004D
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4576,7 +4576,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0033
     const %TMR0_OCRB: u16 = 0x0032
     const %TMR1_CNTH: u16 = 0x0000
@@ -4585,7 +4585,7 @@
     const %TMR1_CTRLB: u16 = 0x004F
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x004D
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4598,7 +4598,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -4607,7 +4607,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4620,7 +4620,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4629,7 +4629,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4642,7 +4642,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4651,7 +4651,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4664,7 +4664,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4673,7 +4673,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4686,7 +4686,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4695,7 +4695,7 @@
     const %TMR1_CTRLB: u16 = 0x0A81
     const %TMR1_IFLAG: u16 = 0x0A86
     const %TMR1_IMASK: u16 = 0x0A85
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A8C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4708,7 +4708,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4717,7 +4717,7 @@
     const %TMR1_CTRLB: u16 = 0x0A81
     const %TMR1_IFLAG: u16 = 0x0A86
     const %TMR1_IMASK: u16 = 0x0A85
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A8C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4730,7 +4730,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4739,7 +4739,7 @@
     const %TMR1_CTRLB: u16 = 0x0A81
     const %TMR1_IFLAG: u16 = 0x0A86
     const %TMR1_IMASK: u16 = 0x0A85
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A8C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4752,7 +4752,7 @@
     const %TMR0_CTRLB: u16 = 0x004D
     const %TMR0_IFLAG: u16 = 0x004A
     const %TMR0_IMASK: u16 = 0x004B
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0046
     const %TMR0_OCRB: u16 = 0x0044
     const %TMR1_CNTH: u16 = 0x0000
@@ -4761,7 +4761,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4774,7 +4774,7 @@
     const %TMR0_CTRLB: u16 = 0x0038
     const %TMR0_IFLAG: u16 = 0x0045
     const %TMR0_IMASK: u16 = 0x0046
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0036
     const %TMR0_OCRB: u16 = 0x0035
     const %TMR1_CNTH: u16 = 0x0047
@@ -4783,7 +4783,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0045
     const %TMR1_IMASK: u16 = 0x0046
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0042
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4796,7 +4796,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4805,7 +4805,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4818,7 +4818,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4827,7 +4827,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4840,7 +4840,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4849,7 +4849,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4862,7 +4862,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4871,7 +4871,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4884,7 +4884,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4893,7 +4893,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4906,7 +4906,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4915,7 +4915,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4928,7 +4928,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4937,7 +4937,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4950,7 +4950,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4959,7 +4959,7 @@
     const %TMR1_CTRLB: u16 = 0x0A81
     const %TMR1_IFLAG: u16 = 0x0A86
     const %TMR1_IMASK: u16 = 0x0A85
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A8C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4972,7 +4972,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -4981,7 +4981,7 @@
     const %TMR1_CTRLB: u16 = 0x0A81
     const %TMR1_IFLAG: u16 = 0x0A86
     const %TMR1_IMASK: u16 = 0x0A85
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A8C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -4994,7 +4994,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -5003,7 +5003,7 @@
     const %TMR1_CTRLB: u16 = 0x0A81
     const %TMR1_IFLAG: u16 = 0x0A86
     const %TMR1_IMASK: u16 = 0x0A85
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A8C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5016,7 +5016,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0056
     const %TMR0_OCRB: u16 = 0x005C
     const %TMR1_CNTH: u16 = 0x004D
@@ -5025,7 +5025,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -5038,7 +5038,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0056
     const %TMR0_OCRB: u16 = 0x005C
     const %TMR1_CNTH: u16 = 0x0000
@@ -5047,7 +5047,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x002B
     const %TMR1_IMASK: u16 = 0x002C
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x004C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5060,7 +5060,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0056
     const %TMR0_OCRB: u16 = 0x005C
     const %TMR1_CNTH: u16 = 0x004D
@@ -5069,7 +5069,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x002B
     const %TMR1_IMASK: u16 = 0x002C
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -5082,7 +5082,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0056
     const %TMR0_OCRB: u16 = 0x005C
     const %TMR1_CNTH: u16 = 0x004D
@@ -5091,7 +5091,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x002E
     const %TMR1_IMASK: u16 = 0x002F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -5104,7 +5104,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0056
     const %TMR0_OCRB: u16 = 0x005C
     const %TMR1_CNTH: u16 = 0x004D
@@ -5113,7 +5113,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x002B
     const %TMR1_IMASK: u16 = 0x002C
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -5126,7 +5126,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0049
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0000
@@ -5135,7 +5135,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5148,7 +5148,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0033
     const %TMR0_OCRB: u16 = 0x0032
     const %TMR1_CNTH: u16 = 0x0000
@@ -5157,7 +5157,7 @@
     const %TMR1_CTRLB: u16 = 0x004F
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x004D
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5170,7 +5170,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0033
     const %TMR0_OCRB: u16 = 0x0032
     const %TMR1_CNTH: u16 = 0x0000
@@ -5179,7 +5179,7 @@
     const %TMR1_CTRLB: u16 = 0x004F
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x004D
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5192,7 +5192,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -5201,7 +5201,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -5214,7 +5214,7 @@
     const %TMR0_CTRLB: u16 = 0x004D
     const %TMR0_IFLAG: u16 = 0x004A
     const %TMR0_IMASK: u16 = 0x004B
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0046
     const %TMR0_OCRB: u16 = 0x0044
     const %TMR1_CNTH: u16 = 0x0000
@@ -5223,7 +5223,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5236,7 +5236,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -5245,7 +5245,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5258,7 +5258,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -5267,7 +5267,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5280,7 +5280,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -5289,7 +5289,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5302,7 +5302,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -5311,7 +5311,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5324,7 +5324,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -5333,7 +5333,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5346,7 +5346,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -5355,7 +5355,7 @@
     const %TMR1_CTRLB: u16 = 0x0A41
     const %TMR1_IFLAG: u16 = 0x0A46
     const %TMR1_IMASK: u16 = 0x0A45
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A4C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5368,7 +5368,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -5377,7 +5377,7 @@
     const %TMR1_CTRLB: u16 = 0x0A81
     const %TMR1_IFLAG: u16 = 0x0A86
     const %TMR1_IMASK: u16 = 0x0A85
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A8C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5390,7 +5390,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -5399,7 +5399,7 @@
     const %TMR1_CTRLB: u16 = 0x0A81
     const %TMR1_IFLAG: u16 = 0x0A86
     const %TMR1_IMASK: u16 = 0x0A85
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A8C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5412,7 +5412,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -5421,7 +5421,7 @@
     const %TMR1_CTRLB: u16 = 0x0A81
     const %TMR1_IFLAG: u16 = 0x0A86
     const %TMR1_IMASK: u16 = 0x0A85
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0A8C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5434,7 +5434,7 @@
     const %TMR0_CTRLB: u16 = 0x0045
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -5443,7 +5443,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -5456,7 +5456,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0056
     const %TMR0_OCRB: u16 = 0x005C
     const %TMR1_CNTH: u16 = 0x004D
@@ -5465,7 +5465,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x002B
     const %TMR1_IMASK: u16 = 0x002C
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -5478,7 +5478,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0056
     const %TMR0_OCRB: u16 = 0x005C
     const %TMR1_CNTH: u16 = 0x004D
@@ -5487,7 +5487,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x002E
     const %TMR1_IMASK: u16 = 0x002F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -5500,7 +5500,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0056
     const %TMR0_OCRB: u16 = 0x005C
     const %TMR1_CNTH: u16 = 0x004D
@@ -5509,7 +5509,7 @@
     const %TMR1_CTRLB: u16 = 0x004E
     const %TMR1_IFLAG: u16 = 0x002B
     const %TMR1_IMASK: u16 = 0x002C
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x004B
     const %TMR1_OCRAL: u16 = 0x004A
     const %TMR1_OCRBH: u16 = 0x0049
@@ -5522,7 +5522,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0049
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0000
@@ -5531,7 +5531,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5544,7 +5544,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0033
     const %TMR0_OCRB: u16 = 0x0032
     const %TMR1_CNTH: u16 = 0x0000
@@ -5553,7 +5553,7 @@
     const %TMR1_CTRLB: u16 = 0x004F
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x004D
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5566,7 +5566,7 @@
     const %TMR0_CTRLB: u16 = 0x0053
     const %TMR0_IFLAG: u16 = 0x0058
     const %TMR0_IMASK: u16 = 0x0059
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0033
     const %TMR0_OCRB: u16 = 0x0032
     const %TMR1_CNTH: u16 = 0x0000
@@ -5575,7 +5575,7 @@
     const %TMR1_CTRLB: u16 = 0x004F
     const %TMR1_IFLAG: u16 = 0x0058
     const %TMR1_IMASK: u16 = 0x0059
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x004D
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5588,7 +5588,7 @@
     const %TMR0_CTRLB: u16 = 0x0046
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0048
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0085
@@ -5597,7 +5597,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -5610,7 +5610,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0035
     const %TMR0_IMASK: u16 = 0x006E
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0047
     const %TMR0_OCRB: u16 = 0x0048
     const %TMR1_CNTH: u16 = 0x0085
@@ -5619,7 +5619,7 @@
     const %TMR1_CTRLB: u16 = 0x0081
     const %TMR1_IFLAG: u16 = 0x0036
     const %TMR1_IMASK: u16 = 0x006F
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0089
     const %TMR1_OCRAL: u16 = 0x0088
     const %TMR1_OCRBH: u16 = 0x008B
@@ -5632,7 +5632,7 @@
     const %TMR0_CTRLB: u16 = 0x004D
     const %TMR0_IFLAG: u16 = 0x004A
     const %TMR0_IMASK: u16 = 0x004B
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0046
     const %TMR0_OCRB: u16 = 0x0044
     const %TMR1_CNTH: u16 = 0x0000
@@ -5641,7 +5641,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5654,7 +5654,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -5663,7 +5663,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5676,7 +5676,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -5685,7 +5685,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5698,7 +5698,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -5707,7 +5707,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5720,7 +5720,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -5729,7 +5729,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5742,7 +5742,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -5751,7 +5751,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5764,7 +5764,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -5773,7 +5773,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5786,7 +5786,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -5795,7 +5795,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5808,7 +5808,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -5817,7 +5817,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5830,7 +5830,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -5839,7 +5839,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5852,7 +5852,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -5861,7 +5861,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5874,7 +5874,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -5883,7 +5883,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5896,7 +5896,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -5905,7 +5905,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5918,7 +5918,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -5927,7 +5927,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5940,7 +5940,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -5949,7 +5949,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5962,7 +5962,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -5971,7 +5971,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -5984,7 +5984,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -5993,7 +5993,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6006,7 +6006,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6015,7 +6015,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6028,7 +6028,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6037,7 +6037,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6050,7 +6050,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6059,7 +6059,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6072,7 +6072,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6081,7 +6081,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6094,7 +6094,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6103,7 +6103,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6116,7 +6116,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6125,7 +6125,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6138,7 +6138,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6147,7 +6147,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6160,7 +6160,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6169,7 +6169,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6182,7 +6182,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6191,7 +6191,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6204,7 +6204,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6213,7 +6213,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6226,7 +6226,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6235,7 +6235,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6248,7 +6248,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6257,7 +6257,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6270,7 +6270,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6279,7 +6279,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6292,7 +6292,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6301,7 +6301,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6314,7 +6314,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6323,7 +6323,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6336,7 +6336,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6345,7 +6345,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6358,7 +6358,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6367,7 +6367,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6380,7 +6380,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6389,7 +6389,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6402,7 +6402,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6411,7 +6411,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6424,7 +6424,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6433,7 +6433,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6446,7 +6446,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6455,7 +6455,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6468,7 +6468,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6477,7 +6477,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6490,7 +6490,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6499,7 +6499,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6512,7 +6512,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6521,7 +6521,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6534,7 +6534,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6543,7 +6543,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6556,7 +6556,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6565,7 +6565,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6578,7 +6578,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6587,7 +6587,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6600,7 +6600,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6609,7 +6609,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6622,7 +6622,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -6631,7 +6631,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6644,7 +6644,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -6653,7 +6653,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6666,7 +6666,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -6675,7 +6675,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6688,7 +6688,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -6697,7 +6697,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6710,7 +6710,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -6719,7 +6719,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6732,7 +6732,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -6741,7 +6741,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6754,7 +6754,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -6763,7 +6763,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6776,7 +6776,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -6785,7 +6785,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6798,7 +6798,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -6807,7 +6807,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6820,7 +6820,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -6829,7 +6829,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6842,7 +6842,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -6851,7 +6851,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6864,7 +6864,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -6873,7 +6873,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6886,7 +6886,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -6895,7 +6895,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6908,7 +6908,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -6917,7 +6917,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6930,7 +6930,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -6939,7 +6939,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6952,7 +6952,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6961,7 +6961,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6974,7 +6974,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -6983,7 +6983,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -6996,7 +6996,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -7005,7 +7005,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7018,7 +7018,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -7027,7 +7027,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7040,7 +7040,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7049,7 +7049,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7062,7 +7062,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7071,7 +7071,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7084,7 +7084,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7093,7 +7093,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7106,7 +7106,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7115,7 +7115,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7128,7 +7128,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7137,7 +7137,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7150,7 +7150,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7159,7 +7159,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7172,7 +7172,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7181,7 +7181,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7194,7 +7194,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7203,7 +7203,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7216,7 +7216,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7225,7 +7225,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7238,7 +7238,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7247,7 +7247,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7260,7 +7260,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7269,7 +7269,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7282,7 +7282,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7291,7 +7291,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7304,7 +7304,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7313,7 +7313,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7326,7 +7326,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7335,7 +7335,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7348,7 +7348,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7357,7 +7357,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7370,7 +7370,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7379,7 +7379,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7392,7 +7392,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7401,7 +7401,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7414,7 +7414,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7423,7 +7423,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7436,7 +7436,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7445,7 +7445,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7458,7 +7458,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7467,7 +7467,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7480,7 +7480,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7489,7 +7489,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7502,7 +7502,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7511,7 +7511,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7524,7 +7524,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7533,7 +7533,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7546,7 +7546,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7555,7 +7555,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7568,7 +7568,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7577,7 +7577,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7590,7 +7590,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7599,7 +7599,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7612,7 +7612,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7621,7 +7621,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7634,7 +7634,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7643,7 +7643,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7656,7 +7656,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7665,7 +7665,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7678,7 +7678,7 @@
     const %TMR0_CTRLB: u16 = 0x0A01
     const %TMR0_IFLAG: u16 = 0x0A0B
     const %TMR0_IMASK: u16 = 0x0A0A
-    const %TMR0_IS_MODERN: u16 = 0x0001
+    const TMR0_IS_MODERN: u16 = 0x0001
     const %TMR0_OCRA: u16 = 0x0A28
     const %TMR0_OCRB: u16 = 0x0A2A
     const %TMR1_CNTH: u16 = 0x0000
@@ -7687,7 +7687,7 @@
     const %TMR1_CTRLB: u16 = 0x0B01
     const %TMR1_IFLAG: u16 = 0x0B06
     const %TMR1_IMASK: u16 = 0x0B05
-    const %TMR1_IS_MODERN: u16 = 0x0001
+    const TMR1_IS_MODERN: u16 = 0x0001
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0B0C
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7700,7 +7700,7 @@
     const %TMR0_CTRLB: u16 = 0x0000
     const %TMR0_IFLAG: u16 = 0x0000
     const %TMR0_IMASK: u16 = 0x0000
-    const %TMR0_IS_MODERN: u16 = 0x0000
+    const TMR0_IS_MODERN: u16 = 0x0000
     const %TMR0_OCRA: u16 = 0x0000
     const %TMR0_OCRB: u16 = 0x0000
     const %TMR1_CNTH: u16 = 0x0000
@@ -7709,7 +7709,7 @@
     const %TMR1_CTRLB: u16 = 0x0000
     const %TMR1_IFLAG: u16 = 0x0000
     const %TMR1_IMASK: u16 = 0x0000
-    const %TMR1_IS_MODERN: u16 = 0x0000
+    const TMR1_IS_MODERN: u16 = 0x0000
     const %TMR1_OCRAH: u16 = 0x0000
     const %TMR1_OCRAL: u16 = 0x0000
     const %TMR1_OCRBH: u16 = 0x0000
@@ -7718,7 +7718,7 @@
 
 
 @timer0_set_prescaler($prescaler: u8) {
-    ? %TMR0_IS_MODERN == 1 {
+    ? TMR0_IS_MODERN == 1 {
         $prescaler -> %TMR0_CTRLA
     } : {
         $prescaler -> %TMR0_CTRLB
@@ -7742,7 +7742,7 @@
 }
 
 @timer0_ctc_mode() {
-    ? %TMR0_IS_MODERN == 1 {
+    ? TMR0_IS_MODERN == 1 {
         0x00 -> %TMR0_CTRLA
     } : {
         0x02 -> %TMR0_CTRLA
@@ -7750,7 +7750,7 @@
 }
 
 @timer0_enable_compa_int() {
-    ? %TMR0_IS_MODERN == 1 {
+    ? TMR0_IS_MODERN == 1 {
         ram imut $curr: u8 = %TMR0_IMASK
         $curr | 0x10 -> %TMR0_IMASK
     } : {
@@ -7760,7 +7760,7 @@
 }
 
 @timer1_set_prescaler($prescaler: u8) {
-    ? %TMR1_IS_MODERN == 1 {
+    ? TMR1_IS_MODERN == 1 {
         $prescaler -> %TMR1_CTRLA
     } : {
         $prescaler -> %TMR1_CTRLB
@@ -7798,7 +7798,7 @@
 }
 
 @timer1_ctc_mode() {
-    ? %TMR1_IS_MODERN == 1 {
+    ? TMR1_IS_MODERN == 1 {
         0x00 -> %TMR1_CTRLA
     } : {
         0x00 -> %TMR1_CTRLA
@@ -7807,7 +7807,7 @@
 }
 
 @timer1_enable_compa_int() {
-    ? %TMR1_IS_MODERN == 1 {
+    ? TMR1_IS_MODERN == 1 {
         ram imut $curr: u8 = %TMR1_IMASK
         $curr | 0x10 -> %TMR1_IMASK
     } : {

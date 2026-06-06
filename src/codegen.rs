@@ -37,7 +37,7 @@ mod emitter;
 mod pipeline;
 mod assembler;
 
-pub use assembler::{generate_intel_hex, resolve_labels};
+pub use assembler::{generate_intel_hex, generate_intel_hex_at, resolve_labels, resolve_labels_at};
 
 pub use model::{CodeGenerator, Pass1Inst, TargetCore};
 
@@ -47,7 +47,7 @@ pub use model::{CodeGenerator, Pass1Inst, TargetCore};
 /// AVR instruction selection. It is exposed through `--emit-ir` for development and
 /// snapshot testing.
 pub fn emit_ir_text(ast: &[ASTNode]) -> Result<String, String> {
-    let funcs = build_ast::lower_program(ast)?;
+    let funcs = build_ast::lower_program(ast, &build_ast::all_function_names(ast))?;
     let mut s = String::new();
     for f in funcs {
         let f = opt::optimize(f);

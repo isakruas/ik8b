@@ -554,7 +554,7 @@ fn fit(v: i64, ty: IrType) -> i64 {
 
 #[cfg(test)]
 mod tests {
-    use super::super::build_ast::lower_program;
+    use super::super::build_ast::{all_function_names, lower_program};
     use super::super::print::print_function;
     use super::*;
     use crate::lexer::Lexer;
@@ -563,7 +563,7 @@ mod tests {
     fn compile_to_ir(src: &str) -> Vec<IrFunction> {
         let toks = Lexer::new(src).tokenize().expect("lex");
         let ast = Parser::new(toks).parse().expect("parse");
-        lower_program(&ast).expect("lower")
+        lower_program(&ast, &all_function_names(&ast)).expect("lower")
     }
 
     #[test]

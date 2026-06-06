@@ -26,29 +26,37 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 const LICENSE: &str = "Apache-2.0";
 
 fn print_help(program: &str) {
-    println!("ik8b {} - AVR-8 source compiler", VERSION);
+    println!("ik8b {} - AVR-8 source compiler and simulator", VERSION);
     println!();
-    println!("Usage:");
-    println!("  {} <file.ik> [-o <out.hex>] [--report]", program);
-    println!("  {} info", program);
-    println!("  {} version", program);
-    println!("  {} license", program);
-    println!("  {} list-devices", program);
-    println!("  {} help", program);
+    println!("Usage: {} <command> [arguments]", program);
     println!();
-    println!("Aliases:");
-    println!("  -h, --help          Show this help text");
-    println!("  -V, --version       Print compiler version");
-    println!("  --info              Print compiler and target support summary");
-    println!("  --license           Print license information");
-    println!("  --list-devices      List supported target devices");
+    println!("Commands:");
+    println!("  build <file.ik>        Compile a source file to Intel HEX");
+    println!("  run   <file.ik>        Compile, then simulate the result");
+    println!("  sim   <file.hex>       Simulate an already-assembled HEX image");
+    println!("  devices                List supported target devices");
+    println!("  info                   Print compiler and target support summary");
+    println!("  version                Print compiler version");
+    println!("  license                Print license information");
+    println!("  help                   Show this help text");
     println!();
-    println!("Compile options:");
-    println!("  -o <out.hex>        Output Intel HEX file (default: out.hex)");
-    println!("  --report            Print SRAM_BYTES=<n> before the normal build report");
+    println!("Build options (build, run):");
+    println!("  -o <out.hex>           Output Intel HEX path (default: out.hex)");
+    println!("  --emit <hex|ir>        Output kind: hex (default) or SSA ir");
+    println!("  --report               Print a memory-usage report (SRAM_BYTES=<n> first)");
     println!();
-    println!("The target device is selected by a mandatory top-level target,");
-    println!("e.g. declare `target atmega328p` at the top of the source file.");
+    println!("Simulation options (run, sim):");
+    println!("  --mcu <device>         Target device (sim only; run uses the source target)");
+    println!("  --trace                Print an instruction trace");
+    println!("  --dump                 Dump registers/PC/SP/SREG at exit");
+    println!("  --limit <N>            Stop after N instructions");
+    println!("  --irq <V>              Raise interrupt vector V at startup");
+    println!("  --irq-at <V:STEP>      Raise vector V once at instruction STEP");
+    println!("  --irq-every <V:N>      Raise vector V every N instructions");
+    println!();
+    println!("The compile target is selected by a mandatory top-level declaration in the");
+    println!("source, e.g. `target atmega328p`. The same simulation options are used by the");
+    println!("standalone ik8bvm simulator. A bare `{} <file.ik>` is treated as `build`.", program);
 }
 
 fn print_version() {
@@ -102,12 +110,190 @@ fn print_device_table() {
     }
 }
 
-fn parse_compile_args(args: &[String]) -> Result<(String, String, bool, bool), String> {
-    let input_file = args[1].clone();
+pub struct SimConfig {
+    pub simulate: bool,
+    pub trace: bool,
+    pub limit: u64,
+    pub dump: bool,
+    pub irq_init: Vec<u8>,
+    pub irq_at: Vec<(u8, u64)>,
+    pub irq_every: Vec<(u8, u64)>,
+}
+
+/// What a compile should write out.
+#[derive(Clone, Copy, PartialEq)]
+pub enum Emit {
+    /// Intel HEX (default), written to the `-o` path.
+    Hex,
+    /// SSA intermediate representation, printed to stdout (no HEX written).
+    Ir,
+}
+
+/// Parsed options for the `build` / `run` paths.
+pub struct CompileOpts {
+    pub input: String,
+    pub output: String,
+    pub report: bool,
+    pub emit: Emit,
+    pub sim: SimConfig,
+}
+
+/// Parses a `VEC:NUMBER` pair (used by `--irq-at` / `--irq-every`).
+fn parse_pair(s: &str) -> Option<(u8, u64)> {
+    let (v, n) = s.split_once(':')?;
+    Some((v.parse().ok()?, n.parse().ok()?))
+}
+
+/// `ik8b --sim-hex <file.hex> --mcu <device> [--trace] [--limit N] [--dump]`
+/// `        [--irq V] [--irq-at V:STEP] [--irq-every V:PERIOD]`
+///
+/// Runs an already-assembled Intel HEX image in the embedded ik8bvm simulator
+/// (the same VM that powers `--simulate`), reporting the exact cycle and
+/// instruction counts. Because it takes a raw hex it works for images produced
+/// by any toolchain (ik8b, avr-gcc, hand-written asm), so the benchmark harness
+/// can compare them on one cycle-accurate model without an external simulator.
+/// The device's real core class drives per-core cycle timing. The simulation
+/// flags are the same ones `--simulate` and the ik8bvm CLI use.
+fn run_sim_hex(args: &[String]) -> ! {
+    let mut hexfile: Option<String> = None;
+    let mut mmcu: Option<String> = None;
+    let mut trace = false;
+    let mut dump = false;
+    let mut max_instr: u64 = 0;
+    let mut irq_init: Vec<u8> = Vec::new();
+    let mut irq_at: Vec<(u8, u64)> = Vec::new();
+    let mut irq_every: Vec<(u8, u64)> = Vec::new();
+
+    let bad = |msg: &str| -> ! {
+        eprintln!("--sim-hex: {}", msg);
+        eprintln!("Usage: ik8b --sim-hex <file.hex> --mcu <device> [--trace] [--limit N] [--dump]");
+        process::exit(1);
+    };
+
+    let mut i = 2;
+    while i < args.len() {
+        let a = args[i].as_str();
+        match a {
+            "--trace" => trace = true,
+            "--dump" => dump = true,
+            "--mcu" => {
+                i += 1;
+                mmcu = args.get(i).cloned();
+            }
+            "--limit" => {
+                i += 1;
+                max_instr = args.get(i).and_then(|s| s.parse().ok()).unwrap_or_else(|| bad("--limit expects an instruction count"));
+            }
+            "--irq" => {
+                i += 1;
+                irq_init.push(args.get(i).and_then(|s| s.parse().ok()).unwrap_or_else(|| bad("--irq expects a vector number")));
+            }
+            "--irq-at" => {
+                i += 1;
+                irq_at.push(args.get(i).and_then(|s| parse_pair(s)).unwrap_or_else(|| bad("--irq-at expects VEC:STEP")));
+            }
+            "--irq-every" => {
+                i += 1;
+                irq_every.push(args.get(i).and_then(|s| parse_pair(s)).unwrap_or_else(|| bad("--irq-every expects VEC:PERIOD")));
+            }
+            other if !other.starts_with('-') && hexfile.is_none() => hexfile = Some(other.to_string()),
+            other => bad(&format!("unexpected argument '{}'", other)),
+        }
+        i += 1;
+    }
+
+    let hex = hexfile.unwrap_or_else(|| bad("requires a hex file path"));
+    let mmcu = mmcu.unwrap_or_else(|| bad("requires --mcu <device> (run `ik8b --list-devices`)"));
+
+    let dev = ik8bvm::devices::AVR_DEVICE_TABLE
+        .iter()
+        .find(|d| d.name == mmcu)
+        .unwrap_or_else(|| {
+            eprintln!("--sim-hex: unknown device '{}' (run `ik8b --list-devices`)", mmcu);
+            process::exit(1);
+        });
+
+    let mut vm = ik8bvm::core::AvrVm::new(
+        dev.name.to_string(),
+        dev.core,
+        dev.flash_bytes,
+        dev.sram_bytes,
+        dev.eeprom_bytes,
+        dev.sram_start,
+    );
+    vm.sp = dev.ram_end as u16;
+    vm.trace = trace;
+
+    if let Err(e) = ik8bvm::hw::load_hex(&mut vm, &hex) {
+        eprintln!("--sim-hex: failed to load '{}': {}", hex, e);
+        process::exit(1);
+    }
+
+    for v in irq_init {
+        vm.raise_interrupt(v);
+    }
+    let mut at_pending: Vec<(u8, u64, bool)> = irq_at.iter().map(|&(v, s)| (v, s, false)).collect();
+    let mut every_next: Vec<(u8, u64, u64)> = irq_every.iter().map(|&(v, p)| (v, p, p)).collect();
+
+    let mut executed: u64 = 0;
+    while vm.running {
+        for ev in &mut at_pending {
+            if !ev.2 && executed >= ev.1 {
+                vm.raise_interrupt(ev.0);
+                ev.2 = true;
+            }
+        }
+        for ev in &mut every_next {
+            if executed >= ev.2 {
+                vm.raise_interrupt(ev.0);
+                ev.2 += ev.1;
+            }
+        }
+        vm.step();
+        executed += 1;
+        if max_instr > 0 && executed >= max_instr {
+            break;
+        }
+    }
+
+    if vm.trace {
+        for line in &vm.trace_buf {
+            println!("{}", line);
+        }
+    }
+    if dump {
+        println!("Registers:");
+        for i in 0..32 {
+            print!("R{:<2}=0x{:02X} ", i, vm.r[i]);
+            if i % 8 == 7 {
+                println!();
+            }
+        }
+        println!("PC=0x{:06X} SP=0x{:04X} SREG=0x{:02X}", vm.pc, vm.sp, vm.sreg);
+    }
+    // Machine-readable summary parsed by the benchmark/test harnesses.
+    println!("Instructions = {}", executed);
+    println!("Cycles = {}", vm.cycles);
+    println!("R16 = 0x{:02X}", vm.r[16]);
+
+    process::exit(if vm.unknown_opcode { 2 } else { 0 });
+}
+
+/// Parses `build`/`run` options. `start` is the index of the input file in `args`
+/// (1 for the bare `ik8b <file>` form, 2 after a `build`/`run` subcommand).
+fn parse_compile_args(args: &[String], start: usize) -> Result<CompileOpts, String> {
+    let input_file = args
+        .get(start)
+        .cloned()
+        .ok_or_else(|| "missing input source file".to_string())?;
     let mut output_file = "out.hex".to_string();
     let mut report = false;
-    let mut emit_ir = false;
-    let mut idx = 2;
+    let mut emit = Emit::Hex;
+    let mut sim = SimConfig {
+        simulate: false, trace: false, limit: 100_000_000, dump: false,
+        irq_init: vec![], irq_at: vec![], irq_every: vec![],
+    };
+    let mut idx = start + 1;
 
     while idx < args.len() {
         match args[idx].as_str() {
@@ -121,23 +307,53 @@ fn parse_compile_args(args: &[String]) -> Result<(String, String, bool, bool), S
             "--report" => {
                 report = true;
             }
-            "--emit-ir" => {
-                emit_ir = true;
+            "--emit" => {
+                idx += 1;
+                emit = match args.get(idx).map(String::as_str) {
+                    Some("hex") => Emit::Hex,
+                    Some("ir") => Emit::Ir,
+                    _ => return Err("--emit expects 'hex' or 'ir'".to_string()),
+                };
             }
-            "-h" | "--help" | "help" => {
-                return Err("Help must be requested without an input file".to_string());
+            "--simulate" => {
+                sim.simulate = true;
             }
-            "-V" | "--version" | "version" => {
-                return Err("Version must be requested without an input file".to_string());
+            // Simulation options below share one vocabulary with `--sim-hex` and the
+            // ik8bvm simulator, so `--trace`/`--dump`/`--limit`/`--irq*` mean the same
+            // thing everywhere. They only take effect together with `--simulate`.
+            "--trace" => {
+                sim.trace = true;
             }
-            "--info" | "info" => {
-                return Err("Info must be requested without an input file".to_string());
+            "--dump" => {
+                sim.dump = true;
             }
-            "--license" | "license" => {
-                return Err("License must be requested without an input file".to_string());
+            "--limit" => {
+                idx += 1;
+                match args.get(idx).and_then(|s| s.parse().ok()) {
+                    Some(n) => sim.limit = n,
+                    None => return Err("--limit expects an instruction count".to_string()),
+                }
             }
-            "--list-devices" | "list-devices" => {
-                return Err("Device listing must be requested without an input file".to_string());
+            "--irq" => {
+                idx += 1;
+                match args.get(idx).and_then(|s| s.parse().ok()) {
+                    Some(v) => sim.irq_init.push(v),
+                    None => return Err("--irq expects a vector number".to_string()),
+                }
+            }
+            "--irq-at" => {
+                idx += 1;
+                match args.get(idx).and_then(|s| parse_pair(s)) {
+                    Some((v, s)) => sim.irq_at.push((v, s)),
+                    None => return Err("--irq-at expects VEC:STEP".to_string()),
+                }
+            }
+            "--irq-every" => {
+                idx += 1;
+                match args.get(idx).and_then(|s| parse_pair(s)) {
+                    Some((v, n)) => sim.irq_every.push((v, n)),
+                    None => return Err("--irq-every expects VEC:PERIOD".to_string()),
+                }
             }
             other if other.starts_with('-') => {
                 return Err(format!("Unknown option: {}", other));
@@ -149,7 +365,7 @@ fn parse_compile_args(args: &[String]) -> Result<(String, String, bool, bool), S
         idx += 1;
     }
 
-    Ok((input_file, output_file, report, emit_ir))
+    Ok(CompileOpts { input: input_file, output: output_file, report, emit, sim })
 }
 
 fn main() {
@@ -162,43 +378,47 @@ fn main() {
     }
 
     match args[1].as_str() {
-        "-h" | "--help" | "help" => {
-            print_help(program);
-            return;
-        }
-        "-V" | "--version" | "version" => {
-            print_version();
-            return;
-        }
-        "--info" | "info" => {
-            print_info(program);
-            return;
-        }
-        "--license" | "license" => {
-            print_license();
-            return;
-        }
-        "--list-devices" | "list-devices" => {
-            print_device_table();
-            return;
+        "-h" | "--help" | "help" => print_help(program),
+        "-V" | "--version" | "version" => print_version(),
+        "--info" | "info" => print_info(program),
+        "--license" | "license" => print_license(),
+        "devices" | "--list-devices" | "list-devices" => print_device_table(),
+        // `sim <file.hex> --mcu <dev>`: simulate an already-assembled image.
+        "sim" | "--sim-hex" | "sim-hex" => run_sim_hex(&args),
+        // `build <file.ik>`: compile only.
+        "build" => run_compile(parse_or_exit(&args, 2, program)),
+        // `run <file.ik>`: compile, then simulate.
+        "run" => {
+            let mut opts = parse_or_exit(&args, 2, program);
+            opts.sim.simulate = true;
+            run_compile(opts);
         }
         option if option.starts_with('-') => {
             eprintln!("Unknown command or option: {}", option);
             eprintln!("Run `{} help` for usage.", program);
             process::exit(1);
         }
-        _ => {}
+        // Back-compat: a bare `ik8b <file.ik> [options]` is an implicit `build`
+        // (and `--simulate` turns it into a `run`).
+        _ => run_compile(parse_or_exit(&args, 1, program)),
     }
+}
 
-    let (input_file, output_file, report, emit_ir) = match parse_compile_args(&args) {
-        Ok(parsed) => parsed,
+fn parse_or_exit(args: &[String], start: usize, program: &str) -> CompileOpts {
+    match parse_compile_args(args, start) {
+        Ok(o) => o,
         Err(e) => {
             eprintln!("CLI Error: {}", e);
             eprintln!("Run `{} help` for usage.", program);
             process::exit(1);
         }
-    };
-    
+    }
+}
+
+/// Compiles a source file and (optionally) simulates it, then exits.
+fn run_compile(opts: CompileOpts) -> ! {
+    let CompileOpts { input: input_file, output: output_file, report, emit, sim } = opts;
+
     let source = match fs::read_to_string(&input_file) {
         Ok(s) => s,
         Err(e) => {
@@ -227,9 +447,9 @@ fn main() {
         }
     };
     
-    // `--emit-ir`: dump the SSA IR for the program and exit. Drives the new
+    // `--emit ir`: dump the SSA IR for the program and exit. Drives the new
     // middle-end without running AVR code generation.
-    if emit_ir {
+    if emit == Emit::Ir {
         match codegen::emit_ir_text(&ast) {
             Ok(text) => {
                 print!("{}", text);
@@ -276,7 +496,23 @@ fn main() {
     };
     
     // 4. Resolve Labels
-    let opcodes = match codegen::resolve_labels(&insts) {
+    // A `boot <addr>` program is located at the Boot Loader Section start.
+    let boot_origin_bytes: u32 = parser.boot_origin.unwrap_or(0);
+    if let Some(addr) = parser.boot_origin {
+        if addr % 2 != 0 || addr >= device.flash_size {
+            eprintln!(
+                "Device Error: boot address 0x{:X} must be even and within {}'s flash.",
+                addr, device.name
+            );
+            process::exit(1);
+        }
+    }
+    let assembled = if parser.boot_origin.is_some() {
+        codegen::resolve_labels_at(&insts, (boot_origin_bytes / 2) as i64)
+    } else {
+        codegen::resolve_labels(&insts)
+    };
+    let opcodes = match assembled {
         Ok(opcodes) => opcodes,
         Err(e) => {
             eprintln!("Assembly Error: {}", e);
@@ -359,17 +595,91 @@ fn main() {
         process::exit(1);
     }
 
-    // 5. Generate Intel HEX
-    let hex_content = codegen::generate_intel_hex(&opcodes);
+    // 5. Generate Intel HEX (at the boot byte address when this is a bootloader)
+    let hex_content = if parser.boot_origin.is_some() {
+        codegen::generate_intel_hex_at(&opcodes, boot_origin_bytes)
+    } else {
+        codegen::generate_intel_hex(&opcodes)
+    };
     
     // 6. Write output
-    match fs::write(&output_file, hex_content) {
+    match fs::write(&output_file, &hex_content) {
         Ok(_) => println!("Successfully compiled {} directly to Intel HEX: {}", input_file, output_file),
         Err(e) => {
             eprintln!("Error writing output HEX file: {}", e);
             process::exit(1);
         }
     }
+
+    if sim.simulate {
+        println!("Starting simulation...");
+        // Build the VM with the device's REAL core class, not a generic one: a few
+        // encodings differ per core (notably the 1-word LDS/STS on the reduced AVRrc
+        // core vs the 2-word forms elsewhere), so simulating with the wrong core would
+        // mis-decode correct code. Take the core (and exact SP/RAM end) from the same
+        // ik8bvm device table the standalone `sim` uses, so both agree with hardware.
+        let (core, sp) = ik8bvm::devices::AVR_DEVICE_TABLE
+            .iter()
+            .find(|d| d.name == device.name)
+            .map(|d| (d.core, d.ram_end as u16))
+            .unwrap_or((
+                ik8bvm::devices::AvrCoreClass::Unknown,
+                device.sram_size as u16 + device.sram_start as u16 - 1,
+            ));
+        let mut vm = ik8bvm::core::AvrVm::new(
+            device.name.to_string(),
+            core,
+            device.flash_size,
+            device.sram_size,
+            device.eeprom_size,
+            device.sram_start as u32,
+        );
+        vm.sp = sp;
+        vm.trace = sim.trace;
+        ik8bvm::hw::load_hex(&mut vm, &output_file).expect("Failed to load hex into VM");
+
+        for &vec in &sim.irq_init {
+            vm.raise_interrupt(vec);
+        }
+
+        struct IrqAtEvent { vec: u8, step: u64, fired: bool }
+        struct IrqEveryEvent { vec: u8, period: u64, next_at: u64 }
+
+        let mut at_events: Vec<IrqAtEvent> = sim.irq_at.iter().map(|&(v, s)| IrqAtEvent { vec: v, step: s, fired: false }).collect();
+        let mut every_events: Vec<IrqEveryEvent> = sim.irq_every.iter().map(|&(v, p)| IrqEveryEvent { vec: v, period: p, next_at: p }).collect();
+
+        let mut executed = 0;
+        while vm.running && executed < sim.limit {
+            vm.step();
+            executed += 1;
+
+            for ev in &mut at_events {
+                if !ev.fired && executed >= ev.step {
+                    vm.raise_interrupt(ev.vec);
+                    ev.fired = true;
+                }
+            }
+            for ev in &mut every_events {
+                if executed >= ev.next_at {
+                    vm.raise_interrupt(ev.vec);
+                    ev.next_at += ev.period;
+                }
+            }
+        }
+        println!("Simulation completed after {} cycles ({} instructions executed).", vm.cycles, executed);
+        println!("R16 = 0x{:02X}", vm.r[16]);
+
+        if sim.dump {
+            println!("Registers:");
+            for i in 0..32 {
+                print!("R{:<2}=0x{:02X} ", i, vm.r[i]);
+                if i % 8 == 7 { println!(); }
+            }
+            println!("PC=0x{:04X} SP=0x{:04X} SREG=0x{:02X}", vm.pc, vm.sp, vm.sreg);
+        }
+    }
+
+    process::exit(0);
 }
 
 fn make_progress_bar(used: u32, total: u32) -> String {

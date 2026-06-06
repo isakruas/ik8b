@@ -262,7 +262,7 @@ pub fn allocate(
 
 #[cfg(test)]
 mod tests {
-    use super::super::build_ast::lower_program;
+    use super::super::build_ast::{all_function_names, lower_program};
     use super::super::opt::optimize;
     use super::*;
     use crate::lexer::Lexer;
@@ -271,7 +271,7 @@ mod tests {
     fn ir(src: &str) -> IrFunction {
         let toks = Lexer::new(src).tokenize().unwrap();
         let ast = Parser::new(toks).parse().unwrap();
-        let f = lower_program(&ast).unwrap().into_iter().next().unwrap();
+        let f = lower_program(&ast, &all_function_names(&ast)).unwrap().into_iter().next().unwrap();
         optimize(f)
     }
 

@@ -9,7 +9,7 @@ IK8B = ../ik8b
 define compile_ik_with_target
 	@tmp=$$(mktemp); \
 	awk -v target="$(MCU)" 'BEGIN{has_target=0} /^[[:space:]]*target[[:space:]]+[A-Za-z_][A-Za-z0-9_]*/{has_target=1} {lines[NR]=$$0} END{if(!has_target){print "target " target; print ""} for(i=1;i<=NR;i++){print lines[i]}}' "$(1)" > "$$tmp"; \
-	$(IK8B) "$$tmp" -o "$(2)"; \
+	$(IK8B) build "$$tmp" -o "$(2)"; \
 	rm -f "$$tmp"
 endef
 

@@ -36,6 +36,10 @@ pub struct ProgramInfo {
     pub fn_params: HashMap<String, Vec<String>>,
     /// `%CONST` / named const -> declared type string.
     pub const_ty: HashMap<String, String>,
+    /// `%CONST` (name as written, with `%`) -> declared address/value. Lets an
+    /// intrinsic that needs a register *address* as a compile-time literal (e.g.
+    /// `@spm`'s SPMCSR operand) accept a per-device hardware-register constant.
+    pub const_addr: HashMap<String, i32>,
 }
 
 impl ProgramInfo {
@@ -43,6 +47,7 @@ impl ProgramInfo {
         let mut fn_ret = HashMap::new();
         let mut fn_params = HashMap::new();
         let mut const_ty = HashMap::new();
+        let mut const_addr = HashMap::new();
         for node in ast {
             match node {
                 ASTNode::Func {
@@ -57,8 +62,9 @@ impl ProgramInfo {
                         params.iter().map(|(_, t)| t.clone()).collect(),
                     );
                 }
-                ASTNode::Const { name, ty, .. } => {
+                ASTNode::Const { name, ty, value } => {
                     const_ty.insert(name.clone(), ty.clone());
+                    const_addr.insert(name.clone(), *value);
                 }
                 ASTNode::Isr { .. } => {}
             }
@@ -67,6 +73,7 @@ impl ProgramInfo {
             fn_ret,
             fn_params,
             const_ty,
+            const_addr,
         }
     }
 
@@ -79,8 +86,24 @@ impl ProgramInfo {
     }
 }
 
-/// Lowers every function/ISR in a program to SSA IR.
-pub fn lower_program(ast: &[ASTNode]) -> Result<Vec<IrFunction>, String> {
+/// Lowers every reachable function/ISR in a program to SSA IR. Unreachable
+/// functions are skipped: they are never emitted anyway, and compiling dead code
+/// can hit lowering corner cases that a live program never reaches (e.g. a
+/// peripheral helper whose per-device address constants are all zero on a part
+/// that lacks that peripheral, which constant-folds a guard into a degenerate
+/// branch). ISRs are roots and always lowered.
+/// Every top-level function name in the program (used to lower all functions, e.g.
+/// for IR inspection or unit tests, rather than only those reachable from `@main`).
+pub fn all_function_names(ast: &[ASTNode]) -> HashSet<String> {
+    ast.iter()
+        .filter_map(|n| match n {
+            ASTNode::Func { name, .. } => Some(name.clone()),
+            _ => None,
+        })
+        .collect()
+}
+
+pub fn lower_program(ast: &[ASTNode], reachable: &HashSet<String>) -> Result<Vec<IrFunction>, String> {
     let info = ProgramInfo::from_ast(ast);
     let mut out = Vec::new();
     for node in ast {
@@ -91,7 +114,9 @@ pub fn lower_program(ast: &[ASTNode]) -> Result<Vec<IrFunction>, String> {
                 ret_ty,
                 body,
             } => {
-                out.push(lower_function(name, params, ret_ty, body, &info)?);
+                if reachable.contains(name) {
+                    out.push(lower_function(name, params, ret_ty, body, &info)?);
+                }
             }
             ASTNode::Isr { vector, body } => {
                 let isr_name = format!("__isr_{}", vector);
@@ -226,6 +251,9 @@ impl<'a> Lower<'a> {
                         .or_else(|| self.info.const_ty.get(rest))
                         .map(|t| IrType::from_decl(t))
                         .unwrap_or(IrType::U8)
+                } else if let Some(t) = self.info.const_ty.get(name) {
+                    // Plain value constant.
+                    IrType::from_decl(t)
                 } else {
                     self.var_ty(name)
                 }
@@ -882,6 +910,19 @@ impl<'a> Lower<'a> {
         if name.starts_with('%') {
             return Ok(self.b.hw_read(hw_reg_name(name), self.var_ref_hw_ty(name)));
         }
+        // A plain (non-`%`) named constant folds to its compile-time value, so a
+        // bit mask or command word becomes an immediate operand instead of a load.
+        if !name.starts_with('$') {
+            if let Some(&val) = self.info.const_addr.get(name) {
+                let ty = self
+                    .info
+                    .const_ty
+                    .get(name)
+                    .map(|t| IrType::from_decl(t))
+                    .unwrap_or(IrType::U8);
+                return Ok(self.b.iconst(val as i64, ty));
+            }
+        }
         if self.slot_backed.contains(name) {
             // Arrays decay to their base address. Address-taken scalars live in a slot
             // too, but reading the variable must load the scalar value, not the slot
@@ -1049,6 +1090,22 @@ impl<'a> Lower<'a> {
         let param_tys = self.info.fn_params.get(name).cloned();
         let mut avals = Vec::with_capacity(args.len());
         for (i, a) in args.iter().enumerate() {
+            // `@spm`'s first operand is the SPMCSR *address*, which the backend needs
+            // as a compile-time literal. SPMCSR lives at a different address on
+            // different parts, so std/boot.ik passes a per-device `const %SPM_CTRL_REG`
+            // here. Resolve such a hardware-register constant to its declared address
+            // instead of emitting a register read.
+            if name == "@spm" && i == 0 {
+                if let Expr::VarRef(reg) = a {
+                    if reg.starts_with('%') {
+                        let addr = *self.info.const_addr.get(reg).ok_or_else(|| {
+                            format!("Intrinsic @spm: unknown hardware register constant '{}'", reg)
+                        })?;
+                        avals.push(self.b.iconst(addr as i64, IrType::U16));
+                        continue;
+                    }
+                }
+            }
             let pty = param_tys
                 .as_ref()
                 .and_then(|p| p.get(i))
@@ -1323,7 +1380,7 @@ mod tests {
     fn lower_src(src: &str) -> Result<Vec<IrFunction>, String> {
         let toks = Lexer::new(src).tokenize().expect("lex");
         let ast = Parser::new(toks).parse().expect("parse");
-        lower_program(&ast)
+        lower_program(&ast, &all_function_names(&ast))
     }
 
     fn lower_err(src: &str) -> String {

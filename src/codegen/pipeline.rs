@@ -189,15 +189,13 @@ impl CodeGenerator {
 
         let reachable = self.compute_reachable_functions(&ast);
 
-        // Lower the whole program at once so type inference has full context (function
-        // return types and named/hardware constant types), then optimize each function.
-        let lowered = build_ast::lower_program(&ast)?;
+        // Lower only the reachable functions (type inference still has full context via
+        // ProgramInfo, which is built from the whole AST), then optimize each.
+        let lowered = build_ast::lower_program(&ast, &reachable)?;
         let mut ir_funcs: HashMap<String, function::IrFunction> = HashMap::new();
         for f in lowered {
-            if reachable.contains(&f.name) {
-                let name = f.name.clone();
-                ir_funcs.insert(name, opt::optimize(f));
-            }
+            let name = f.name.clone();
+            ir_funcs.insert(name, opt::optimize(f));
         }
 
         // Allocate RAM string literals (`$str:`) in SRAM (initialized by @main at startup),

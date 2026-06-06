@@ -231,6 +231,14 @@ fn label_addr(label_addresses: &HashMap<String, i64>, label: &str) -> Result<i64
 /// - Frontend emits "BRxx skip; RJMP target" patterns when target distance can grow.
 /// - RJMP/RCALL are promoted to JMP/CALL only when 12-bit signed range is exceeded.
 pub fn resolve_labels(instructions: &[Pass1Inst]) -> Result<Vec<u16>, String> {
+    resolve_labels_at(instructions, 0)
+}
+
+/// Like [`resolve_labels`], but places the program at `word_origin` (a flash
+/// word address). Relative branches are unaffected (origin cancels), so only
+/// absolute targets — JMP/CALL, function pointers and flash-data addresses —
+/// get the origin added. Used to locate a bootloader in the Boot Loader Section.
+pub fn resolve_labels_at(instructions: &[Pass1Inst], word_origin: i64) -> Result<Vec<u16>, String> {
     let optimized_instructions = peephole_optimize(instructions);
     let instructions = &optimized_instructions;
     let n = instructions.len();
@@ -303,7 +311,7 @@ pub fn resolve_labels(instructions: &[Pass1Inst]) -> Result<Vec<u16>, String> {
                 addr += 1;
             }
             Pass1Inst::JmpAbsL(label) => {
-                let target = label_addr(&label_addresses, label)? as u32;
+                let target = (label_addr(&label_addresses, label)? + word_origin) as u32;
                 final_opcodes.push(0x940C | ((((target >> 17) & 0x1F) as u16) << 4) | ((target >> 16) & 0x01) as u16); // JMP
                 final_opcodes.push((target & 0xFFFF) as u16);
                 addr += 2;
@@ -311,7 +319,7 @@ pub fn resolve_labels(instructions: &[Pass1Inst]) -> Result<Vec<u16>, String> {
             Pass1Inst::RJumpL(label) => {
                 let target = label_addr(&label_addresses, label)?;
                 if is_long[idx] {
-                    let k = target as u32;
+                    let k = (target + word_origin) as u32;
                     final_opcodes.push(0x940C | ((((k >> 17) & 0x1F) as u16) << 4) | ((k >> 16) & 0x01) as u16); // JMP
                     final_opcodes.push((k & 0xFFFF) as u16);
                     addr += 2;
@@ -324,7 +332,7 @@ pub fn resolve_labels(instructions: &[Pass1Inst]) -> Result<Vec<u16>, String> {
             Pass1Inst::RCallL(label) => {
                 let target = label_addr(&label_addresses, label)?;
                 if is_long[idx] {
-                    let k = target as u32;
+                    let k = (target + word_origin) as u32;
                     final_opcodes.push(0x940E | ((((k >> 17) & 0x1F) as u16) << 4) | ((k >> 16) & 0x01) as u16); // CALL
                     final_opcodes.push((k & 0xFFFF) as u16);
                     addr += 2;
@@ -350,7 +358,7 @@ pub fn resolve_labels(instructions: &[Pass1Inst]) -> Result<Vec<u16>, String> {
             }
             Pass1Inst::FnAddr16(target_reg, label) => {
                 // Resolve the function's WORD address for ICALL via Z.
-                let word_addr = label_addr(&label_addresses, label)? as u16;
+                let word_addr = (label_addr(&label_addresses, label)? + word_origin) as u16;
                 let lo = (word_addr & 0xFF) as u8;
                 let hi = ((word_addr >> 8) & 0xFF) as u8;
                 let d_lo = (*target_reg - 16) as u16;
@@ -363,7 +371,7 @@ pub fn resolve_labels(instructions: &[Pass1Inst]) -> Result<Vec<u16>, String> {
             }
             Pass1Inst::FlashAddr16(target_reg, label) => {
                 // Resolve the label's BYTE address (word_addr * 2) for LPM via Z.
-                let byte_addr = (label_addr(&label_addresses, label)? as u16).wrapping_mul(2);
+                let byte_addr = ((label_addr(&label_addresses, label)? + word_origin) as u16).wrapping_mul(2);
                 let lo = (byte_addr & 0xFF) as u8;
                 let hi = ((byte_addr >> 8) & 0xFF) as u8;
                 let d_lo = (*target_reg - 16) as u16;
@@ -386,29 +394,62 @@ pub fn resolve_labels(instructions: &[Pass1Inst]) -> Result<Vec<u16>, String> {
 /// - Data records use 16-byte payloads (8 words) except possibly final partial record.
 /// - Addresses are byte addresses, little-endian payload per AVR word order.
 pub fn generate_intel_hex(opcodes: &[u16]) -> String {
+    generate_intel_hex_at(opcodes, 0)
+}
+
+/// Like [`generate_intel_hex`], but the first word lands at flash byte address
+/// `byte_base` (used to place a bootloader in the Boot Loader Section). Emits
+/// Extended Linear Address (type 04) records so bases/addresses above 64 KB are
+/// expressed correctly.
+pub fn generate_intel_hex_at(opcodes: &[u16], byte_base: u32) -> String {
     let mut hex = String::new();
-    let mut address = 0u16;
-    
-    let chunks = opcodes.chunks(8);
-    for chunk in chunks {
+    let mut address: u32 = byte_base;
+    let mut cur_upper: u16 = 0xFFFF; // force an initial type-04 record when needed
+
+    for chunk in opcodes.chunks(8) {
+        // Emit/refresh the upper-16-bit linear address segment when it changes.
+        let upper = (address >> 16) as u16;
+        if upper != cur_upper {
+            hex.push_str(&make_ext_linear_record(upper));
+            hex.push('\n');
+            cur_upper = upper;
+        }
+
         let mut data = Vec::new();
         for &op in chunk {
             // Little-endian: low byte first, then high byte
             data.push((op & 0xFF) as u8);
             data.push((op >> 8) as u8);
         }
-        
-        let record = make_hex_record(address, &data);
+
+        let record = make_hex_record((address & 0xFFFF) as u16, &data);
         hex.push_str(&record);
         hex.push('\n');
-        
-        address += data.len() as u16;
+
+        address += data.len() as u32;
     }
-    
+
     hex.push_str(&make_eof_record());
     hex.push('\n');
-    
+
     hex
+}
+
+/// Intel HEX Extended Linear Address record (type 04): sets bits 16..31 of the
+/// address for the data records that follow.
+pub(super) fn make_ext_linear_record(upper: u16) -> String {
+    let data = [(upper >> 8) as u8, (upper & 0xFF) as u8];
+    let byte_count = 2u8;
+    let record_type = 0x04u8;
+    let mut sum = byte_count as u32 + record_type as u32; // address field is 0x0000
+    for &b in &data {
+        sum += b as u32;
+    }
+    let checksum = (((!sum) + 1) & 0xFF) as u8;
+    format!(
+        ":{:02X}0000{:02X}{:02X}{:02X}{:02X}",
+        byte_count, record_type, data[0], data[1], checksum
+    )
 }
 
 /// Builds one Intel HEX data record (record type 00) with two's-complement checksum.

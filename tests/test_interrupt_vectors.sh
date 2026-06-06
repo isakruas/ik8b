@@ -23,7 +23,7 @@ compile_expect_success() {
   local tag="$2"
   local out_hex="$tmpdir/$tag.hex"
   local out
-  if ! out="$("$IK8B_BIN" "$src" -o "$out_hex" 2>&1)"; then
+  if ! out="$("$IK8B_BIN" build "$src" -o "$out_hex" 2>&1)"; then
     echo "FAIL: expected success for $tag"
     echo "$out"
     fail=$((fail + 1))
@@ -39,7 +39,7 @@ compile_expect_error() {
   local pattern="$3"
   local out_hex="$tmpdir/$tag.hex"
   local out
-  if out="$("$IK8B_BIN" "$src" -o "$out_hex" 2>&1)"; then
+  if out="$("$IK8B_BIN" build "$src" -o "$out_hex" 2>&1)"; then
     echo "FAIL: expected error for $tag"
     fail=$((fail + 1))
     return 1

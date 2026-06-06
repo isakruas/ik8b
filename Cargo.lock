@@ -5,3 +5,10 @@ version = 4
 [[package]]
 name = "ik8b"
 version = "0.1.0"
+dependencies = [
+ "ik8bvm",
+]
+
+[[package]]
+name = "ik8bvm"
+version = "0.1.0"

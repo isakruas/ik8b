@@ -23,7 +23,11 @@ CORE_FAMILIES = {
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
 IK8B_BIN = os.path.join(REPO_ROOT, "ik8b")
-VM_BIN = os.path.join(REPO_ROOT, "tools", "avr-vm", "bin", "avr_vm")
+# The simulator is now built into the ik8b compiler itself (the embedded ik8bvm
+# core, exposed via `ik8b sim`). It runs any Intel HEX — ik8b, avr-gcc, or
+# hand-written asm — on one cycle-accurate model, so the legacy external avr_vm
+# binary is no longer needed.
+SIM_CMD = f"{shlex.quote(IK8B_BIN)} sim"
 ARTIFACT_DIR = "out"
 REPORT_DIR = "reports"
 
@@ -61,7 +65,7 @@ def trace_and_measure(hex_path, mcu):
         return 0, 0
     
     # Step 1: Run VM in trace mode to detect terminal halt loop
-    cmd = f"{shlex.quote(VM_BIN)} {hex_path} -mmcu={mcu} -t -n 2000"
+    cmd = f"{SIM_CMD} {shlex.quote(hex_path)} --mcu {mcu} --trace --limit 2000"
     res = run_cmd(cmd)
     
     lines = res.stdout.strip().split("\n")
@@ -82,7 +86,7 @@ def trace_and_measure(hex_path, mcu):
         active_instr = 1
         
     # Step 2: Rerun VM to get exact cycles
-    cmd_d = f"{shlex.quote(VM_BIN)} {hex_path} -mmcu={mcu} -d -n {active_instr}"
+    cmd_d = f"{SIM_CMD} {shlex.quote(hex_path)} --mcu {mcu} --dump --limit {active_instr}"
     res_d = run_cmd(cmd_d)
     
     cycles = 0

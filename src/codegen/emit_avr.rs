@@ -218,6 +218,16 @@ impl<'a> Emitter<'a> {
         self.out.push(Pass1Inst::Op(op));
     }
 
+    /// PUSH Rr  (1001 001r rrrr 1111).
+    fn emit_push(&mut self, r: u8) {
+        self.emit(0x920F | ((r as u16) << 4));
+    }
+
+    /// POP Rr  (1001 000r rrrr 1111).
+    fn emit_pop(&mut self, r: u8) {
+        self.emit(0x900F | ((r as u16) << 4));
+    }
+
     fn block_label(&self, b: Block) -> String {
         format!("__nb_{}_{}", self.label_base, b.0)
     }
@@ -1206,9 +1216,11 @@ impl<'a> Emitter<'a> {
         let addr = self.hw_addr(reg)?;
         let vr = self.reg(val)?;
         let pair = self.is_pair(val);
-        self.emit_out_or_sts(addr, vr);
         if pair {
             self.emit_out_or_sts(addr + 1, vr + 1);
+            self.emit_out_or_sts(addr, vr);
+        } else {
+            self.emit_out_or_sts(addr, vr);
         }
         Ok(())
     }
@@ -1341,6 +1353,21 @@ impl<'a> Emitter<'a> {
                 self.emit(0x9478); // SEI (set global interrupt enable)
                 Ok(true)
             }
+            // Single-opcode, no-operand instructions.
+            "wdr" | "sleep" | "break" => {
+                if !args.is_empty() {
+                    return Err(format!("Intrinsic @{} expects no arguments", intrinsic));
+                }
+                if result.is_some() {
+                    return Err(format!("Intrinsic @{} does not return a value", intrinsic));
+                }
+                self.emit(match intrinsic {
+                    "wdr" => 0x95A8,   // WDR   (watchdog reset)
+                    "sleep" => 0x9588, // SLEEP (enter sleep mode)
+                    _ => 0x9598,       // BREAK (on-chip debug breakpoint)
+                });
+                Ok(true)
+            }
             "swap" => {
                 if result.is_some() {
                     return Err("Intrinsic @swap does not return a value".to_string());
@@ -1379,6 +1406,107 @@ impl<'a> Emitter<'a> {
                 self.emit(0x9C00 | (((rr & 0x10) as u16) << 5) | ((rd as u16) << 4) | ((rr & 0x0F) as u16));
                 Ok(true)
             }
+            "goto" => {
+                // @goto(word_addr) — unconditional JMP to an absolute flash
+                // word address. Mainly for a bootloader to start the
+                // application at 0 (`@goto(0)`). The address is explicit, so it
+                // is never adjusted by the boot origin.
+                if result.is_some() {
+                    return Err("Intrinsic @goto does not return a value".to_string());
+                }
+                if args.len() != 1 {
+                    return Err("Intrinsic @goto expects exactly 1 literal address".to_string());
+                }
+                let target = self.intrinsic_literal_arg(args, 0, "@goto")? as u32;
+                self.emit(
+                    0x940C
+                        | ((((target >> 17) & 0x1F) as u16) << 4)
+                        | ((target >> 16) & 0x01) as u16,
+                ); // JMP
+                self.emit((target & 0xFFFF) as u16);
+                Ok(true)
+            }
+            "spm" => {
+                // @spm(spmcsr_addr, cmd, zaddr, word) — self-program flash.
+                //
+                // Runs the timed Store-Program-Memory sequence: wait for any
+                // previous SPM to finish, write `cmd` to SPMCSR, then SPM with
+                // Z = zaddr (byte address) and R1:R0 = word as the data. The
+                // exact `cmd` (page erase / fill buffer / page write / RWWSRE)
+                // is the caller's; see std/boot.ik. Call with interrupts off.
+                //
+                // All clobbered fixed registers (R0, R1, Z, two temps) are
+                // saved/restored via the stack, and the operands are routed
+                // through the stack too, so this never disturbs the register
+                // allocator regardless of where the operands live.
+                if result.is_some() {
+                    return Err("Intrinsic @spm does not return a value".to_string());
+                }
+                if args.len() != 4 {
+                    return Err(
+                        "Intrinsic @spm expects (spmcsr_addr, cmd, zaddr, word)".to_string(),
+                    );
+                }
+                if !self.target_core.supports_spm() {
+                    return Err(
+                        "Memory Error: @spm requires SPM self-programming on this target"
+                            .to_string(),
+                    );
+                }
+                let spmcsr = self.intrinsic_literal_arg(args, 0, "@spm")? as u16;
+                let cmd = self.reg(args[1])?;
+                if !self.is_pair(args[2]) || !self.is_pair(args[3]) {
+                    return Err(
+                        "Intrinsic @spm: zaddr and word must be 16-bit values".to_string(),
+                    );
+                }
+                let z = self.reg(args[2])?;
+                let w = self.reg(args[3])?;
+
+                const T_CMD: u8 = 18;
+                const T_POLL: u8 = 19;
+
+                // Save everything we touch.
+                self.emit_push(T_CMD);
+                self.emit_push(T_POLL);
+                self.emit_push(0);
+                self.emit_push(1);
+                self.emit_push(30);
+                self.emit_push(31);
+
+                // Route operands through the stack to dodge any aliasing with
+                // the destination registers (all reads happen before writes).
+                self.emit_push(w + 1); // word hi
+                self.emit_push(w); // word lo
+                self.emit_push(z + 1); // Z hi
+                self.emit_push(z); // Z lo
+                self.emit_push(cmd); // command
+                self.emit_pop(T_CMD);
+                self.emit_pop(30);
+                self.emit_pop(31);
+                self.emit_pop(0);
+                self.emit_pop(1);
+
+                // Wait for a previous SPM to complete (SPMCSR bit0 = SPMEN).
+                let load_words: u16 = if (0x20..=0x5F).contains(&spmcsr) { 1 } else { 2 };
+                self.emit_in_or_lds(T_POLL, spmcsr);
+                self.emit(0xFC00 | ((T_POLL as u16) << 4)); // SBRC T_POLL, 0
+                let back = (-(load_words as i32 + 2)) as u16 & 0x0FFF;
+                self.emit(0xC000 | back); // RJMP wait
+
+                // Timed sequence: arm SPMCSR then SPM with no gap.
+                self.emit_out_or_sts(spmcsr, T_CMD);
+                self.emit(0x95E8); // SPM
+
+                // Restore.
+                self.emit_pop(31);
+                self.emit_pop(30);
+                self.emit_pop(1);
+                self.emit_pop(0);
+                self.emit_pop(T_POLL);
+                self.emit_pop(T_CMD);
+                Ok(true)
+            }
             "burn" => {
                 if result.is_some() {
                     return Err("Intrinsic @burn does not return a value".to_string());
@@ -1397,10 +1525,21 @@ impl<'a> Emitter<'a> {
                         self.emit(0x93FF); // push r31
                         self.mov(30, r);
                         self.mov(31, r + 1);
-                        self.emit(0x9730); // sbiw r30, 0
-                        self.emit(0xF011); // breq .+2 words
-                        self.emit(0x9731); // sbiw r30, 1
-                        self.emit(0xF7F1); // brne .-2 words
+                        if self.target_core == TargetCore::AVRrc {
+                            // The reduced core has no SBIW: test-for-zero and the
+                            // pair decrement are done with byte ops (SUBI/SBCI).
+                            self.emit(0x2E0E); // mov r0, r30
+                            self.emit(0x2A0F); // or  r0, r31
+                            self.emit(0xF019); // breq .+3 words (skip the loop if 0)
+                            self.emit(0x50E1); // subi r30, 1
+                            self.emit(0x40F0); // sbci r31, 0
+                            self.emit(0xF7E9); // brne .-3 words
+                        } else {
+                            self.emit(0x9730); // sbiw r30, 0
+                            self.emit(0xF011); // breq .+2 words
+                            self.emit(0x9731); // sbiw r30, 1
+                            self.emit(0xF7F1); // brne .-2 words
+                        }
                         self.emit(0x91FF); // pop r31
                         self.emit(0x91EF); // pop r30
                     } else {
@@ -1450,6 +1589,21 @@ impl<'a> Emitter<'a> {
         Ok(*k as i32)
     }
 
+    /// Decrement the r24:r25 counter by one and loop back while it is non-zero.
+    /// Uses SBIW on cores that have it, or SUBI/SBCI on the reduced core (which
+    /// lacks SBIW); both bodies are 4 cycles per iteration, so the surrounding
+    /// burn-cycle arithmetic is unchanged.
+    fn emit_burn_loop16(&mut self) {
+        if self.target_core == TargetCore::AVRrc {
+            self.emit(0x5081); // subi r24, 1
+            self.emit(0x4090); // sbci r25, 0
+            self.emit(0xF7E9); // brne .-3 words
+        } else {
+            self.emit(0x9701); // sbiw r24, 1
+            self.emit(0xF7F1); // brne .-2 words
+        }
+    }
+
     fn emit_burn(&mut self, mut cycles: u32) {
         // Large delays: chunk into 16-bit loops of max 65000 * 4 = 260000 cycles
         while cycles >= 260009 {
@@ -1457,8 +1611,7 @@ impl<'a> Emitter<'a> {
             self.emit(0x939F); // push r25
             self.ldi(24, (65000 & 0xFF) as u8);
             self.ldi(25, (65000 >> 8) as u8);
-            self.emit(0x9701); // sbiw r24, 1
-            self.emit(0xF7F1); // brne .-2 words (0xF7F1)
+            self.emit_burn_loop16();
             self.emit(0x919F); // pop r25
             self.emit(0x918F); // pop r24
             cycles -= 260009;
@@ -1472,13 +1625,12 @@ impl<'a> Emitter<'a> {
                 self.emit(0x939F); // push r25
                 self.ldi(24, (x & 0xFF) as u8);
                 self.ldi(25, (x >> 8) as u8);
-                self.emit(0x9701); // sbiw r24, 1
-                self.emit(0xF7F1); // brne .-2 words
+                self.emit_burn_loop16();
                 self.emit(0x919F); // pop r25
                 self.emit(0x918F); // pop r24
                 cycles -= 4 * x + 9;
             }
-        } 
+        }
         // 8-bit loop for remaining >= 7
         else if cycles >= 7 {
             let x = (cycles - 4) / 3;

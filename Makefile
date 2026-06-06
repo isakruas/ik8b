@@ -1,8 +1,6 @@
 # Makefile for ik8b Rust compiler
 
-.PHONY: all build compile test test-interrupts test-vm-interrupts clean
-
-VM_BIN := ./tools/avr-vm/bin/avr_vm
+.PHONY: all build compile test test-interrupts benchmark clean
 
 all: build
 
@@ -10,6 +8,7 @@ all: build
 build:
 	@echo "Building ik8b Rust compiler via Docker..."
 	docker run --rm -v "$(shell pwd):/volume" -w /volume rust:latest cargo build --release
+	@-mv ./ik8b ./ik8b.old 2>/dev/null || true
 	@cp target/release/ik8b ./ik8b
 	@echo "=========================================================="
 	@echo "Successfully built ik8b compiler! Binary located at ./ik8b"
@@ -18,7 +17,12 @@ build:
 # Compile the blink example to out.hex
 compile:
 	@echo "Compiling examples/demo_blink_modular.ik to out.hex..."
-	./ik8b examples/demo_blink_modular.ik -o out.hex
+	./ik8b build examples/demo_blink_modular.ik -o out.hex
+
+# Compare ik8b vs avr-gcc C vs hand asm using the built-in simulator (ik8b sim).
+benchmark: build
+	@$(MAKE) -C benchmarks build
+	@$(MAKE) -C benchmarks compare
 
 # Run the automated language test suite across all supported MCUs.
 # MCU list is derived from `ik8b --list-devices` (no external registry needed).
@@ -27,7 +31,6 @@ test: build
 	@echo "=========================================================="
 	@echo "Running Automated ik8b Test Suite across ALL fitting MCUs..."
 	@echo "=========================================================="
-	@[ -x "$(VM_BIN)" ] || (echo "Missing $(VM_BIN). Build it with: make -C tools/avr-vm" && exit 1)
 	@table=$$(./ik8b --list-devices | tail -n +3 | awk 'NF>=6 { print $$2","$$1","$$3 }'); \
 	total_mcus=$$(echo "$$table" | grep -c .); \
 	echo "ik8b supports $$total_mcus MCU profiles."; \
@@ -48,7 +51,7 @@ test: build
 	    echo "" >> $$tmp_src; \
 	    cat $$f >> $$tmp_src; \
 	    hex=/tmp/$$name-$$mcu.hex; \
-	    compile_out=$$(./ik8b $$tmp_src -o $$hex --report 2>&1); \
+	    compile_out=$$(./ik8b run $$tmp_src -o $$hex --report 2>&1); \
 	    compile_rc=$$?; \
 	    fp=$$(echo "$$compile_out" | grep -o 'SRAM_BYTES=[0-9]*' | cut -d= -f2 | tail -n1); \
 	    [ -z "$$fp" ] && fp=999; \
@@ -58,20 +61,8 @@ test: build
 	      if echo "$$compile_out" | grep -q "Memory Error:"; then rm -f $$hex; continue; fi; \
 	      echo "  -> $$mcu: COMPILE FAIL. Error: $$compile_out"; suite_fail=1; rm -f $$hex; continue; \
 	    fi; \
-	    case "$$name" in \
-	      test_math_trigonometry) \
-	        if [ "$$core" = "AVRe" ] || [ "$$core" = "AVRrc" ]; then rm -f $$hex; continue; fi; \
-	        limit=20000000 ;; \
-	      test_mem|test_delay|test_ringbuf) \
-	        if [ "$$core" = "AVRrc" ]; then rm -f $$hex; continue; fi; \
-	        limit=200000 ;; \
-	      test_math_algebra) limit=60000000 ;; \
-	      test_math_core) limit=10000000 ;; \
-	      test_fixed_div) limit=1000000 ;; \
-	      *) limit=200000 ;; \
-	    esac; \
-	    out=$$($(VM_BIN) $$hex -mmcu=$$mcu -n $$limit -d 2>&1); \
-	    rm -f $$hex; \
+	    out="$$compile_out"; \
+	    rm -f $$tmp_src $$hex; \
 	    if echo "$$out" | grep -q "HEX overflows flash"; then continue; fi; \
 	    r16=$$(echo "$$out" | grep -o 'R16 = 0x[0-9A-Fa-f]*' | awk '{print $$3}'); \
 	    ran=$$((ran+1)); total_runs=$$((total_runs+1)); \
@@ -92,11 +83,6 @@ test: build
 # Validate ISR/vector binding coverage for all devices in src/vectors.rs.
 test-interrupts: build
 	@tests/test_interrupt_vectors.sh
-
-# Validate runtime interrupt delivery in AVR-VM (representative cores by default).
-# Set FULL_ALL_DEVICES=1 to run across every vector of every listed device.
-test-vm-interrupts: build
-	@tests/test_vm_interrupts.sh
 
 # Clean cargo build artifacts and test HEX files
 clean:

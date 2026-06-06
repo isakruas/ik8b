@@ -37,9 +37,14 @@ pub fn rewrite(f: &IrFunction, spilled: &HashSet<u32>) -> IrFunction {
         let d = f.stack_slot(s);
         slot_map.insert(s.0, g.new_stack_slot(d.size, d.space, d.name.clone()));
     }
-    // One new slot per spilled value (sized to its type).
+    // One new slot per spilled value (sized to its type). Iterate the spilled set
+    // in a fixed (sorted) order so slot creation — and thus the whole stack layout
+    // and emitted code — is deterministic; `spilled` is a HashSet, whose iteration
+    // order would otherwise vary between runs and make builds non-reproducible.
     let mut spill_slot: HashMap<u32, StackSlot> = HashMap::new();
-    for &v in spilled {
+    let mut spilled_sorted: Vec<u32> = spilled.iter().copied().collect();
+    spilled_sorted.sort_unstable();
+    for &v in &spilled_sorted {
         let slot = previous_spill_slot(f, Value(v), &slot_map).unwrap_or_else(|| {
             let ty = f.value_type(Value(v));
             g.new_stack_slot(ty.bytes().max(1), Space::Ram, format!("spill_v{}", v))
