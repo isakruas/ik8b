@@ -50,6 +50,7 @@ Hardware and peripherals
    eeprom
    wdt
    sleep
+   boot
 
 Concurrency and buffers
 =======================
@@ -99,9 +100,9 @@ Graphics
 Module summary
 ==============
 
-============== ===========================================================
+=============== ===========================================================
 Module          Summary
-============== ===========================================================
+=============== ===========================================================
 ``std/gpio``    Per-port pin mode, read, write, and toggle.
 ``std/uart``    Blocking USART transmit/receive (USART0–5).
 ``std/spi``     Blocking master-mode SPI byte transfer.
@@ -112,6 +113,7 @@ Module          Summary
 ``std/eeprom``  Byte read/write of on-chip EEPROM.
 ``std/wdt``     Watchdog timer enable/disable/reset.
 ``std/sleep``   Sleep-mode entry and configuration.
+``std/boot``    Flash self-programming (SPM) for bootloaders.
 ``std/atomic``  Save/restore SREG around a critical section.
 ``std/ringbuf`` Caller-owned byte ring buffer.
 ``std/delay``   Blocking millisecond/microsecond delays.
@@ -122,4 +124,4 @@ Module          Summary
 ``std/crc``     CRC-8 (Dallas/Maxim) and CRC-16 (IBM/ANSI).
 ``std/math``    Q8.8 fixed-point math: trig, logs, roots, and more.
 ``std/font``    5×8 font: render to a buffer, stream, or fold.
-============== ===========================================================
+=============== ===========================================================

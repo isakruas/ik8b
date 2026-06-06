@@ -65,8 +65,9 @@ bundled AVR virtual machine across several MCUs::
 
    make test
 
-Other targets validate interrupt-vector binding (``make test-interrupts``) and
-runtime interrupt delivery in the VM (``make test-vm-interrupts``).
+Another target validates interrupt-vector binding (``make test-interrupts``),
+and ``make benchmark`` compares ik8b against avr-gcc C/assembly on the built-in
+simulator.
 
 .. note::
 

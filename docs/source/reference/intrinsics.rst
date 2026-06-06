@@ -29,6 +29,23 @@ These are the only built-in functions. Everything else that looks like
    interrupts globally. Takes no arguments, returns nothing. The ``std/atomic``
    module builds critical sections on this.
 
+.. function:: @wdr()
+
+   Emits ``WDR`` — reset the watchdog timer ("kick the dog"). Takes no
+   arguments, returns nothing. This is what :func:`@wdt_reset <wdt_reset>` in
+   ``std/wdt`` is built on.
+
+.. function:: @sleep()
+
+   Emits ``SLEEP`` — enter the sleep mode previously selected/enabled in the
+   device's sleep-control register. Takes no arguments, returns nothing. The
+   ``std/sleep`` module configures the mode and then calls this.
+
+.. function:: @break()
+
+   Emits ``BREAK`` — the on-chip debug breakpoint instruction. Takes no
+   arguments, returns nothing. It acts as a ``NOP`` when no debugger is attached.
+
 .. function:: @burn($cycles)
 
    Emits a calibrated busy-wait that consumes ``$cycles`` CPU cycles. Returns
@@ -68,6 +85,29 @@ These are the only built-in functions. Everything else that looks like
    This intrinsic **requires a hardware multiplier**. On core families without
    one (such as the reduced-core ``AVRrc`` parts), the compiler rejects ``@mul``
    with an error rather than emitting an unsupported instruction.
+
+.. function:: @goto($word_addr)
+
+   Emits an unconditional ``JMP`` to the absolute Flash **word** address
+   ``$word_addr`` (a literal). The address is never adjusted by a ``boot``
+   origin, so it is the way a bootloader hands control to the application —
+   typically ``@goto(0)``. Returns nothing.
+
+.. function:: @spm($spmcsr, $cmd, $zaddr, $word)
+
+   Runs the timed **Store-Program-Memory** sequence used for flash
+   self-programming: it waits for any previous SPM to finish, writes ``$cmd``
+   to the SPM control/status register at data address ``$spmcsr``, then issues
+   ``SPM`` with ``Z = $zaddr`` (a byte address) and ``R1:R0 = $word``. The exact
+   command (page erase / fill buffer / page write / RWW re-enable) is the
+   caller's; ``$zaddr`` and ``$word`` must be 16-bit values.
+
+   ``$spmcsr`` is the SPMCSR **address**, which differs per device. Rather than
+   pass a literal, accept the per-device :doc:`std/boot </library/boot>`
+   register constant — ``@spm`` resolves a ``%`` register constant to its
+   address — or just use the ``@boot_*`` wrappers, which do this for you.
+   Requires a core with SPM (not ``AVRrc``); interrupts should be disabled
+   around the call. Returns nothing.
 
 Notes
 =====

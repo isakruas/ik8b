@@ -38,25 +38,24 @@ The set of valid vector names is **device-specific**. The compiler knows the
 ordered vector table for every supported device and checks your ``isr`` name
 against it. Common examples:
 
-============== =========================================================
-Vector         Meaning (device-dependent)
-============== =========================================================
-``INT0``       External interrupt 0
-``INT1``       External interrupt 1
+================ =========================================================
+Vector           Meaning (device-dependent)
+================ =========================================================
+``INT0``         External interrupt 0
+``INT1``         External interrupt 1
 ``TIMER0_COMPA`` Timer/Counter0 compare match A (e.g. ATmega328P)
 ``TIMER0_COMP``  Timer/Counter0 compare match (e.g. ATmega32A)
 ``TIMER1_COMPA`` Timer/Counter1 compare match A
 ``USART_RX``     USART receive complete
 ``ADC``          ADC conversion complete
-============== =========================================================
+================ =========================================================
 
 Because the exact names and their ordering differ between parts, the complete,
 authoritative list of bindable vector names for **every** supported device is in
 :doc:`interrupt-vectors`. Look up your ``target`` there to see exactly which
 ``isr`` names you may use. The compiler also validates the name for you and
 rejects an unknown one; ``make test-interrupts`` checks vector binding for every
-supported device, and ``make test-vm-interrupts`` checks runtime delivery on
-representative cores.
+supported device.
 
 Enabling an interrupt
 =====================

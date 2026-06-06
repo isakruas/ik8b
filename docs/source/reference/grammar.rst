@@ -30,7 +30,13 @@ grammar and the compiler are correct.
    
    CompileTimeCondition ::= "?" "target" "==" Identifier "{" { TopLevelStatement } "}"
    
-   ConstDeclaration     ::= "const" RegisterIdentifier ":" PrimitiveType "=" Number
+   (* Two kinds of compile-time constant, distinguished by the leading sigil:
+        - "const" "%NAME" ...  a hardware register / memory-mapped address; a
+                               "%NAME" reference reads or writes that location.
+        - "const"  "NAME" ...  a plain value constant (bit mask, command word,
+                               feature flag); a "NAME" reference folds to the
+                               immediate value. *)
+   ConstDeclaration     ::= "const" ( RegisterIdentifier | ConstIdentifier ) ":" PrimitiveType "=" Number
    
    FunctionDeclaration  ::= FunctionIdentifier [ "(" [ ParameterList ] ")" ] [ "->" Type ] Block
    
@@ -144,6 +150,7 @@ grammar and the compiler are correct.
    (* A variable, register, or array-element reference. Array indexing is valid
       in any expression position (both reads and assignment targets). *)
    IdentifierExpression ::= ( VariableIdentifier | RegisterIdentifier ) [ "[" Expression "]" ]
+                          | ConstIdentifier              (* a value constant — folds to its immediate *)
                           | FunctionIdentifier           (* bare @name without call — e.g. for &@name *)
    
    ArgumentList         ::= Expression { "," Expression }
@@ -151,6 +158,7 @@ grammar and the compiler are correct.
    VariableIdentifier   ::= "$" Identifier
    FunctionIdentifier   ::= "@" Identifier
    RegisterIdentifier   ::= "%" Identifier
+   ConstIdentifier      ::= Identifier              (* a value-constant name (no sigil) *)
    
    (* --- Types ----------------------------------------------------------------- *)
    Type                 ::= ( PrimitiveType | PointerType | StringType | FunctionType ) [ "[" Number "]" ]

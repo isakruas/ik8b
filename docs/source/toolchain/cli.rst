@@ -3,30 +3,41 @@ The ``ik8b`` command
 ====================
 
 The compiler is a single executable that turns one ``.ik`` source file into an
-Intel HEX image of AVR instruction words.
+Intel HEX image of AVR instruction words, and also embeds the cycle-accurate
+simulator. It is organised as **subcommands**.
 
 Synopsis
 ========
 
 .. code-block:: text
 
-   ./ik8b <file.ik> [-o <out.hex>] [--report]
+   ./ik8b build <file.ik> [-o <out.hex>] [--emit <hex|ir>] [--report]
+   ./ik8b run   <file.ik> [-o <out.hex>] [--report] [<sim options>]
+   ./ik8b sim   <file.hex> --mcu <device> [<sim options>]
+   ./ik8b devices
    ./ik8b info
    ./ik8b version
    ./ik8b license
-   ./ik8b list-devices
    ./ik8b help
 
-Compiling
-=========
+A bare ``./ik8b <file.ik> ...`` (no subcommand) is accepted as a shorthand for
+``build``, for convenience and backward compatibility.
+
+Compiling — ``build``
+=====================
 
 Give the compiler a source file. The device is taken from the file's mandatory
 ``target`` declaration, not from a command-line flag::
 
-   ./ik8b blink.ik -o blink.hex
+   ./ik8b build blink.ik -o blink.hex
 
 ``-o <out.hex>``
    Path of the Intel HEX output. Defaults to ``out.hex`` if omitted.
+
+``--emit <hex|ir>``
+   What to produce: ``hex`` (the default) writes the Intel HEX image to ``-o``;
+   ``ir`` prints the SSA intermediate representation to standard output and
+   writes no HEX (useful for development and snapshot tests).
 
 ``--report``
    Print a build summary covering Program (Flash), SRAM, EEPROM, and register
@@ -37,6 +48,40 @@ Give the compiler a source file. The device is taken from the file's mandatory
 
 Use ``--report`` in CI and whenever you want to know how close you are to a
 device's limits.
+
+Simulating — ``run`` and ``sim``
+================================
+
+The compiler embeds the same AVR virtual machine the test suite uses, so it can
+run a program without any external tool:
+
+* ``run <file.ik>`` compiles the source (taking the device from its ``target``)
+  and then simulates the result.
+* ``sim <file.hex>`` simulates an already-assembled Intel HEX image — produced by
+  any toolchain (ik8b, ``avr-gcc``, hand-written assembly) — for the device
+  given by ``--mcu``.
+
+Both share one set of **simulation options**:
+
+``--mcu <device>``
+   Device to simulate (``sim`` only; ``run`` takes it from the source target).
+   The device's real core class drives instruction decoding and per-core timing.
+
+``--trace``
+   Print a per-instruction execution trace (``PC=...`` lines).
+
+``--dump``
+   Dump the registers, PC, SP, and SREG at exit.
+
+``--limit <N>``
+   Stop after ``N`` instructions (default: a large bound).
+
+``--irq <V>`` / ``--irq-at <V:STEP>`` / ``--irq-every <V:N>``
+   Inject interrupt vector ``V`` — at startup, once at instruction ``STEP``, or
+   every ``N`` instructions — to exercise ISR handling.
+
+The standalone ``ik8bvm`` simulator binary accepts the **same** subcommands and
+options (``ik8bvm run <file.hex> --mcu <device> ...``, ``ik8bvm devices``).
 
 Informational commands
 ======================
@@ -56,7 +101,7 @@ These subcommands print information and exit without compiling.
 ``license`` (``--license``)
    Print license information (the project is Apache-2.0).
 
-``list-devices`` (``--list-devices``)
+``devices`` (``list-devices``, ``--list-devices``)
    Print the full table of supported devices with their core family, SRAM, Flash,
    EEPROM sizes, and SRAM start address. See :doc:`devices`.
 
@@ -89,8 +134,9 @@ container, so no local Rust toolchain is required):
 
 ============================ ===============================================
 ``make build``               Build the native ``./ik8b`` binary.
-``make test``                Compile + run the VM regression suite.
+``make compile``             Compile the bundled blink example to ``out.hex``.
+``make test``                Compile + simulate the regression suite (all MCUs).
 ``make test-interrupts``     Validate interrupt-vector binding, all devices.
-``make test-vm-interrupts``  Validate runtime interrupt delivery in the VM.
+``make benchmark``           Compare ik8b vs avr-gcc C/asm via the built-in ``sim``.
 ``make clean``               Remove build artifacts.
 ============================ ===============================================

@@ -120,6 +120,31 @@ Most programs do not declare these by hand; the peripheral modules in the
 standard library declare the aliases they need inside ``? target == ...`` blocks
 so the right address is used for every supported device.
 
+Value constants
+===============
+
+``const`` **without** the ``%`` sigil declares a plain compile-time *value*
+constant — a bit mask, a command word, a feature flag — rather than a memory
+address:
+
+.. code-block:: text
+
+   const TWINT_BIT: u8  = 0x80
+   const SPI_ENABLE: u8 = 0x51
+
+A reference to such a name folds directly to its immediate value, so it
+generates no load:
+
+.. code-block:: text
+
+   ? ($status & TWINT_BIT) != 0 { ... }   # ANDI with 0x80, not a memory read
+
+The distinction is exactly the sigil: ``%NAME`` is *the register at that
+address* (read/written at run time), while ``NAME`` is *the constant value*
+itself. Use ``%`` for peripheral registers and bare ``const`` for masks and
+command/configuration words. The standard-library peripheral modules follow
+this split (e.g. ``%TWI0_CTRL_REG`` is a register, ``TWI0_INT_MASK`` is a value).
+
 No heap, no hidden copies
 =========================
 

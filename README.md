@@ -1,6 +1,6 @@
 # ik8b Compiler
 
-The **ik8b** compiler is a Rust-based toolchain that translates source code written in the **ik8b** language directly into standard **Intel HEX** files for the AVR-8 architecture.
+**ik8b** is a Rust-based compiler that translates the **ik** language directly into standard **Intel HEX** files for the AVR-8 architecture.
 
 ---
 
@@ -29,37 +29,24 @@ Builds the native binary `./ik8b` via a standard Rust container:
 make build
 ```
 
-### Compile source files to Intel HEX
+### Compile a source file to Intel HEX
 ```bash
-./ik8b <input.ik> -o <output.hex>
+./ik8b build <input.ik> -o <output.hex>
 ```
 
-The source must declare a top-level target target, for example:
-```ik
-target atmega328p
-```
+A bare `./ik8b <input.ik> -o <output.hex>` also works. The source must declare
+its target, e.g. `target atmega328p`.
 
-### CLI commands
+### Commands
 ```bash
-./ik8b help
-./ik8b version
-./ik8b info
-./ik8b license
-./ik8b list-devices
+./ik8b build <file.ik> [-o <out.hex>] [--emit <hex|ir>] [--report]
+./ik8b run   <file.ik>                   # compile, then simulate
+./ik8b sim   <file.hex> --mcu <device>   # simulate an existing HEX
+./ik8b devices                           # list supported targets
+./ik8b info | version | license | help
 ```
 
-Flag aliases are also supported: `-h`, `--help`, `-V`, `--version`, `--info`,
-`--license`, and `--list-devices`.
-
-#### Compilation Options
-- `-o <output.hex>`: Specifies the output Intel HEX file (defaults to `out.hex`).
-- `--report`: Prints a build summary with Program/SRAM/EEPROM/register usage and fails compilation when a memory budget is exceeded.
-
-### Import resolution
-`import` paths are resolved in this order:
-1. Current working directory (`<path>.ik`)
-2. `IK8B_STD_PATH` (if set)
-3. Paths relative to the compiler executable, including `std` fallbacks for `std/*` imports
+Run `./ik8b help` for the full list of options.
 
 ### Clean build artifacts
 ```bash
@@ -68,25 +55,13 @@ make clean
 
 ## Testing
 
-Run the full compiler + VM regression suite across supported MCUs:
 ```bash
-make test
+make test               # compile + simulate the suite across all fitting MCUs
+make test-interrupts    # validate interrupt-vector binding for all devices
+make benchmark          # compare against avr-gcc C / asm
 ```
 
-Validate interrupt vector binding coverage for all devices:
-```bash
-make test-interrupts
-```
+## Documentation
 
-Validate runtime interrupt delivery in AVR-VM (representative cores):
-```bash
-make test-vm-interrupts
-```
-
-For exhaustive VM interrupt delivery checks across all listed devices/vectors:
-```bash
-FULL_ALL_DEVICES=1 tests/test_vm_interrupts.sh
-```
-
-AVR-VM CLI flags and interrupt injection options are documented in:
-`tools/avr-vm/README.md`
+The language reference, standard-library reference, and toolchain guide are in
+[`docs/`](docs/) (Sphinx). Build them with `make html` inside `docs/`.
