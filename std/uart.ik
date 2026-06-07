@@ -635,7 +635,7 @@
 }
 
 ? target == at94k {
-    const %UART0_BAUDH_REG: u8 = 0x0000
+    const %UART0_BAUDH_REG: u8 = 0x0040
     const %UART0_BAUDL_REG: u8 = 0x0029
     const %UART0_CTRLB_REG: u8 = 0x002A
     const %UART0_CTRLC_REG: u8 = 0x0000
@@ -1205,7 +1205,7 @@
     const %UART0_CTRLC_REG: u8 = 0x0040
     const UART0_DRE_MASK: u8 = 0x0020
     const UART0_INIT_CTRLB: u8 = 0x0018
-    const UART0_INIT_CTRLC: u8 = 0x0006
+    const UART0_INIT_CTRLC: u8 = 0x0086
     const UART0_IS_MODERN: u8 = 0x0000
     const UART0_RXC_MASK: u8 = 0x0080
     const %UART0_RX_REG: u8 = 0x002C
@@ -1304,7 +1304,7 @@
 }
 
 ? target == atmega161 {
-    const %UART0_BAUDH_REG: u8 = 0x0000
+    const %UART0_BAUDH_REG: u8 = 0x0040
     const %UART0_BAUDL_REG: u8 = 0x0029
     const %UART0_CTRLB_REG: u8 = 0x002A
     const %UART0_CTRLC_REG: u8 = 0x0000
@@ -1337,7 +1337,7 @@
     const %UART0_CTRLC_REG: u8 = 0x0040
     const UART0_DRE_MASK: u8 = 0x0020
     const UART0_INIT_CTRLB: u8 = 0x0018
-    const UART0_INIT_CTRLC: u8 = 0x0006
+    const UART0_INIT_CTRLC: u8 = 0x0086
     const UART0_IS_MODERN: u8 = 0x0000
     const UART0_RXC_MASK: u8 = 0x0080
     const %UART0_RX_REG: u8 = 0x002C
@@ -1655,7 +1655,7 @@
     const %UART0_CTRLC_REG: u8 = 0x0040
     const UART0_DRE_MASK: u8 = 0x0020
     const UART0_INIT_CTRLB: u8 = 0x0018
-    const UART0_INIT_CTRLC: u8 = 0x0006
+    const UART0_INIT_CTRLC: u8 = 0x0086
     const UART0_IS_MODERN: u8 = 0x0000
     const UART0_RXC_MASK: u8 = 0x0080
     const %UART0_RX_REG: u8 = 0x002C
@@ -2033,10 +2033,10 @@
     const %UART0_BAUDH_REG: u8 = 0x0040
     const %UART0_BAUDL_REG: u8 = 0x0029
     const %UART0_CTRLB_REG: u8 = 0x002A
-    const %UART0_CTRLC_REG: u8 = 0x0000
+    const %UART0_CTRLC_REG: u8 = 0x0040
     const UART0_DRE_MASK: u8 = 0x0020
     const UART0_INIT_CTRLB: u8 = 0x0018
-    const UART0_INIT_CTRLC: u8 = 0x0006
+    const UART0_INIT_CTRLC: u8 = 0x0086
     const UART0_IS_MODERN: u8 = 0x0000
     const UART0_RXC_MASK: u8 = 0x0080
     const %UART0_RX_REG: u8 = 0x002C
@@ -2468,7 +2468,7 @@
     const %UART0_CTRLC_REG: u8 = 0x0040
     const UART0_DRE_MASK: u8 = 0x0020
     const UART0_INIT_CTRLB: u8 = 0x0018
-    const UART0_INIT_CTRLC: u8 = 0x0006
+    const UART0_INIT_CTRLC: u8 = 0x0086
     const UART0_IS_MODERN: u8 = 0x0000
     const UART0_RXC_MASK: u8 = 0x0080
     const %UART0_RX_REG: u8 = 0x002C
@@ -3299,7 +3299,7 @@
     const %UART0_CTRLC_REG: u8 = 0x0040
     const UART0_DRE_MASK: u8 = 0x0020
     const UART0_INIT_CTRLB: u8 = 0x0018
-    const UART0_INIT_CTRLC: u8 = 0x0006
+    const UART0_INIT_CTRLC: u8 = 0x0086
     const UART0_IS_MODERN: u8 = 0x0000
     const UART0_RXC_MASK: u8 = 0x0080
     const %UART0_RX_REG: u8 = 0x002C
@@ -3401,10 +3401,10 @@
     const %UART0_BAUDH_REG: u8 = 0x0040
     const %UART0_BAUDL_REG: u8 = 0x0029
     const %UART0_CTRLB_REG: u8 = 0x002A
-    const %UART0_CTRLC_REG: u8 = 0x0000
+    const %UART0_CTRLC_REG: u8 = 0x0040
     const UART0_DRE_MASK: u8 = 0x0020
     const UART0_INIT_CTRLB: u8 = 0x0018
-    const UART0_INIT_CTRLC: u8 = 0x0006
+    const UART0_INIT_CTRLC: u8 = 0x0086
     const UART0_IS_MODERN: u8 = 0x0000
     const UART0_RXC_MASK: u8 = 0x0080
     const %UART0_RX_REG: u8 = 0x002C
@@ -3416,10 +3416,10 @@
     const %UART0_BAUDH_REG: u8 = 0x0040
     const %UART0_BAUDL_REG: u8 = 0x0029
     const %UART0_CTRLB_REG: u8 = 0x002A
-    const %UART0_CTRLC_REG: u8 = 0x0000
+    const %UART0_CTRLC_REG: u8 = 0x0040
     const UART0_DRE_MASK: u8 = 0x0020
     const UART0_INIT_CTRLB: u8 = 0x0018
-    const UART0_INIT_CTRLC: u8 = 0x0006
+    const UART0_INIT_CTRLC: u8 = 0x0086
     const UART0_IS_MODERN: u8 = 0x0000
     const UART0_RXC_MASK: u8 = 0x0080
     const %UART0_RX_REG: u8 = 0x002C
@@ -3509,7 +3509,7 @@
     const %UART0_CTRLC_REG: u8 = 0x0040
     const UART0_DRE_MASK: u8 = 0x0020
     const UART0_INIT_CTRLB: u8 = 0x0018
-    const UART0_INIT_CTRLC: u8 = 0x0006
+    const UART0_INIT_CTRLC: u8 = 0x0086
     const UART0_IS_MODERN: u8 = 0x0000
     const UART0_RXC_MASK: u8 = 0x0080
     const %UART0_RX_REG: u8 = 0x002C
@@ -7520,8 +7520,8 @@
 }
 
 ? target == m3000 {
-    const %UART0_BAUDH_REG: u8 = 0x0000
-    const %UART0_BAUDL_REG: u8 = 0x0000
+    const %UART0_BAUDH_REG: u8 = 0x0035
+    const %UART0_BAUDL_REG: u8 = 0x0034
     const %UART0_CTRLB_REG: u8 = 0x0000
     const %UART0_CTRLC_REG: u8 = 0x0000
     const UART0_DRE_MASK: u8 = 0x0000
