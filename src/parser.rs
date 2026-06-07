@@ -267,13 +267,17 @@ impl Parser {
                     self.consume(Some(TokenKind::Symbol("{".to_string())))?;
                     
                     let mut block_nodes = Vec::new();
+                    // A `boot <addr>` inside a target block locates the program
+                    // when that target is active, so a library (e.g.
+                    // std/bootloader) can carry the right boot address per chip.
+                    let mut block_boot: Option<u32> = None;
                     while let Some(t) = self.peek(0) {
                         if let TokenKind::Symbol(ref s) = t.kind {
                             if s == "}" {
                                 break;
                             }
                         }
-                        
+
                         let block_tok = self.peek(0).unwrap().clone();
                         match block_tok.kind {
                             TokenKind::Keyword(ref kw) if kw == "import" => {
@@ -282,6 +286,17 @@ impl Parser {
                             }
                             TokenKind::Keyword(ref kw) if kw == "const" => {
                                 block_nodes.push(self.parse_const()?);
+                            }
+                            TokenKind::Keyword(ref kw) if kw == "boot" => {
+                                self.consume(Some(TokenKind::Keyword("boot".to_string())))?;
+                                let addr_tok = self.consume(None)?;
+                                block_boot = Some(match addr_tok.kind {
+                                    TokenKind::Number(n) => n as u32,
+                                    _ => return Err(format!(
+                                        "Expected boot section address after `boot`, got {:?} at line {}",
+                                        addr_tok, addr_tok.line
+                                    )),
+                                });
                             }
                             TokenKind::Keyword(ref kw) if kw == "isr" => {
                                 block_nodes.push(self.parse_isr()?);
@@ -293,9 +308,12 @@ impl Parser {
                         }
                     }
                     self.consume(Some(TokenKind::Symbol("}".to_string())))?;
-                    
+
                     if self.active_target == right {
                         nodes.extend(block_nodes);
+                        if let Some(addr) = block_boot {
+                            self.boot_origin = Some(addr);
+                        }
                     }
                 }
                 TokenKind::Keyword(ref kw) if kw == "isr" => {
@@ -384,7 +402,14 @@ impl Parser {
         let mut parser = Parser::new(tokens);
         parser.active_target = self.active_target.clone();
         let ast = parser.parse()?;
-        
+
+        // Carry a boot address the imported module set for the active target
+        // (e.g. std/bootloader's per-chip `boot`) up to the main program, unless
+        // the program already has one of its own.
+        if self.boot_origin.is_none() {
+            self.boot_origin = parser.boot_origin;
+        }
+
         Ok(ast)
     }
 
