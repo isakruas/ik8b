@@ -30,12 +30,10 @@ See :doc:`uart` for how to compute the UBRR divisor from your clock and baud.
 Supported targets
 =================
 
-Only chips that have a hardware UART, self-programming (SPM), and a real boot
-section whose application area fits below 64 KB are included — for example the
-ATmega8/88, ATmega16/32, ATmega64/640, ATmega164/324/644 families, the
-AT90CAN and AT90PWM parts, and the ATtiny828. Importing the module on an
-unlisted target leaves ``PAGE_SIZE`` / ``BOOT_ORIGIN`` undefined, so the build
-fails fast rather than producing a bootloader that cannot self-program.
+The module supports the 32 KB and 64 KB ATmega parts that have a hardware UART,
+self-programming (SPM), and a real boot section — the
+ATmega32/324/325/3250/328/329/3290 and ATmega64/640/644/645/6450/649/6490
+families — plus AT90CAN32 and AT90CAN64.
 
 API
 ===
