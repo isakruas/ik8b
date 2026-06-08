@@ -7565,6 +7565,15 @@
     ? ($status & UART0_RXC_MASK) != 0 { return 1 }
     return 0
 }
+@uart_print_str($s: str ram) {
+    ram mut $i: u16 = 0
+    loop * {
+        ram imut $c: u8 = *($s + $i)
+        ? $c == 0 { return }
+        @uart_send($c)
+        $i + 1 -> $i
+    }
+}
 @uart_print_char($char: u8) { @uart_send($char) }
 @uart_println() {
     @uart_send(13)
@@ -7600,6 +7609,15 @@
     ram imut $status: u8 = %UART1_STATUS_REG
     ? ($status & UART1_RXC_MASK) != 0 { return 1 }
     return 0
+}
+@uart1_print_str($s: str ram) {
+    ram mut $i: u16 = 0
+    loop * {
+        ram imut $c: u8 = *($s + $i)
+        ? $c == 0 { return }
+        @uart1_send($c)
+        $i + 1 -> $i
+    }
 }
 @uart1_print_char($char: u8) { @uart1_send($char) }
 @uart1_println() {
@@ -7637,6 +7655,15 @@
     ? ($status & UART2_RXC_MASK) != 0 { return 1 }
     return 0
 }
+@uart2_print_str($s: str ram) {
+    ram mut $i: u16 = 0
+    loop * {
+        ram imut $c: u8 = *($s + $i)
+        ? $c == 0 { return }
+        @uart2_send($c)
+        $i + 1 -> $i
+    }
+}
 @uart2_print_char($char: u8) { @uart2_send($char) }
 @uart2_println() {
     @uart2_send(13)
@@ -7672,6 +7699,15 @@
     ram imut $status: u8 = %UART3_STATUS_REG
     ? ($status & UART3_RXC_MASK) != 0 { return 1 }
     return 0
+}
+@uart3_print_str($s: str ram) {
+    ram mut $i: u16 = 0
+    loop * {
+        ram imut $c: u8 = *($s + $i)
+        ? $c == 0 { return }
+        @uart3_send($c)
+        $i + 1 -> $i
+    }
 }
 @uart3_print_char($char: u8) { @uart3_send($char) }
 @uart3_println() {
@@ -7709,6 +7745,15 @@
     ? ($status & UART4_RXC_MASK) != 0 { return 1 }
     return 0
 }
+@uart4_print_str($s: str ram) {
+    ram mut $i: u16 = 0
+    loop * {
+        ram imut $c: u8 = *($s + $i)
+        ? $c == 0 { return }
+        @uart4_send($c)
+        $i + 1 -> $i
+    }
+}
 @uart4_print_char($char: u8) { @uart4_send($char) }
 @uart4_println() {
     @uart4_send(13)
@@ -7744,6 +7789,15 @@
     ram imut $status: u8 = %UART5_STATUS_REG
     ? ($status & UART5_RXC_MASK) != 0 { return 1 }
     return 0
+}
+@uart5_print_str($s: str ram) {
+    ram mut $i: u16 = 0
+    loop * {
+        ram imut $c: u8 = *($s + $i)
+        ? $c == 0 { return }
+        @uart5_send($c)
+        $i + 1 -> $i
+    }
 }
 @uart5_print_char($char: u8) { @uart5_send($char) }
 @uart5_println() {

@@ -63,6 +63,12 @@ USART0
    Return non-zero if a received byte is waiting to be read, ``0`` otherwise.
    Use this to poll without blocking in :func:`@uart_receive`.
 
+.. function:: @uart_print_str($s: str ram)
+
+   Transmit a NUL-terminated string from RAM, one byte at a time, stopping at
+   the terminating ``0``. Each byte is sent through :func:`@uart_send`, so the
+   call blocks until the whole string has been pushed out.
+
 .. function:: @uart_print_char($char: u8)
 
    Convenience wrapper that transmits a single character ``$char``.
@@ -85,7 +91,7 @@ Devices with more than one USART expose the same API on numbered modules. The
 those peripherals:
 
 * ``@uart1_init`` / ``@uart1_send`` / ``@uart1_receive`` / ``@uart1_available``
-  / ``@uart1_print_char`` / ``@uart1_println``
+  / ``@uart1_print_str`` / ``@uart1_print_char`` / ``@uart1_println``
 * ``@uart2_*``, ``@uart3_*``, ``@uart4_*``, ``@uart5_*`` — identical shape.
 
 Only call into an instance that exists on your ``target``.
@@ -100,6 +106,7 @@ Example
 
    @main {
        @uart_init(103)                # 9600 baud @ 16 MHz (UBRR = 103)
+       @uart_print_str("ready\r\n")   # greet over the serial line
        loop * {
            ? @uart_available() != 0 {            # is a received byte waiting?
                ram imut $c: u8 = @uart_receive() # read it (blocks until one arrives)

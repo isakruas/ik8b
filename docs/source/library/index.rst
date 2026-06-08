@@ -51,6 +51,7 @@ Hardware and peripherals
    wdt
    sleep
    boot
+   bootloader
 
 Concurrency and buffers
 =======================
@@ -100,28 +101,29 @@ Graphics
 Module summary
 ==============
 
-=============== ===========================================================
-Module          Summary
-=============== ===========================================================
-``std/gpio``    Per-port pin mode, read, write, and toggle.
-``std/uart``    Blocking USART transmit/receive (USART0–5).
-``std/spi``     Blocking master-mode SPI byte transfer.
-``std/twi``     I²C / TWI master primitives.
-``std/adc``     Analog-to-digital conversion reads.
-``std/pwm``     Fast-PWM setup for Timer0 (8-bit) and Timer1 (16-bit).
-``std/timer``   Timer0/Timer1 prescaler, compare, count, and CTC mode.
-``std/eeprom``  Byte read/write of on-chip EEPROM.
-``std/wdt``     Watchdog timer enable/disable/reset.
-``std/sleep``   Sleep-mode entry and configuration.
-``std/boot``    Flash self-programming (SPM) for bootloaders.
-``std/atomic``  Save/restore SREG around a critical section.
-``std/ringbuf`` Caller-owned byte ring buffer.
-``std/delay``   Blocking millisecond/microsecond delays.
-``std/string``  String and character-class routines.
-``std/conv``    Integer ↔ string (decimal and hexadecimal).
-``std/mem``     Memory block routines.
-``std/bits``    Rotation, population count, parity, and bit reversal.
-``std/crc``     CRC-8 (Dallas/Maxim) and CRC-16 (IBM/ANSI).
-``std/math``    Q8.8 fixed-point math: trig, logs, roots, and more.
-``std/font``    5×8 font: render to a buffer, stream, or fold.
-=============== ===========================================================
+================== ===========================================================
+Module             Summary
+================== ===========================================================
+``std/gpio``       Per-port pin mode, read, write, and toggle.
+``std/uart``       Blocking USART transmit/receive (USART0–5).
+``std/spi``        Blocking master-mode SPI byte transfer.
+``std/twi``        I²C / TWI master primitives.
+``std/adc``        Analog-to-digital conversion reads.
+``std/pwm``        Fast-PWM setup for Timer0 (8-bit) and Timer1 (16-bit).
+``std/timer``      Timer0/Timer1 prescaler, compare, count, and CTC mode.
+``std/eeprom``     Byte read/write of on-chip EEPROM.
+``std/wdt``        Watchdog timer enable/disable/reset.
+``std/sleep``      Sleep-mode entry and configuration.
+``std/boot``       Flash self-programming (SPM) for bootloaders.
+``std/bootloader`` Ready-made serial firmware bootloader over USART0.
+``std/atomic``     Save/restore SREG around a critical section.
+``std/ringbuf``    Caller-owned byte ring buffer.
+``std/delay``      Blocking millisecond/microsecond delays.
+``std/string``     String and character-class routines.
+``std/conv``       Integer ↔ string (decimal and hexadecimal).
+``std/mem``        Memory block routines.
+``std/bits``       Rotation, population count, parity, and bit reversal.
+``std/crc``        CRC-8 (Dallas/Maxim) and CRC-16 (IBM/ANSI).
+``std/math``       Q8.8 fixed-point math: trig, logs, roots, and more.
+``std/font``       5×8 font: render to a buffer, stream, or fold.
+================== ===========================================================
