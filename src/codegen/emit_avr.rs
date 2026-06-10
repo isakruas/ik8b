@@ -57,6 +57,7 @@ pub fn emit_function(
     label_base: usize,
     consts: &HashMap<String, u16>,
     str_data: &HashMap<String, u16>,
+    ret_addr_bytes: u8,
 ) -> Result<EmittedFunction, String> {
     // Allocate; on spill, rewrite the function to materialize spilled values through stack
     // slots and re-allocate, iterating to a fixpoint (the classic Chaitin spill loop).
@@ -98,6 +99,7 @@ pub fn emit_function(
         str_data,
         callee_saved,
         is_isr,
+        ret_addr_bytes,
     );
     e.run(name, is_main)?;
     let sram_used = e.sram_used;
@@ -172,6 +174,9 @@ struct Emitter<'a> {
     /// True when the ISR prologue saved the full interrupt frame (r0, SREG, r1). A trivial
     /// ISR (no body instructions) skips the frame and returns with a bare RETI.
     isr_full_frame: bool,
+    /// Bytes a CALL pushes for the return address on this device (3 on >128 KB
+    /// flash parts, else 2). Stack-passed arguments sit above it in the frame.
+    ret_addr_bytes: u8,
 }
 
 impl<'a> Emitter<'a> {
@@ -186,6 +191,7 @@ impl<'a> Emitter<'a> {
         str_data: &'a HashMap<String, u16>,
         callee_saved: &'static [u8],
         is_isr: bool,
+        ret_addr_bytes: u8,
     ) -> Self {
         Emitter {
             f,
@@ -206,6 +212,7 @@ impl<'a> Emitter<'a> {
             is_isr,
             isr_saved: Vec::new(),
             isr_full_frame: false,
+            ret_addr_bytes,
         }
     }
 
@@ -358,28 +365,63 @@ impl<'a> Emitter<'a> {
         }
     }
 
+    /// Lowest register an argument slot may occupy: the fifth argument uses our
+    /// reserved scratch pair r16:r17 (r18 on the reduced core, which only has
+    /// r16..r31 and a smaller pool). Arguments past the register slots travel
+    /// on the hardware stack.
+    fn abi_floor(&self) -> u8 {
+        if self.target_core == TargetCore::AVRrc { 18 } else { 16 }
+    }
+
     /// Move incoming ABI argument registers (r24:r25 descending) into the registers the
-    /// allocator assigned to the entry block parameters.
+    /// allocator assigned to the entry block parameters. Parameters beyond the register
+    /// slots arrive on the stack, pushed by the caller in ascending byte order right
+    /// above the return address; they are read with a post-increment LD through Z.
     fn emit_param_moves(&mut self) -> Result<(), String> {
         let params: Vec<Value> = self.f.block_params(self.f.entry).to_vec();
+        let floor = self.abi_floor();
         let mut arg = 24u8;
         let mut pairs: Vec<(u8, u8)> = Vec::new();
+        let mut stack_params: Vec<Value> = Vec::new();
         for p in params {
-            if arg < 16 {
-                return Err("backend: more than 5 function parameters not yet supported".to_string());
+            if arg < floor {
+                stack_params.push(p);
+                continue;
             }
             let dst = self.reg(p)?;
             pairs.push((dst, arg));
             if self.is_pair(p) {
                 pairs.push((dst + 1, arg + 1));
             }
-            if arg >= 18 {
+            if arg > floor {
                 arg -= 2;
             } else {
                 arg = 0;
             }
         }
         self.emit_parallel_move(pairs);
+
+        if !stack_params.is_empty() {
+            // Z := SP, then step over the prologue's callee-saved pushes and the
+            // return address to land on the first argument byte. SP points one
+            // below the last pushed byte, hence the extra +1. Z (r30:r31) is
+            // emitter scratch on every core, so nothing live is clobbered here.
+            let skip = self.used_callee.len() as u16 + self.ret_addr_bytes as u16 + 1;
+            self.emit(0xB000 | ((0x3D & 0x30) << 5) | (30 << 4) | (0x3D & 0x0F)); // IN r30, SPL
+            self.emit(0xB000 | ((0x3E & 0x30) << 5) | (31 << 4) | (0x3E & 0x0F)); // IN r31, SPH
+            let nk = 0u16.wrapping_sub(skip);
+            let lo = (nk & 0xFF) as u16;
+            let hi = ((nk >> 8) & 0xFF) as u16;
+            self.emit(0x5000 | ((lo & 0xF0) << 4) | (14 << 4) | (lo & 0x0F)); // SUBI r30, lo8(-skip)
+            self.emit(0x4000 | ((hi & 0xF0) << 4) | (15 << 4) | (hi & 0x0F)); // SBCI r31, hi8(-skip)
+            for p in stack_params {
+                let dst = self.reg(p)?;
+                self.emit(0x9001 | ((dst as u16) << 4)); // LD dst, Z+
+                if self.is_pair(p) {
+                    self.emit(0x9001 | (((dst + 1) as u16) << 4)); // LD dst+1, Z+
+                }
+            }
+        }
         Ok(())
     }
 
@@ -1266,24 +1308,40 @@ impl<'a> Emitter<'a> {
 
         // Marshal arguments: arg i occupies r(24 - 2*i) (low) and +1 for a 16-bit arg.
         // The fifth argument uses r16:r17, our reserved scratch pair; no allocated value
-        // can live there, so this is safe immediately before CALL/ICALL. Stack arguments
-        // are still out of scope for this backend bring-up.
+        // can live there, so this is safe immediately before CALL/ICALL. Arguments past
+        // the register slots are pushed on the stack — in reverse order, high byte
+        // before low — so the callee finds them in ascending byte order right above
+        // the return address. The pushes read the allocated source registers, so they
+        // happen before the parallel move clobbers the ABI registers.
+        let floor = self.abi_floor();
         let mut pairs: Vec<(u8, u8)> = Vec::new();
         let mut abi = 24u8;
+        let mut stack_args: Vec<Value> = Vec::new();
         for &a in args {
-            if abi < 16 {
-                return Err("backend: more than 5 call arguments not yet supported".to_string());
+            if abi < floor {
+                stack_args.push(a);
+                continue;
             }
             let src = self.reg(a)?;
             pairs.push((abi, src));
             if self.is_pair(a) {
                 pairs.push((abi + 1, src + 1));
             }
-            if abi >= 18 {
+            if abi > floor {
                 abi -= 2;
             } else {
                 abi = 0;
             }
+        }
+        let mut pushed: u16 = 0;
+        for &a in stack_args.iter().rev() {
+            let src = self.reg(a)?;
+            if self.is_pair(a) {
+                self.emit_push(src + 1);
+                pushed += 1;
+            }
+            self.emit_push(src);
+            pushed += 1;
         }
         self.emit_parallel_move(pairs);
 
@@ -1298,6 +1356,12 @@ impl<'a> Emitter<'a> {
                 self.emit(0x9509); // ICALL
             }
             _ => return Err("backend: malformed call".to_string()),
+        }
+
+        // Drop the stack-passed argument bytes. POP into r0 (true scratch — no
+        // value is live there across a call) keeps SP arithmetic out of the picture.
+        for _ in 0..pushed {
+            self.emit_pop(0);
         }
 
         // Move the return value out of r24:r25 into its allocated register.

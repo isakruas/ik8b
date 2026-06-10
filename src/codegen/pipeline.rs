@@ -246,6 +246,13 @@ impl CodeGenerator {
             }
         }
 
+        // Return-address bytes a CALL leaves on the stack; the callee needs this
+        // to locate stack-passed arguments above the frame. ik8bvm stacks a
+        // 16-bit return address for every core, so 2 is the whole-toolchain
+        // convention today. Real parts with >128 KB flash (22-bit PC) push 3
+        // bytes — when ik8bvm models that, switch on flash_size here too.
+        let ret_addr_bytes = 2u8;
+
         for (idx, (name, is_isr)) in order.iter().enumerate() {
             let f = ir_funcs
                 .get(name)
@@ -261,6 +268,7 @@ impl CodeGenerator {
                 idx,
                 &consts,
                 &str_data,
+                ret_addr_bytes,
             )?;
             // Reserve the SRAM region the function actually used, including spill slots.
             sram_cursor += emitted.sram_used;
