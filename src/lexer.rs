@@ -35,11 +35,36 @@ pub enum TokenKind {
     Symbol(String),
 }
 
+impl TokenKind {
+    /// Human-readable rendering for diagnostics (e.g. `keyword 'loop'`, `number 42`),
+    /// instead of the internal `Token { kind: ... }` debug form.
+    pub fn describe(&self) -> String {
+        match self {
+            TokenKind::Keyword(k) => format!("keyword '{}'", k),
+            TokenKind::Type(t) => format!("type '{}'", t),
+            TokenKind::Identifier(i) => format!("identifier '{}'", i),
+            TokenKind::Number(n) => format!("number {}", n),
+            TokenKind::Float(f) => format!("number {}", f),
+            TokenKind::Str(s) => format!("string \"{}\"", s),
+            TokenKind::Arrow => "'->'".to_string(),
+            TokenKind::CompoundArrow(op) => format!("'{}'", op),
+            TokenKind::Symbol(s) => format!("'{}'", s),
+        }
+    }
+}
+
 /// Combines a parsed TokenKind with its source file line number for high-fidelity error reporting.
 #[derive(Debug, Clone)]
 pub struct Token {
     pub kind: TokenKind,
     pub line: usize,
+}
+
+impl Token {
+    /// See [`TokenKind::describe`].
+    pub fn describe(&self) -> String {
+        self.kind.describe()
+    }
 }
 
 /// Lexical analyzer that scans ik8b source code and produces a stream of tokens.
@@ -292,6 +317,12 @@ impl<'a> Lexer<'a> {
                     }
                 }
             } else {
+                if c == ';' {
+                    return Err(format!(
+                        "Unexpected character ';' at line {} (statements end at the newline; ik8b does not use semicolons)",
+                        self.line
+                    ));
+                }
                 return Err(format!("Unexpected character '{}' at line {}", c, self.line));
             }
         }

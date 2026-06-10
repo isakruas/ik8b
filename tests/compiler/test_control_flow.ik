@@ -70,7 +70,7 @@
     }
 
     # 5. Return Statement Subroutine Check
-    @test_return(5) -> $res
+    @test_return(5) & 0xFF -> $res
     ? $res != 25 {
         0 -> $ok
     }

@@ -115,7 +115,12 @@ impl Parser {
                 _ => false,
             };
             if !matches {
-                return Err(format!("Expected token {:?}, got {:?} at line {}", kind, tok.kind, tok.line));
+                return Err(format!(
+                    "Expected {}, got {} at line {}",
+                    kind.describe(),
+                    tok.kind.describe(),
+                    tok.line
+                ));
             }
         }
         self.idx += 1;
@@ -147,7 +152,7 @@ impl Parser {
                 let space_tok = self.consume(None)?;
                 let space = match space_tok.kind {
                     TokenKind::Keyword(ref s) if s == "ram" || s == "flash" || s == "eeprom" => s.clone(),
-                    _ => return Err(format!("Expected pointer space (ram/flash/eeprom) after 'ptr': {:?} at line {}", space_tok, space_tok.line)),
+                    _ => return Err(format!("Expected pointer space (ram/flash/eeprom) after 'ptr': {} at line {}", space_tok.describe(), space_tok.line)),
                 };
                 let pointee = self.parse_type_spec()?;
                 Ok(format!("ptr {} {}", space, pointee))
@@ -156,7 +161,7 @@ impl Parser {
                 let space_tok = self.consume(None)?;
                 let space = match space_tok.kind {
                     TokenKind::Keyword(ref s) if s == "ram" => s.clone(),
-                    _ => return Err(format!("Expected string space 'ram' after 'str': {:?} at line {}", space_tok, space_tok.line)),
+                    _ => return Err(format!("Expected string space 'ram' after 'str': {} at line {}", space_tok.describe(), space_tok.line)),
                 };
                 Ok(format!("str {}", space))
             }
@@ -189,7 +194,7 @@ impl Parser {
                 }
                 Ok(format!("fn({}){}", arg_tys.join(","), if ret == "void" { String::new() } else { format!("->{}", ret) }))
             }
-            _ => Err(format!("Expected type specifier, got {:?} at line {}", tok, tok.line)),
+            _ => Err(format!("Expected type specifier, got {} at line {}", tok.describe(), tok.line)),
         }?;
 
         if let Some(next_tok) = self.peek(0) {
@@ -200,7 +205,7 @@ impl Parser {
                         let size_tok = self.consume(None)?;
                         let size = match size_tok.kind {
                             TokenKind::Number(n) => n,
-                            _ => return Err(format!("Expected array size number: {:?} at line {}", size_tok, size_tok.line)),
+                            _ => return Err(format!("Expected array size number: {} at line {}", size_tok.describe(), size_tok.line)),
                         };
                         self.consume(Some(TokenKind::Symbol("]".to_string())))?;
                         ty = format!("{}[{}]", ty, size);
@@ -231,7 +236,7 @@ impl Parser {
                     let name_tok = self.consume(None)?;
                     let ns_name = match name_tok.kind {
                         TokenKind::Identifier(ref n) => n.clone(),
-                        _ => return Err(format!("Expected target name, got {:?} at line {}", name_tok, name_tok.line)),
+                        _ => return Err(format!("Expected target name, got {} at line {}", name_tok.describe(), name_tok.line)),
                     };
                     self.active_target = ns_name;
                 }
@@ -244,8 +249,8 @@ impl Parser {
                         TokenKind::Number(n) => n as u32,
                         _ => {
                             return Err(format!(
-                                "Expected boot section address after `boot`, got {:?} at line {}",
-                                addr_tok, addr_tok.line
+                                "Expected boot section address after `boot`, got {} at line {}",
+                                addr_tok.describe(), addr_tok.line
                             ))
                         }
                     };
@@ -256,13 +261,13 @@ impl Parser {
                     let left_tok = self.consume(None)?;
                     let _left = match left_tok.kind {
                         TokenKind::Keyword(ref kw) if kw == "target" => kw.clone(),
-                        _ => return Err(format!("Expected 'target' in compile-time check, got {:?} at line {}", left_tok, left_tok.line)),
+                        _ => return Err(format!("Expected 'target' in compile-time check, got {} at line {}", left_tok.describe(), left_tok.line)),
                     };
                     self.consume(Some(TokenKind::Symbol("==".to_string())))?;
                     let right_tok = self.consume(None)?;
                     let right = match right_tok.kind {
                         TokenKind::Identifier(ref id) => id.clone(),
-                        _ => return Err(format!("Expected identifier in compile-time check, got {:?} at line {}", right_tok, right_tok.line)),
+                        _ => return Err(format!("Expected identifier in compile-time check, got {} at line {}", right_tok.describe(), right_tok.line)),
                     };
                     self.consume(Some(TokenKind::Symbol("{".to_string())))?;
                     
@@ -293,8 +298,8 @@ impl Parser {
                                 block_boot = Some(match addr_tok.kind {
                                     TokenKind::Number(n) => n as u32,
                                     _ => return Err(format!(
-                                        "Expected boot section address after `boot`, got {:?} at line {}",
-                                        addr_tok, addr_tok.line
+                                        "Expected boot section address after `boot`, got {} at line {}",
+                                        addr_tok.describe(), addr_tok.line
                                     )),
                                 });
                             }
@@ -304,7 +309,7 @@ impl Parser {
                             TokenKind::Identifier(ref name) if name.starts_with('@') => {
                                 block_nodes.push(self.parse_function()?);
                             }
-                            _ => return Err(format!("Expected top-level declaration in conditional block, got {:?} at line {}", block_tok, block_tok.line)),
+                            _ => return Err(format!("Expected top-level declaration in conditional block, got {} at line {}", block_tok.describe(), block_tok.line)),
                         }
                     }
                     self.consume(Some(TokenKind::Symbol("}".to_string())))?;
@@ -322,7 +327,7 @@ impl Parser {
                 TokenKind::Identifier(ref name) if name.starts_with('@') => {
                     nodes.push(self.parse_function()?);
                 }
-                _ => return Err(format!("Expected top-level declaration (target, import, const, function or isr), got {:?} at line {}", tok, tok.line)),
+                _ => return Err(format!("Expected top-level declaration (target, import, const, function or isr), got {} at line {}", tok.describe(), tok.line)),
             }
         }
         Ok(nodes)
@@ -335,7 +340,7 @@ impl Parser {
         let path_tok = self.consume(None)?;
         let path = match path_tok.kind {
             TokenKind::Identifier(ref name) => name.clone(),
-            _ => return Err(format!("Expected module name after import, got {:?} at line {}", path_tok, path_tok.line)),
+            _ => return Err(format!("Expected module name after import, got {} at line {}", path_tok.describe(), path_tok.line)),
         };
         
         let mut candidates = Vec::new();
@@ -424,19 +429,19 @@ impl Parser {
         let name_tok = self.consume(None)?;
         let name = match name_tok.kind {
             TokenKind::Identifier(ref n) => n.clone(),
-            _ => return Err(format!("Expected constant name: {:?} at line {}", name_tok, name_tok.line)),
+            _ => return Err(format!("Expected constant name: {} at line {}", name_tok.describe(), name_tok.line)),
         };
         self.consume(Some(TokenKind::Symbol(":".to_string())))?;
         let ty_tok = self.consume(None)?;
         let ty = match ty_tok.kind {
             TokenKind::Type(ref t) => t.clone(),
-            _ => return Err(format!("Expected type: {:?} at line {}", ty_tok, ty_tok.line)),
+            _ => return Err(format!("Expected type: {} at line {}", ty_tok.describe(), ty_tok.line)),
         };
         self.consume(Some(TokenKind::Symbol("=".to_string())))?;
         let val_tok = self.consume(None)?;
         let value = match val_tok.kind {
             TokenKind::Number(v) => v,
-            _ => return Err(format!("Expected number: {:?} at line {}", val_tok, val_tok.line)),
+            _ => return Err(format!("Expected number: {} at line {}", val_tok.describe(), val_tok.line)),
         };
         Ok(ASTNode::Const { name, ty, value })
     }
@@ -447,7 +452,7 @@ impl Parser {
         let name_tok = self.consume(None)?;
         let name = match name_tok.kind {
             TokenKind::Identifier(ref n) if n.starts_with('@') => n.clone(),
-            _ => return Err(format!("Function name must start with @: {:?} at line {}", name_tok, name_tok.line)),
+            _ => return Err(format!("Function name must start with @: {} at line {}", name_tok.describe(), name_tok.line)),
         };
 
         let mut params = Vec::new();
@@ -464,7 +469,7 @@ impl Parser {
                         let param_tok = self.consume(None)?;
                         let param_name = match param_tok.kind {
                             TokenKind::Identifier(ref p) if p.starts_with('$') => p.clone(),
-                            _ => return Err(format!("Parameter must start with $: {:?} at line {}", param_tok, param_tok.line)),
+                            _ => return Err(format!("Parameter must start with $: {} at line {}", param_tok.describe(), param_tok.line)),
                         };
                         self.consume(Some(TokenKind::Symbol(":".to_string())))?;
                         let param_ty = self.parse_type_spec()?;
@@ -502,7 +507,7 @@ impl Parser {
         let vec_tok = self.consume(None)?;
         let vector = match vec_tok.kind {
             TokenKind::Identifier(ref v) => v.clone(),
-            _ => return Err(format!("Expected an interrupt vector name after 'isr', got {:?} at line {}", vec_tok, vec_tok.line)),
+            _ => return Err(format!("Expected an interrupt vector name after 'isr', got {} at line {}", vec_tok.describe(), vec_tok.line)),
         };
         let body = self.parse_block()?;
         Ok(ASTNode::Isr { vector, body })
@@ -531,7 +536,7 @@ impl Parser {
                                 let right_tok = self.consume(None)?;
                                 let right = match right_tok.kind {
                                     TokenKind::Identifier(ref id) => id.clone(),
-                                    _ => return Err(format!("Expected identifier in compile-time check, got {:?} at line {}", right_tok, right_tok.line)),
+                                    _ => return Err(format!("Expected identifier in compile-time check, got {} at line {}", right_tok.describe(), right_tok.line)),
                                 };
                                 let block_stmts = self.parse_block()?;
                                 if self.active_target == right {
@@ -568,7 +573,7 @@ impl Parser {
                     let name_tok = self.consume(None)?;
                     let name = match name_tok.kind {
                         TokenKind::Identifier(ref n) if n.starts_with('$') => n.clone(),
-                        _ => return Err(format!("Pointer variable must start with $: {:?} at line {}", name_tok, name_tok.line)),
+                        _ => return Err(format!("Pointer variable must start with $: {} at line {}", name_tok.describe(), name_tok.line)),
                     };
                     self.consume(Some(TokenKind::Symbol("=".to_string())))?;
                     let expr = self.parse_expr()?;
@@ -585,7 +590,7 @@ impl Parser {
                     let name_tok = self.consume(None)?;
                     let name = match name_tok.kind {
                         TokenKind::Identifier(ref n) if n.starts_with('$') => n.clone(),
-                        _ => return Err(format!("String variable must start with $: {:?} at line {}", name_tok, name_tok.line)),
+                        _ => return Err(format!("String variable must start with $: {} at line {}", name_tok.describe(), name_tok.line)),
                     };
                     self.consume(Some(TokenKind::Symbol("=".to_string())))?;
                     let expr = self.parse_expr()?;
@@ -600,7 +605,7 @@ impl Parser {
                         self.consume(None)?;
                         im
                     }
-                    _ => return Err(format!("Expected mutability specifier (mut or imut) after {}: {:?} at line {}", kw, next_tok, next_tok.line)),
+                    _ => return Err(format!("Expected mutability specifier (mut or imut) after {}: {} at line {}", kw, next_tok.describe(), next_tok.line)),
                 };
 
                 if storage == "flash" && is_mut {
@@ -610,7 +615,7 @@ impl Parser {
                 let name_tok = self.consume(None)?;
                 let name = match name_tok.kind {
                     TokenKind::Identifier(ref n) if n.starts_with('$') => n.clone(),
-                    _ => return Err(format!("Variable must start with $: {:?} at line {}", name_tok, name_tok.line)),
+                    _ => return Err(format!("Variable must start with $: {} at line {}", name_tok.describe(), name_tok.line)),
                 };
                 self.consume(Some(TokenKind::Symbol(":".to_string())))?;
                 // Function-pointer locals (`fn(...) [-> R]`) use the full type
@@ -621,7 +626,7 @@ impl Parser {
                     let ty_tok = self.consume(None)?;
                     match ty_tok.kind {
                         TokenKind::Type(ref t) => t.clone(),
-                        _ => return Err(format!("Expected type: {:?} at line {}", ty_tok, ty_tok.line)),
+                        _ => return Err(format!("Expected type: {} at line {}", ty_tok.describe(), ty_tok.line)),
                     }
                 };
                 if let Some(next_tok) = self.peek(0) {
@@ -631,7 +636,7 @@ impl Parser {
                             let size_tok = self.consume(None)?;
                             let size = match size_tok.kind {
                                 TokenKind::Number(n) => n,
-                                _ => return Err(format!("Expected array size number: {:?} at line {}", size_tok, size_tok.line)),
+                                _ => return Err(format!("Expected array size number: {} at line {}", size_tok.describe(), size_tok.line)),
                             };
                             self.consume(Some(TokenKind::Symbol("]".to_string())))?;
                             ty = format!("{}[{}]", ty, size);
@@ -671,7 +676,7 @@ impl Parser {
                 let var_tok = self.consume(None)?;
                 let var_name = match var_tok.kind {
                     TokenKind::Identifier(ref n) if n.starts_with('$') => n.clone(),
-                    _ => return Err(format!("Loop variable must start with $: {:?} at line {}", var_tok, var_tok.line)),
+                    _ => return Err(format!("Loop variable must start with $: {} at line {}", var_tok.describe(), var_tok.line)),
                 };
                 let body = self.parse_block()?;
                 Ok(Stmt::LoopRange { start: start_expr, end: end_expr, var_name, body })
@@ -1089,7 +1094,7 @@ impl Parser {
                     Err(format!("Unexpected symbol in expression: {} at line {}", sym, tok.line))
                 }
             }
-            _ => Err(format!("Unexpected token in expression: {:?} at line {}", tok, tok.line)),
+            _ => Err(format!("Unexpected token in expression: {} at line {}", tok.describe(), tok.line)),
         }
     }
 }

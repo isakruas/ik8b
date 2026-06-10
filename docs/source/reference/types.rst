@@ -141,3 +141,51 @@ ik does not silently mix unrelated types. The general rules are:
    current compiler. The toolchain includes a guardrail that rejects programs
    using a type whose code paths are not yet implemented, with a clear error,
    rather than miscompiling. If the compiler refuses a type, believe it.
+
+Conversions, literal ranges and truncation
+==========================================
+
+Integer values are stored in two's complement and conversions operate on the
+raw bit pattern. The exact rules are:
+
+**Integer literals must fit the bit width of their context.** A literal
+initializing or being assigned to a typed location is checked against that
+type's width at compile time; a value that does not fit in the width at all is
+a compile error::
+
+   ram mut $a: u8 = 300       # error: literal 300 does not fit in type 'u8'
+   ram mut $b: u16 = 70000    # error: literal 70000 does not fit in type 'u16'
+
+Both interpretations of a fitting bit pattern are accepted, so the two common
+embedded idioms remain valid::
+
+   ram mut $c: u8 = -15       # ok: stores 0xF1 (two's complement)
+   ram mut $d: i8 = 0xFF      # ok: stores -1 (same bit pattern)
+
+**Widening is implicit and lossless.** Assigning a narrower value to a wider
+location zero-extends unsigned sources and sign-extends signed sources.
+
+**Narrowing is implicit but truncates.** Assigning a wider value to a narrower
+location keeps only the low byte(s)::
+
+   ram mut $w: u16 = 0x1234
+   ram mut $n: u8 = 0
+   $w -> $n                   # $n becomes 0x34; the compiler warns once per target
+
+Because accidental narrowing is a common source of bugs, a plain ``->``
+assignment that truncates emits a one-time warning per target. Two forms state
+the intent explicitly and never warn:
+
+* **A declaration with the narrower type written at the site** — this is the
+  language's explicit-conversion idiom::
+
+     ram imut $lo: u8 = $w          # explicit: the u8 is written right here
+
+* **A mask or shift that provably fits the target width**::
+
+     $w & 0xFF -> $n                # low byte, explicit
+     $w >> 8 -> $n                  # high byte, explicit
+     $w % 10 -> $n                  # remainder < 10, fits
+
+Deliberate truncation (e.g. sending the low byte of a 16-bit baud divisor to a
+UART register) is well-defined; write it in one of the two forms above.

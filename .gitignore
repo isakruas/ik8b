@@ -3,6 +3,7 @@
 
 # Local compiler/VM binaries produced or vendored during development
 /ik8b
+/ik8b.old
 /bin/
 
 # ik8b and AVR build outputs

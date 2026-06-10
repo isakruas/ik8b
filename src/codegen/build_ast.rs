@@ -105,6 +105,25 @@ pub fn all_function_names(ast: &[ASTNode]) -> HashSet<String> {
 
 pub fn lower_program(ast: &[ASTNode], reachable: &HashSet<String>) -> Result<Vec<IrFunction>, String> {
     let info = ProgramInfo::from_ast(ast);
+    for node in ast {
+        if let ASTNode::Const { name, ty, value } = node {
+            if name.starts_with('%') {
+                // For a `%REG` constant the declared type is the register's width and
+                // the value is its address, which only has to fit the data address space.
+                if *value < 0 || *value > 0xFFFF {
+                    return Err(format!(
+                        "Type Error: hardware register '{}' address {} is outside the 16-bit address space",
+                        name, value
+                    ));
+                }
+            } else if !literal_fits(i64::from(*value), IrType::from_decl(ty)) {
+                return Err(format!(
+                    "Type Error: constant '{}' value {} does not fit in type '{}'",
+                    name, value, ty
+                ));
+            }
+        }
+    }
     let mut out = Vec::new();
     for node in ast {
         match node {
@@ -177,11 +196,14 @@ struct Lower<'a> {
     b: Builder,
     info: &'a ProgramInfo,
     ret_ty: IrType,
+    fn_name: String,
     var_decl: HashMap<String, String>,
     slot_backed: HashSet<String>,
     slots: HashMap<String, StackSlot>,
     /// Names declared `imut` (immutable). Assigning to one is a compile error.
     immutable: HashSet<String>,
+    /// Targets already warned about implicit narrowing (one warning per target).
+    narrow_warned: HashSet<String>,
     temp_id: u32,
 }
 
@@ -191,10 +213,12 @@ impl<'a> Lower<'a> {
             b: Builder::new(name, ret_ty),
             info,
             ret_ty,
+            fn_name: name.to_string(),
             var_decl: HashMap::new(),
             slot_backed: HashSet::new(),
             slots: HashMap::new(),
             immutable: HashSet::new(),
+            narrow_warned: HashSet::new(),
             temp_id: 0,
         }
     }
@@ -464,9 +488,22 @@ impl<'a> Lower<'a> {
                     base
                 ));
             }
+            if base.starts_with('$') && !self.var_decl.contains_key(base) {
+                return Err(format!(
+                    "Semantic Error: undefined variable '{}' in function '{}' (declare it first, e.g. `ram mut {}: u8 = 0`)",
+                    base, self.fn_name, base
+                ));
+            }
+            if !base.starts_with('$') && !base.starts_with('%') {
+                return Err(format!(
+                    "Semantic Error: cannot assign to '{}'; only variables ($), hardware registers (%), array elements and dereferenced pointers are assignable",
+                    base
+                ));
+            }
         }
 
         let tty = self.expr_ty(target, None);
+        self.warn_if_narrowing(target, expr, tty);
         // Compound assignment: target = target <op> expr.
         let rhs = if op == "->" {
             let r = self.lower_expr(expr, Some(tty))?;
@@ -806,10 +843,91 @@ impl<'a> Lower<'a> {
         Ok(self.b.use_var(tmp))
     }
 
+    /// Implicit narrowing (e.g. a u16 value assigned to a u8 target) truncates to the
+    /// low byte(s) at runtime. That is defined behavior (see docs: reference/types),
+    /// but it is easy to hit by accident in a plain `$a -> $b` assignment where no
+    /// type is visible at the site, so each narrowed target warns once. Declarations
+    /// (`ram imut $x: u8 = <wider expr>`) never warn: the narrower type written at
+    /// the site IS the language's explicit-conversion idiom. Also exempt: literals
+    /// (range-checked against the target type instead) and expressions that provably
+    /// fit the target width (`$u16 & 0xFF`, `$u16 >> 8`, `$u16 % 10`, ...).
+    fn warn_if_narrowing(&mut self, target: &Expr, expr: &Expr, tty: IrType) {
+        if matches!(expr, Expr::Literal(_) | Expr::FloatLiteral(_)) {
+            return;
+        }
+        let sty = self.expr_ty(expr, None);
+        if !matches!(sty, IrType::Int { frac: 0, .. }) || !matches!(tty, IrType::Int { frac: 0, .. }) {
+            return;
+        }
+        if sty.bytes() <= tty.bytes() {
+            return;
+        }
+        if self.expr_max_bits(expr) <= u32::from(tty.bytes()) * 8 {
+            return;
+        }
+        let desc = match assign_base_var(target) {
+            Some(base) => base.to_string(),
+            None => return,
+        };
+        if self.narrow_warned.insert(desc.clone()) {
+            eprintln!(
+                "Warning: implicit narrowing from {} to {} in assignment to '{}' in function '{}'; the value is truncated (mask with `& 0xFF` or shift to state the intent)",
+                sty, tty, desc, self.fn_name
+            );
+        }
+    }
+
+    /// Conservative upper bound on the significant bits of an expression's value,
+    /// used only to suppress the narrowing warning when the value provably fits.
+    fn expr_max_bits(&self, e: &Expr) -> u32 {
+        let full = |s: &Self, e: &Expr| u32::from(s.expr_ty(e, None).bytes()) * 8;
+        match e {
+            Expr::Literal(v) => {
+                if *v < 0 {
+                    16
+                } else {
+                    32 - (*v as u32).leading_zeros()
+                }
+            }
+            Expr::BinOp { left, op, right } => {
+                let lb = self.expr_max_bits(left);
+                let rb = self.expr_max_bits(right);
+                match op.as_str() {
+                    "&" => lb.min(rb),
+                    "|" | "^" => lb.max(rb),
+                    ">>" => match &**right {
+                        Expr::Literal(n) if *n >= 0 => lb.saturating_sub(*n as u32),
+                        _ => lb,
+                    },
+                    // Division by a power-of-two literal drops that many bits.
+                    "/" => match &**right {
+                        Expr::Literal(n) if *n > 0 && (*n & (*n - 1)) == 0 => {
+                            lb.saturating_sub((*n as u32).trailing_zeros())
+                        }
+                        _ => lb,
+                    },
+                    // The remainder is strictly below the divisor.
+                    "%" => match &**right {
+                        Expr::Literal(n) if *n > 0 => 32 - ((*n as u32) - 1).leading_zeros(),
+                        _ => lb.min(rb),
+                    },
+                    _ => full(self, e),
+                }
+            }
+            _ => full(self, e),
+        }
+    }
+
     fn lower_expr(&mut self, e: &Expr, expected: Option<IrType>) -> Result<Value, String> {
         match e {
             Expr::Literal(v) => {
                 let ty = self.expr_ty(e, expected);
+                if !literal_fits(i64::from(*v), ty) {
+                    return Err(format!(
+                        "Type Error: literal {} does not fit in type '{}' in function '{}'",
+                        v, ty, self.fn_name
+                    ));
+                }
                 Ok(self.b.iconst(*v as i64, ty))
             }
             Expr::FloatLiteral(v) => {
@@ -910,6 +1028,17 @@ impl<'a> Lower<'a> {
         if name.starts_with('%') {
             return Ok(self.b.hw_read(hw_reg_name(name), self.var_ref_hw_ty(name)));
         }
+        // A bare `@fn` in value position is almost always a missing `&`; there is no
+        // implicit function-to-pointer decay.
+        if name.starts_with('@') {
+            if self.info.has_function(name) || is_intrinsic_function(name) {
+                return Err(format!(
+                    "Semantic Error: function '{}' used as a value; use '&{}' to take its address",
+                    name, name
+                ));
+            }
+            return Err(format!("Semantic Error: undefined function '{}'", name));
+        }
         // A plain (non-`%`) named constant folds to its compile-time value, so a
         // bit mask or command word becomes an immediate operand instead of a load.
         if !name.starts_with('$') {
@@ -922,6 +1051,16 @@ impl<'a> Lower<'a> {
                     .unwrap_or(IrType::U8);
                 return Ok(self.b.iconst(val as i64, ty));
             }
+            return Err(format!(
+                "Semantic Error: undefined constant '{}' (no `const {}` is declared for the selected target)",
+                name, name
+            ));
+        }
+        if !self.var_decl.contains_key(name) {
+            return Err(format!(
+                "Semantic Error: undefined variable '{}' in function '{}'",
+                name, self.fn_name
+            ));
         }
         if self.slot_backed.contains(name) {
             // Arrays decay to their base address. Address-taken scalars live in a slot
@@ -970,6 +1109,18 @@ impl<'a> Lower<'a> {
                     .symbol_addr(name.clone(), IrType::Ptr { space: Space::Flash }))
             }
             Expr::VarRef(name) => {
+                if !name.starts_with('$') {
+                    return Err(format!(
+                        "Semantic Error: cannot take address of '{}'; constants and hardware registers have no data address",
+                        name
+                    ));
+                }
+                if !self.var_decl.contains_key(name) {
+                    return Err(format!(
+                        "Semantic Error: undefined variable '{}' in function '{}'",
+                        name, self.fn_name
+                    ));
+                }
                 let slot = self.ensure_slot(name);
                 self.slot_backed.insert(name.clone());
                 let space = self.var_space(name);
@@ -1009,6 +1160,18 @@ impl<'a> Lower<'a> {
             Expr::VarRef(n) => n.clone(),
             _ => return Err("array indexing is only supported on named variables".to_string()),
         };
+        if !name.starts_with('$') {
+            return Err(format!(
+                "Semantic Error: cannot index '{}'; only array or pointer variables ($) are indexable",
+                name
+            ));
+        }
+        if !self.var_decl.contains_key(&name) {
+            return Err(format!(
+                "Semantic Error: undefined variable '{}' in function '{}'",
+                name, self.fn_name
+            ));
+        }
         let ety = self.elem_ty(base);
         let elem_size = ety.bytes().max(1);
 
@@ -1293,6 +1456,25 @@ fn walk_addr_taken_expr(e: &Expr, out: &mut HashSet<String>) {
     }
 }
 
+/// True when integer literal `v` is representable in `ty`'s bit width. Both
+/// interpretations of the bit pattern are accepted — `u8 = -15` stores 0xF1 and
+/// `i8 = 0xFF` stores -1 (two's complement storage, see test_literals) — so only
+/// values that do not fit in the width at all are rejected. Fixed-point types are
+/// exempt: an integer literal there is a raw-value operand (see the fixed-point
+/// mul/div note in `lower_expr`).
+fn literal_fits(v: i64, ty: IrType) -> bool {
+    match ty {
+        IrType::Int { width, frac: 0, .. } => {
+            let bits = match width {
+                Width::W8 => 8,
+                Width::W16 => 16,
+            };
+            v >= -(1i64 << (bits - 1)) && v < (1i64 << bits)
+        }
+        _ => true,
+    }
+}
+
 fn decl_byte_size(decl: &str) -> u16 {
     let core = strip_storage(decl);
     if let Some(open) = core.find('[') {
@@ -1418,6 +1600,108 @@ mod tests {
             "target atmega328p\n@callee() { }\n@main { @callee() @nop() @burn(1) }\n",
         )
         .expect("declared functions and intrinsics should lower");
+    }
+
+    #[test]
+    fn rejects_undefined_variable_read() {
+        let err = lower_err(
+            "target atmega328p\nconst %PORTB: u8 = 0x25\n@main {\n  $typo -> %PORTB\n}\n",
+        );
+        assert!(
+            err.contains("undefined variable '$typo'"),
+            "unexpected error: {}",
+            err
+        );
+    }
+
+    #[test]
+    fn rejects_undefined_variable_write() {
+        let err = lower_err("target atmega328p\n@main {\n  5 -> $typo\n}\n");
+        assert!(
+            err.contains("undefined variable '$typo'"),
+            "unexpected error: {}",
+            err
+        );
+    }
+
+    #[test]
+    fn rejects_undefined_constant() {
+        let err = lower_err(
+            "target atmega328p\nconst %PORTB: u8 = 0x25\n@main {\n  NO_SUCH_MASK -> %PORTB\n}\n",
+        );
+        assert!(
+            err.contains("undefined constant 'NO_SUCH_MASK'"),
+            "unexpected error: {}",
+            err
+        );
+    }
+
+    #[test]
+    fn rejects_undefined_variable_address_and_index() {
+        let err = lower_err(
+            "target atmega328p\n@main {\n  ram ptr u8 $p = &$ghost\n}\n",
+        );
+        assert!(err.contains("undefined variable '$ghost'"), "unexpected error: {}", err);
+        let err = lower_err(
+            "target atmega328p\nconst %PORTB: u8 = 0x25\n@main {\n  $ghost[2] -> %PORTB\n}\n",
+        );
+        assert!(err.contains("undefined variable '$ghost'"), "unexpected error: {}", err);
+    }
+
+    #[test]
+    fn rejects_assignment_to_constant() {
+        let err = lower_err(
+            "target atmega328p\nconst MASK: u8 = 3\n@main {\n  5 -> MASK\n}\n",
+        );
+        assert!(err.contains("cannot assign to 'MASK'"), "unexpected error: {}", err);
+    }
+
+    #[test]
+    fn rejects_bare_function_reference() {
+        let err = lower_err(
+            "target atmega328p\nconst %PORTB: u8 = 0x25\n@f() -> u8 { return 1 }\n@main {\n  ram mut $x: u8 = 0\n  @f -> $x\n  $x -> %PORTB\n}\n",
+        );
+        assert!(
+            err.contains("function '@f' used as a value"),
+            "unexpected error: {}",
+            err
+        );
+    }
+
+    #[test]
+    fn rejects_out_of_range_literal() {
+        let err = lower_err("target atmega328p\n@main {\n  ram mut $x: u8 = 300\n}\n");
+        assert!(
+            err.contains("literal 300 does not fit in type 'u8'"),
+            "unexpected error: {}",
+            err
+        );
+        let err = lower_err("target atmega328p\n@main {\n  ram mut $x: u16 = 70000\n}\n");
+        assert!(
+            err.contains("literal 70000 does not fit in type 'u16'"),
+            "unexpected error: {}",
+            err
+        );
+    }
+
+    #[test]
+    fn accepts_bit_pattern_literals() {
+        // Two's-complement storage: `u8 = -15` (0xF1) and `i8 = 0xFF` (-1) are
+        // deliberate idioms (see tests/compiler/test_literals.ik).
+        lower_src(
+            "target atmega328p\n@main {\n  ram mut $a: u8 = -15\n  ram mut $b: i8 = 0xFF\n  ram mut $c: u16 = 0xFFFF\n  ram mut $d: i16 = -32768\n}\n",
+        )
+        .expect("width-fitting literals should lower");
+    }
+
+    #[test]
+    fn rejects_out_of_range_const() {
+        let err = lower_err("target atmega328p\nconst MASK: u8 = 300\n@main { }\n");
+        assert!(
+            err.contains("constant 'MASK' value 300 does not fit"),
+            "unexpected error: {}",
+            err
+        );
     }
 }
 

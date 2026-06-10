@@ -156,9 +156,9 @@
             ram imut $rem: u16 = $v & 15
             ram mut $digit: u8 = 0
             ? $rem < 10 {
-                $rem + 48 -> $digit
+                ($rem + 48) & 0xFF -> $digit
             } : {
-                $rem - 10 + 65 -> $digit # 'A'
+                ($rem - 10 + 65) & 0xFF -> $digit # 'A'
             }
             $digit -> $temp[$t_idx]
             $t_idx + 1 -> $t_idx

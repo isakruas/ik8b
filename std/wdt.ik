@@ -2123,11 +2123,11 @@ import std/atomic
 
 @wdt_enable($prescaler: u8) {
     ? WDT_IS_MODERN == 1 {
-        @atomic_start() -> $s
+        ram imut $s: u8 = @atomic_start()
         $prescaler -> %WDT_CTRL_REG
         @atomic_end($s)
     } : {
-        @atomic_start() -> $s
+        ram imut $s: u8 = @atomic_start()
         0x18 -> %WDT_CTRL_REG
         $prescaler | 0x08 -> %WDT_CTRL_REG
         @atomic_end($s)
@@ -2136,11 +2136,11 @@ import std/atomic
 
 @wdt_disable() {
     ? WDT_IS_MODERN == 1 {
-        @atomic_start() -> $s
+        ram imut $s: u8 = @atomic_start()
         0x00 -> %WDT_CTRL_REG
         @atomic_end($s)
     } : {
-        @atomic_start() -> $s
+        ram imut $s: u8 = @atomic_start()
         0x18 -> %WDT_CTRL_REG
         0x00 -> %WDT_CTRL_REG
         @atomic_end($s)
