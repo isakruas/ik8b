@@ -103,7 +103,11 @@ pub fn all_function_names(ast: &[ASTNode]) -> HashSet<String> {
         .collect()
 }
 
-pub fn lower_program(ast: &[ASTNode], reachable: &HashSet<String>) -> Result<Vec<IrFunction>, String> {
+pub fn lower_program(
+    ast: &[ASTNode],
+    reachable: &HashSet<String>,
+    warnings: &mut Vec<String>,
+) -> Result<Vec<IrFunction>, String> {
     let info = ProgramInfo::from_ast(ast);
     for node in ast {
         if let ASTNode::Const { name, ty, value } = node {
@@ -134,12 +138,12 @@ pub fn lower_program(ast: &[ASTNode], reachable: &HashSet<String>) -> Result<Vec
                 body,
             } => {
                 if reachable.contains(name) {
-                    out.push(lower_function(name, params, ret_ty, body, &info)?);
+                    out.push(lower_function(name, params, ret_ty, body, &info, warnings)?);
                 }
             }
             ASTNode::Isr { vector, body } => {
                 let isr_name = format!("__isr_{}", vector);
-                out.push(lower_function(&isr_name, &[], "void", body, &info)?);
+                out.push(lower_function(&isr_name, &[], "void", body, &info, warnings)?);
             }
             ASTNode::Const { .. } => {}
         }
@@ -153,6 +157,7 @@ fn lower_function(
     ret_ty: &str,
     body: &[Stmt],
     info: &ProgramInfo,
+    warnings: &mut Vec<String>,
 ) -> Result<IrFunction, String> {
     let mut lo = Lower::new(name, IrType::from_decl(ret_ty), info);
 
@@ -189,6 +194,7 @@ fn lower_function(
         lo.b.ret(rv);
     }
 
+    warnings.append(&mut lo.warnings);
     Ok(lo.b.finalize())
 }
 
@@ -204,6 +210,9 @@ struct Lower<'a> {
     immutable: HashSet<String>,
     /// Targets already warned about implicit narrowing (one warning per target).
     narrow_warned: HashSet<String>,
+    /// Non-fatal diagnostics produced while lowering this function; collected
+    /// into `CodeGenerator::warnings` so front ends decide how to present them.
+    warnings: Vec<String>,
     temp_id: u32,
 }
 
@@ -219,6 +228,7 @@ impl<'a> Lower<'a> {
             slots: HashMap::new(),
             immutable: HashSet::new(),
             narrow_warned: HashSet::new(),
+            warnings: Vec::new(),
             temp_id: 0,
         }
     }
@@ -870,10 +880,10 @@ impl<'a> Lower<'a> {
             None => return,
         };
         if self.narrow_warned.insert(desc.clone()) {
-            eprintln!(
-                "Warning: implicit narrowing from {} to {} in assignment to '{}' in function '{}'; the value is truncated (mask with `& 0xFF` or shift to state the intent)",
+            self.warnings.push(format!(
+                "implicit narrowing from {} to {} in assignment to '{}' in function '{}'; the value is truncated (mask with `& 0xFF` or shift to state the intent)",
                 sty, tty, desc, self.fn_name
-            );
+            ));
         }
     }
 
@@ -1562,7 +1572,7 @@ mod tests {
     fn lower_src(src: &str) -> Result<Vec<IrFunction>, String> {
         let toks = Lexer::new(src).tokenize().expect("lex");
         let ast = Parser::new(toks).parse().expect("parse");
-        lower_program(&ast, &all_function_names(&ast))
+        lower_program(&ast, &all_function_names(&ast), &mut Vec::new())
     }
 
     fn lower_err(src: &str) -> String {

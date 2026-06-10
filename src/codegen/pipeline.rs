@@ -26,6 +26,7 @@ impl CodeGenerator {
         self.instructions.clear();
         self.sram_free_ptr = self.sram_start;
         self.eeprom_free_ptr = 0;
+        self.warnings.clear();
     }
 
     /// Validates interrupt declarations and maps them to vector-table labels.
@@ -191,7 +192,7 @@ impl CodeGenerator {
 
         // Lower only the reachable functions (type inference still has full context via
         // ProgramInfo, which is built from the whole AST), then optimize each.
-        let lowered = build_ast::lower_program(&ast, &reachable)?;
+        let lowered = build_ast::lower_program(&ast, &reachable, &mut self.warnings)?;
         let mut ir_funcs: HashMap<String, function::IrFunction> = HashMap::new();
         for f in lowered {
             let name = f.name.clone();

@@ -488,8 +488,16 @@ fn run_compile(opts: CompileOpts) -> ! {
     codegen.set_sram_start(sram_start);
     codegen.set_device_name(device.name);
     let insts = match codegen.compile(&ast) {
-        Ok(i) => i,
+        Ok(i) => {
+            for w in &codegen.warnings {
+                eprintln!("Warning: {}", w);
+            }
+            i
+        }
         Err(e) => {
+            for w in &codegen.warnings {
+                eprintln!("Warning: {}", w);
+            }
             eprintln!("Compilation Error: {}", e);
             process::exit(1);
         }

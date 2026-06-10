@@ -47,7 +47,7 @@ pub use model::{CodeGenerator, Pass1Inst, TargetCore};
 /// AVR instruction selection. It is exposed through `--emit-ir` for development and
 /// snapshot testing.
 pub fn emit_ir_text(ast: &[ASTNode]) -> Result<String, String> {
-    let funcs = build_ast::lower_program(ast, &build_ast::all_function_names(ast))?;
+    let funcs = build_ast::lower_program(ast, &build_ast::all_function_names(ast), &mut Vec::new())?;
     let mut s = String::new();
     for f in funcs {
         let f = opt::optimize(f);

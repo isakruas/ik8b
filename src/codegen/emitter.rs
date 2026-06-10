@@ -28,6 +28,7 @@ impl CodeGenerator {
             device_name: String::new(),
             regs_used: 0,
             spills: 0,
+            warnings: Vec::new(),
         }
     }
 

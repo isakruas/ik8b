@@ -115,4 +115,7 @@ pub struct CodeGenerator {
     // total number of values that had to be spilled to memory.
     pub(super) regs_used: u32,
     pub(super) spills: u32,
+    /// Non-fatal diagnostics collected during lowering (e.g. implicit narrowing).
+    /// Exposed so front ends (CLI, IDE) decide how to present them.
+    pub warnings: Vec<String>,
 }

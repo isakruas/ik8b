@@ -563,7 +563,7 @@ mod tests {
     fn compile_to_ir(src: &str) -> Vec<IrFunction> {
         let toks = Lexer::new(src).tokenize().expect("lex");
         let ast = Parser::new(toks).parse().expect("parse");
-        lower_program(&ast, &all_function_names(&ast)).expect("lower")
+        lower_program(&ast, &all_function_names(&ast), &mut Vec::new()).expect("lower")
     }
 
     #[test]
