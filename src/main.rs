@@ -515,11 +515,8 @@ fn run_compile(opts: CompileOpts) -> ! {
             process::exit(1);
         }
     }
-    let assembled = if parser.boot_origin.is_some() {
-        codegen::resolve_labels_at(&insts, (boot_origin_bytes / 2) as i64)
-    } else {
-        codegen::resolve_labels(&insts)
-    };
+    let assembled =
+        codegen::resolve_labels_for(&insts, (boot_origin_bytes / 2) as i64, device.flash_size / 2);
     let opcodes = match assembled {
         Ok(opcodes) => opcodes,
         Err(e) => {

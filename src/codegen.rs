@@ -37,7 +37,10 @@ mod emitter;
 mod pipeline;
 mod assembler;
 
-pub use assembler::{generate_intel_hex, generate_intel_hex_at, resolve_labels, resolve_labels_at};
+// `resolve_labels`/`resolve_labels_at` are part of the library surface (the
+// IDE links them); inside the binary itself only `resolve_labels_for` is used.
+#[allow(unused_imports)]
+pub use assembler::{generate_intel_hex, generate_intel_hex_at, resolve_labels, resolve_labels_at, resolve_labels_for};
 
 pub use model::{CodeGenerator, Pass1Inst, TargetCore};
 

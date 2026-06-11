@@ -33,9 +33,15 @@ enforces the differences at compile time:
 * The :func:`@spm` intrinsic requires self-programming support — rejected on
   ``AVRrc`` (see :doc:`/reference/intrinsics`).
 * On ``AVRrc`` the generated code restricts itself to the reduced register
-  file (``r16``–``r31``), uses ``RJMP`` interrupt vectors, and avoids the
-  instructions the reduced core lacks (``MOVW``, ``ADIW``/``SBIW``,
-  ``LDD``/``STD`` with displacement, two-word ``LDS``/``STS``).
+  file (``r16``–``r31``) and avoids the instructions the reduced core lacks
+  (``MOVW``, ``ADIW``/``SBIW``, ``LDD``/``STD`` with displacement, two-word
+  ``LDS``/``STS``). The bundled simulator enforces this: executing a reserved
+  encoding on an ``AVRrc`` device stops with an illegal-instruction error.
+* Parts with 8 KB of flash or less (any core) have no ``JMP``/``CALL``
+  instructions and use **1-word ``RJMP`` vector slots**; larger parts use the
+  fixed 2-word ``JMP`` slots. On the small parts a relative jump reaches the
+  whole flash by program-counter wraparound, which the compiler encodes and
+  the simulator models.
 
 The columns below are: core family, device name (use this exact name in
 ``target``), SRAM bytes, Flash bytes, EEPROM bytes, and the SRAM start address.

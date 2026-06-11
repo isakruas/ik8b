@@ -65,9 +65,15 @@ impl CodeGenerator {
         Ok(bindings)
     }
 
-    /// Emits one vector-table slot using the instruction width required by the core family.
+    /// Emits one vector-table slot using the instruction width the device's
+    /// vector table actually has: parts with 8 KB of flash or less use 1-word
+    /// RJMP vectors (they have no JMP instruction, and a 12-bit relative jump
+    /// reaches the whole flash), larger parts use the fixed 2-word JMP.
     pub(super) fn emit_vector_jump(&mut self, label: &str) {
-        if self.target_core == TargetCore::AVRrc {
+        let small_flash = crate::devices::lookup_device(&self.device_name)
+            .map(|d| d.flash_size <= 8192)
+            .unwrap_or(false);
+        if self.target_core == TargetCore::AVRrc || small_flash {
             self.emit(Pass1Inst::RJumpL(label.to_string()));
         } else {
             self.emit(Pass1Inst::JmpAbsL(label.to_string()));

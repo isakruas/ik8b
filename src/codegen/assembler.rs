@@ -230,6 +230,7 @@ fn label_addr(label_addresses: &HashMap<String, i64>, label: &str) -> Result<i64
 /// - BRBS/BRBC remain short branches (7-bit signed).
 /// - Frontend emits "BRxx skip; RJMP target" patterns when target distance can grow.
 /// - RJMP/RCALL are promoted to JMP/CALL only when 12-bit signed range is exceeded.
+#[allow(dead_code)] // library-surface convenience wrapper (used by the IDE)
 pub fn resolve_labels(instructions: &[Pass1Inst]) -> Result<Vec<u16>, String> {
     resolve_labels_at(instructions, 0)
 }
@@ -238,7 +239,24 @@ pub fn resolve_labels(instructions: &[Pass1Inst]) -> Result<Vec<u16>, String> {
 /// word address). Relative branches are unaffected (origin cancels), so only
 /// absolute targets — JMP/CALL, function pointers and flash-data addresses —
 /// get the origin added. Used to locate a bootloader in the Boot Loader Section.
+#[allow(dead_code)] // library-surface convenience wrapper (used by the IDE)
 pub fn resolve_labels_at(instructions: &[Pass1Inst], word_origin: i64) -> Result<Vec<u16>, String> {
+    resolve_labels_for(instructions, word_origin, 0)
+}
+
+/// Like [`resolve_labels_at`], but aware of the device's flash size in words.
+/// Devices with more than 8 KB of flash have the 2-word JMP/CALL instructions,
+/// so out-of-range RJMP/RCALL are promoted to them. Parts with 8 KB or less do
+/// NOT have JMP/CALL — there the program counter is exactly wide enough that a
+/// 12-bit relative jump reaches the whole flash by wrapping around, which is
+/// what real silicon does, so out-of-range offsets are encoded modulo the
+/// flash word count instead. `flash_words == 0` means "unknown, assume large".
+pub fn resolve_labels_for(
+    instructions: &[Pass1Inst],
+    word_origin: i64,
+    flash_words: u32,
+) -> Result<Vec<u16>, String> {
+    let wrap_relative = flash_words > 0 && flash_words <= 4096;
     let optimized_instructions = peephole_optimize(instructions);
     let instructions = &optimized_instructions;
     let n = instructions.len();
@@ -267,7 +285,7 @@ pub fn resolve_labels_at(instructions: &[Pass1Inst], word_origin: i64) -> Result
                 Pass1Inst::Label(_) => {}
                 Pass1Inst::Op(_) | Pass1Inst::BrbsL(_, _) | Pass1Inst::BrbcL(_, _) | Pass1Inst::DataWord(_) => addr += 1,
                 Pass1Inst::RJumpL(label) | Pass1Inst::RCallL(label) => {
-                    if !is_long[idx] {
+                    if !is_long[idx] && !wrap_relative {
                         let target = label_addr(&label_addresses, label)?;
                         let offset = target - (addr + 1);
                         if offset < -2048 || offset > 2047 {
@@ -324,7 +342,10 @@ pub fn resolve_labels_at(instructions: &[Pass1Inst], word_origin: i64) -> Result
                     final_opcodes.push((k & 0xFFFF) as u16);
                     addr += 2;
                 } else {
-                    let offset = target - (addr + 1);
+                    let mut offset = target - (addr + 1);
+                    if wrap_relative && !(-2048..=2047).contains(&offset) {
+                        offset = offset.rem_euclid(flash_words as i64);
+                    }
                     final_opcodes.push(0xC000 | ((offset as u16) & 0x0FFF)); // RJMP
                     addr += 1;
                 }
@@ -337,7 +358,10 @@ pub fn resolve_labels_at(instructions: &[Pass1Inst], word_origin: i64) -> Result
                     final_opcodes.push((k & 0xFFFF) as u16);
                     addr += 2;
                 } else {
-                    let offset = target - (addr + 1);
+                    let mut offset = target - (addr + 1);
+                    if wrap_relative && !(-2048..=2047).contains(&offset) {
+                        offset = offset.rem_euclid(flash_words as i64);
+                    }
                     final_opcodes.push(0xD000 | ((offset as u16) & 0x0FFF)); // RCALL
                     addr += 1;
                 }

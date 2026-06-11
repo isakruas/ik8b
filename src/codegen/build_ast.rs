@@ -1279,6 +1279,20 @@ impl<'a> Lower<'a> {
                     }
                 }
             }
+            // `@burn`'s literal cycle count is consumed at compile time by the
+            // backend (which chunks it into delay loops), so it may exceed the
+            // 16-bit value range that applies to ordinary literals.
+            if name == "@burn" && i == 0 {
+                if let Expr::Literal(n) = a {
+                    if *n < 0 {
+                        return Err(
+                            "Intrinsic @burn expects a non-negative cycle count".to_string()
+                        );
+                    }
+                    avals.push(self.b.iconst(i64::from(*n), IrType::U16));
+                    continue;
+                }
+            }
             let pty = param_tys
                 .as_ref()
                 .and_then(|p| p.get(i))

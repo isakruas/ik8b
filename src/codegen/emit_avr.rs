@@ -1289,17 +1289,30 @@ impl<'a> Emitter<'a> {
         Ok(())
     }
 
-    /// IN Rd, io  when the data address is in the low I/O window, else LDS Rd, addr.
-    /// On the reduced core I/O maps at data 0x00..0x3F (no register-file alias) and
-    /// the 2-word LDS encoding does not exist, so higher addresses go through Z.
+    /// True for the cores whose I/O file sits directly at data 0x00-0x3F
+    /// (AVRrc, AVRxt, AVRxm); the classic cores alias it at 0x20-0x5F behind
+    /// the memory-mapped register file.
+    fn io_at_data_zero(&self) -> bool {
+        matches!(
+            self.target_core,
+            TargetCore::AVRrc | TargetCore::AVRxt | TargetCore::AVRxm
+        )
+    }
+
+    /// IN Rd, io  when the data address is in the device's I/O window, else a
+    /// direct load. On the reduced core the 2-word LDS encoding does not
+    /// exist, so higher addresses go through Z instead.
     fn emit_in_or_lds(&mut self, dr: u8, data_addr: u16) {
-        if self.target_core == TargetCore::AVRrc {
+        if self.io_at_data_zero() {
             if data_addr < 0x40 {
                 let io = data_addr;
                 self.emit(0xB000 | ((io & 0x30) << 5) | ((dr as u16) << 4) | (io & 0x0F));
-            } else {
+            } else if self.target_core == TargetCore::AVRrc {
                 self.load_imm16_reg(30, data_addr);
                 self.emit(0x8000 | ((dr as u16) << 4)); // LD dr, Z
+            } else {
+                self.emit(0x9000 | ((dr as u16) << 4)); // LDS Rd, k (2-word)
+                self.emit(data_addr);
             }
             return;
         }
@@ -1312,16 +1325,19 @@ impl<'a> Emitter<'a> {
         }
     }
 
-    /// OUT io, Rr  when the data address is in the low I/O window, else STS addr, Rr.
-    /// Same reduced-core mapping as `emit_in_or_lds`: OUT below 0x40, ST Z above.
+    /// OUT io, Rr  when the data address is in the device's I/O window, else a
+    /// direct store. Same per-core mapping as `emit_in_or_lds`.
     fn emit_out_or_sts(&mut self, data_addr: u16, rr: u8) {
-        if self.target_core == TargetCore::AVRrc {
+        if self.io_at_data_zero() {
             if data_addr < 0x40 {
                 let io = data_addr;
                 self.emit(0xB800 | ((io & 0x30) << 5) | ((rr as u16) << 4) | (io & 0x0F));
-            } else {
+            } else if self.target_core == TargetCore::AVRrc {
                 self.load_imm16_reg(30, data_addr);
                 self.emit(0x8200 | ((rr as u16) << 4)); // ST Z, rr
+            } else {
+                self.emit(0x9200 | ((rr as u16) << 4)); // STS k, Rr (2-word)
+                self.emit(data_addr);
             }
             return;
         }
