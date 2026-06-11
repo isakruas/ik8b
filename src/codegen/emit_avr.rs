@@ -290,7 +290,12 @@ impl<'a> Emitter<'a> {
             self.out.push(Pass1Inst::Label(name.to_string()));
 
             // Prologue: clear r1 (codegen assumes r1==0), push callee-saved.
-            self.emit(0x2411); // CLR R1 (EOR R1,R1)
+            // The reduced core has no r1 (register file is r16..r31); nothing
+            // on its emission paths consumes the zero invariant (MUL and the
+            // fixed-point runtime are unavailable there).
+            if self.target_core != TargetCore::AVRrc {
+                self.emit(0x2411); // CLR R1 (EOR R1,R1)
+            }
             let callee = self.used_callee.clone();
             for &r in &callee {
                 self.emit(0x920F | ((r as u16) << 4)); // PUSH
@@ -353,12 +358,22 @@ impl<'a> Emitter<'a> {
             return;
         }
 
-        // Save r0 and SREG (via r0), then r1; re-establish the r1==0 invariant.
-        self.emit(0x920F); // PUSH R0
-        self.emit(0xB60F); // IN R0, SREG (0x3F)
-        self.emit(0x920F); // PUSH R0  (saved SREG)
-        self.emit(0x921F); // PUSH R1
-        self.emit(0x2411); // CLR R1
+        if self.target_core == TargetCore::AVRrc {
+            // Reduced core: r0/r1 do not exist, so SREG is staged through r16.
+            // The saved set pushed below may include r16 again; its restore
+            // only re-loads the SREG copy, which the final POP R16 overwrites
+            // with the real caller value.
+            self.emit(0x930F); // PUSH R16
+            self.emit(0xB70F); // IN R16, SREG (0x3F)
+            self.emit(0x930F); // PUSH R16 (saved SREG)
+        } else {
+            // Save r0 and SREG (via r0), then r1; re-establish the r1==0 invariant.
+            self.emit(0x920F); // PUSH R0
+            self.emit(0xB60F); // IN R0, SREG (0x3F)
+            self.emit(0x920F); // PUSH R0  (saved SREG)
+            self.emit(0x921F); // PUSH R1
+            self.emit(0x2411); // CLR R1
+        }
         let saved = self.isr_saved.clone();
         for &r in &saved {
             self.emit(0x920F | ((r as u16) << 4)); // PUSH r
@@ -605,14 +620,17 @@ impl<'a> Emitter<'a> {
                 // sign is sign(lhs)^sign(rhs) for `/` and sign(lhs) for `%`; we save it on
                 // the stack (abs destroys it) and conditionally negate the result.
                 let signed = self.f.value_type(dst).is_signed();
+                // Division scratch: r0 normally; the reduced core has no r0,
+                // so it uses r29 (never allocated there: pool is r18..r28).
+                let t = if self.target_core == TargetCore::AVRrc { 29u8 } else { 0u8 };
                 if signed {
                     let hi_d = if pair { dr + 1 } else { dr };
                     let hi_r = if pair { rr + 1 } else { rr };
-                    self.mov(0, hi_d); // r0 = high byte of dividend (sign in bit7)
+                    self.mov(t, hi_d); // t = high byte of dividend (sign in bit7)
                     if matches!(op, BinOp::Div) {
-                        self.emit(Self::rdrr(0x2400, 0, hi_r)); // EOR r0, hi(divisor)
+                        self.emit(Self::rdrr(0x2400, t, hi_r)); // EOR t, hi(divisor)
                     }
-                    self.emit(0x920F); // PUSH r0 (saved sign)
+                    self.emit(0x920F | ((t as u16) << 4)); // PUSH t (saved sign)
                     self.emit_abs(dr, pair);
                     self.emit_abs(rr, pair);
                 }
@@ -620,33 +638,33 @@ impl<'a> Emitter<'a> {
                 let skip_lbl = self.uniq("divskip");
                 if !pair {
                     // Unsigned 8-bit restoring division. dr holds the dividend and becomes
-                    // the quotient; the remainder accumulates in r0; r16 is the counter.
+                    // the quotient; the remainder accumulates in t; r16 is the counter.
                     let mut vv = rr;
                     if vv == dr {
                         self.mov(SCR_HI, vv); // r17 = divisor copy
                         vv = SCR_HI;
                     }
-                    self.emit(Self::rdrr(0x2400, 0, 0)); // CLR r0 (remainder)
+                    self.emit(Self::rdrr(0x2400, t, t)); // CLR t (remainder)
                     self.ldi(SCR_LO, 8); // counter = 8
                     self.out.push(Pass1Inst::Label(loop_lbl.clone()));
                     self.emit(Self::rdrr(0x0C00, dr, dr)); // LSL quotient
-                    self.emit(Self::rdrr(0x1C00, 0, 0)); // ROL r0 (remainder)
-                    self.emit(Self::rdrr(0x1400, 0, vv)); // CP r0, vv
+                    self.emit(Self::rdrr(0x1C00, t, t)); // ROL t (remainder)
+                    self.emit(Self::rdrr(0x1400, t, vv)); // CP t, vv
                     self.out.push(Pass1Inst::BrbsL(0, skip_lbl.clone())); // BRLO skip
-                    self.emit(Self::rdrr(0x1800, 0, vv)); // SUB r0, vv
+                    self.emit(Self::rdrr(0x1800, t, vv)); // SUB t, vv
                     self.emit(0x9403 | ((dr as u16) << 4)); // INC quotient
                     self.out.push(Pass1Inst::Label(skip_lbl));
                     self.emit(0x940A | ((SCR_LO as u16) << 4)); // DEC counter
                     self.out.push(Pass1Inst::BrbcL(1, loop_lbl)); // BRNE loop
                     if matches!(op, BinOp::Rem) {
-                        self.mov(dr, 0);
+                        self.mov(dr, t);
                     }
                 } else {
                     // Unsigned 16-bit restoring division. dr:dr+1 = dividend->quotient,
                     // rr:rr+1 = divisor (interferes with the result, so it never aliases
-                    // dr), remainder in r16:r17, counter in r0.
+                    // dr), remainder in r16:r17, counter in t.
                     self.ldi(SCR_LO, 16);
-                    self.mov(0, SCR_LO); // r0 = counter (16)
+                    self.mov(t, SCR_LO); // t = counter (16)
                     self.emit(Self::rdrr(0x2400, SCR_LO, SCR_LO)); // CLR r16 (rem lo)
                     self.emit(Self::rdrr(0x2400, SCR_HI, SCR_HI)); // CLR r17 (rem hi)
                     self.out.push(Pass1Inst::Label(loop_lbl.clone()));
@@ -661,16 +679,16 @@ impl<'a> Emitter<'a> {
                     self.emit(Self::rdrr(0x0800, SCR_HI, rr + 1)); // SBC rem.hi, div.hi
                     self.emit(0x9403 | ((dr as u16) << 4)); // INC q.lo (set bit0)
                     self.out.push(Pass1Inst::Label(skip_lbl));
-                    self.emit(0x940A); // DEC r0 (counter)
+                    self.emit(0x940A | ((t as u16) << 4)); // DEC t (counter)
                     self.out.push(Pass1Inst::BrbcL(1, loop_lbl)); // BRNE loop
                     if matches!(op, BinOp::Rem) {
                         self.movw_or_pair(dr, SCR_LO); // remainder r16:r17 -> dst
                     }
                 }
                 if signed {
-                    self.emit(0x900F); // POP r0 (saved sign)
+                    self.emit(0x900F | ((t as u16) << 4)); // POP t (saved sign)
                     let skip = self.uniq("sgnskip");
-                    self.emit(Self::rdrr(0x2000, 0, 0)); // TST r0 (N = sign bit)
+                    self.emit(Self::rdrr(0x2000, t, t)); // TST t (N = sign bit)
                     self.out.push(Pass1Inst::BrbcL(2, skip.clone())); // BRPL -> skip (positive)
                     self.emit_neg(dr, pair);
                     self.out.push(Pass1Inst::Label(skip));
@@ -909,10 +927,12 @@ impl<'a> Emitter<'a> {
             }
             UnOp::Neg => {
                 if pair {
-                    return Err("backend: 16-bit neg not yet implemented".to_string());
+                    self.movw_or_pair(dr, ar);
+                    self.emit_neg(dr, true);
+                } else {
+                    self.mov(dr, ar);
+                    self.emit(0x9401 | ((dr as u16) << 4)); // NEG
                 }
-                self.mov(dr, ar);
-                self.emit(0x9401 | ((dr as u16) << 4)); // NEG
             }
             UnOp::LogicalNot => {
                 // arg is a 0/1 boolean; logical-not flips bit 0: result = arg ^ 1.
@@ -1091,12 +1111,14 @@ impl<'a> Emitter<'a> {
                 self.mov(d, s);
             } else {
                 // Every destination is also a needed source: a pure cycle. Park one
-                // value in r0 (a true scratch) and redirect readers of it to r0.
+                // value in a true scratch register and redirect readers of it there.
+                // r0 normally; r29 on the reduced core (no r0, never allocated).
+                let scratch = if self.target_core == TargetCore::AVRrc { 29 } else { 0 };
                 let (d, _s) = moves[0];
-                self.mov(0, d);
+                self.mov(scratch, d);
                 for m in moves.iter_mut() {
                     if m.1 == d {
-                        m.1 = 0;
+                        m.1 = scratch;
                     }
                 }
             }
@@ -1268,7 +1290,19 @@ impl<'a> Emitter<'a> {
     }
 
     /// IN Rd, io  when the data address is in the low I/O window, else LDS Rd, addr.
+    /// On the reduced core I/O maps at data 0x00..0x3F (no register-file alias) and
+    /// the 2-word LDS encoding does not exist, so higher addresses go through Z.
     fn emit_in_or_lds(&mut self, dr: u8, data_addr: u16) {
+        if self.target_core == TargetCore::AVRrc {
+            if data_addr < 0x40 {
+                let io = data_addr;
+                self.emit(0xB000 | ((io & 0x30) << 5) | ((dr as u16) << 4) | (io & 0x0F));
+            } else {
+                self.load_imm16_reg(30, data_addr);
+                self.emit(0x8000 | ((dr as u16) << 4)); // LD dr, Z
+            }
+            return;
+        }
         if (0x20..=0x5F).contains(&data_addr) {
             let io = data_addr - 0x20;
             self.emit(0xB000 | ((io & 0x30) << 5) | ((dr as u16) << 4) | (io & 0x0F));
@@ -1279,7 +1313,18 @@ impl<'a> Emitter<'a> {
     }
 
     /// OUT io, Rr  when the data address is in the low I/O window, else STS addr, Rr.
+    /// Same reduced-core mapping as `emit_in_or_lds`: OUT below 0x40, ST Z above.
     fn emit_out_or_sts(&mut self, data_addr: u16, rr: u8) {
+        if self.target_core == TargetCore::AVRrc {
+            if data_addr < 0x40 {
+                let io = data_addr;
+                self.emit(0xB800 | ((io & 0x30) << 5) | ((rr as u16) << 4) | (io & 0x0F));
+            } else {
+                self.load_imm16_reg(30, data_addr);
+                self.emit(0x8200 | ((rr as u16) << 4)); // ST Z, rr
+            }
+            return;
+        }
         if (0x20..=0x5F).contains(&data_addr) {
             let io = data_addr - 0x20;
             self.emit(0xB800 | ((io & 0x30) << 5) | ((rr as u16) << 4) | (io & 0x0F));
@@ -1358,10 +1403,13 @@ impl<'a> Emitter<'a> {
             _ => return Err("backend: malformed call".to_string()),
         }
 
-        // Drop the stack-passed argument bytes. POP into r0 (true scratch — no
-        // value is live there across a call) keeps SP arithmetic out of the picture.
+        // Drop the stack-passed argument bytes. POP into a true scratch (r0;
+        // r16 on the reduced core, which has no r0 and never allocates r16) —
+        // no value is live there across a call — keeps SP arithmetic out of
+        // the picture.
+        let junk = if self.target_core == TargetCore::AVRrc { 16 } else { 0 };
         for _ in 0..pushed {
-            self.emit_pop(0);
+            self.emit_pop(junk);
         }
 
         // Move the return value out of r24:r25 into its allocated register.
@@ -1590,10 +1638,12 @@ impl<'a> Emitter<'a> {
                         self.mov(30, r);
                         self.mov(31, r + 1);
                         if self.target_core == TargetCore::AVRrc {
-                            // The reduced core has no SBIW: test-for-zero and the
-                            // pair decrement are done with byte ops (SUBI/SBCI).
-                            self.emit(0x2E0E); // mov r0, r30
-                            self.emit(0x2A0F); // or  r0, r31
+                            // The reduced core has no SBIW and no r0: the pair is
+                            // tested for zero with SUBI/SBCI #0 (registers unchanged,
+                            // Z accumulates across the pair) and decremented with
+                            // byte ops (SUBI/SBCI).
+                            self.emit(0x50E0); // subi r30, 0
+                            self.emit(0x40F0); // sbci r31, 0
                             self.emit(0xF019); // breq .+3 words (skip the loop if 0)
                             self.emit(0x50E1); // subi r30, 1
                             self.emit(0x40F0); // sbci r31, 0
@@ -1726,10 +1776,16 @@ impl<'a> Emitter<'a> {
                 self.emit(0x900F | ((r as u16) << 4)); // POP r
             }
             if self.isr_full_frame {
-                self.emit(0x901F); // POP R1
-                self.emit(0x900F); // POP R0  (saved SREG)
-                self.emit(0xBE0F); // OUT SREG, R0 (0x3F)
-                self.emit(0x900F); // POP R0
+                if self.target_core == TargetCore::AVRrc {
+                    self.emit(0x910F); // POP R16 (saved SREG)
+                    self.emit(0xBF0F); // OUT SREG, R16 (0x3F)
+                    self.emit(0x910F); // POP R16
+                } else {
+                    self.emit(0x901F); // POP R1
+                    self.emit(0x900F); // POP R0  (saved SREG)
+                    self.emit(0xBE0F); // OUT SREG, R0 (0x3F)
+                    self.emit(0x900F); // POP R0
+                }
             }
             self.emit(0x9518); // RETI
             return Ok(());

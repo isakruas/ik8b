@@ -21,9 +21,21 @@ Family       Notes
 ``AVRxt``    Newer "AVRxt" core (megaAVR 0-series, tinyAVR 0/1/2-series, etc.).
 ============ ======================================================================
 
-The core family determines which instructions are available. For example, the
-:func:`@mul` intrinsic requires a hardware multiplier and is rejected on
-``AVRrc`` parts (see :doc:`/reference/intrinsics`).
+The core family determines which instructions are available, and the compiler
+enforces the differences at compile time:
+
+* The :func:`@mul` intrinsic and the fixed-point (``r8``/``r16``) multiply and
+  divide runtime require a hardware multiplier — rejected on ``AVRe`` and
+  ``AVRrc`` (integer ``*`` falls back to a shift-add loop there).
+* ``eeprom`` storage uses the classic access protocol — rejected on ``AVRxt``,
+  ``AVRxm``, and ``AVRrc`` (see :doc:`/reference/memory`).
+* ``flash`` data reads use ``LPM`` — rejected on ``AVRrc``.
+* The :func:`@spm` intrinsic requires self-programming support — rejected on
+  ``AVRrc`` (see :doc:`/reference/intrinsics`).
+* On ``AVRrc`` the generated code restricts itself to the reduced register
+  file (``r16``–``r31``), uses ``RJMP`` interrupt vectors, and avoids the
+  instructions the reduced core lacks (``MOVW``, ``ADIW``/``SBIW``,
+  ``LDD``/``STD`` with displacement, two-word ``LDS``/``STS``).
 
 The columns below are: core family, device name (use this exact name in
 ``target``), SRAM bytes, Flash bytes, EEPROM bytes, and the SRAM start address.
@@ -290,8 +302,8 @@ Device table
    AVRxm      atxmega64d3            4096    69632     2048 0x2000
    AVRxm      atxmega64d4            4096    69632     2048 0x2000
    AVRxm      atxmega8e5             1024    10240      512 0x2000
-   AVRxm      avr64du28              8192    65536     5376 0x6000
-   AVRxm      avr64du32              8192    65536     5376 0x6000
+   AVRxt      avr64du28              8192    65536     5376 0x6000
+   AVRxt      avr64du32              8192    65536     5376 0x6000
    AVRxt      atmega1608             2048    16384     5376 0x3800
    AVRxt      atmega1609             2048    16384     5376 0x3800
    AVRxt      atmega3208             4096    32768     5376 0x3000

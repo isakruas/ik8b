@@ -94,6 +94,24 @@
         0 -> $ok
     }
 
+    # 11. 16-bit unary negation: -x wraps modulo 2^16 for u16, and a low byte
+    # of zero must still propagate the +1 into the high byte (-256 case).
+    ram mut $v1: u16 = 5
+    ram mut $w1: u16 = -$v1
+    ? $w1 != 65531 {
+        0 -> $ok
+    }
+    ram mut $v2: u16 = 256
+    ram mut $w2: u16 = -$v2
+    ? $w2 != 65280 {
+        0 -> $ok
+    }
+    ram mut $v3: i16 = -1000
+    ram mut $w3: i16 = -$v3
+    ? $w3 != 1000 {
+        0 -> $ok
+    }
+
     # Force success status into R16 by storing into an SRAM array
     ram mut $res_arr: u8[1] = 0
     $ok -> $res_arr[0]

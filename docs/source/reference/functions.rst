@@ -62,12 +62,24 @@ statement.
 Calling convention
 ==================
 
-The compiler uses a register-based calling convention. Values are passed in AVR
-registers and the 16-bit return value travels in the ``R16`` register pair by
-convention. Callers and ISRs preserve registers as required; you do not manage
-this by hand, but it is useful to know when reading a VM register trace while
-debugging (the ``-t`` instruction trace on the bundled VM shows the register
-state).
+The compiler uses a register-based calling convention:
+
+* **Arguments** occupy register slots descending from ``r24``: the first
+  argument is in ``r24`` (``r24:r25`` for a 16-bit value), the second in
+  ``r22(:r23)``, and so on down to ``r16`` (``r18`` on the reduced ``AVRrc``
+  core, whose register file is ``r16``–``r31``).
+* **Surplus arguments** that do not fit the register slots travel on the
+  hardware stack: the caller pushes them in ascending byte order so they sit
+  just above the return address, the callee reads them with post-increment
+  loads through ``Z``, and the caller pops them after the call returns.
+* The **return value** travels in ``r24`` (``r24:r25`` for 16-bit values).
+* **Callee-saved registers** (values kept live across calls) are ``r2``–``r15``
+  on classic cores and ``r26``–``r28`` on ``AVRrc``; everything else is
+  call-clobbered.
+
+You do not manage any of this by hand, but it is useful to know when reading a
+VM register trace while debugging (the ``--trace`` instruction trace on the
+bundled VM shows the register state).
 
 Function pointers
 =================

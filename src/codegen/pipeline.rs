@@ -74,6 +74,29 @@ impl CodeGenerator {
         }
     }
 
+    /// Emits the reset stack-pointer initialisation (SP = RAMEND through r16).
+    /// Modern cores reset SP to RAMEND in hardware, but classic AT90S parts
+    /// reset it to 0, so every image sets it explicitly — SPL/SPH sit at I/O
+    /// 0x3D/0x3E on every AVR core family. SPH is written only when RAMEND
+    /// needs more than eight bits; parts with no SRAM (hardware stack) skip it.
+    fn emit_sp_init(&mut self) {
+        let Some(dev) = crate::devices::lookup_device(&self.device_name) else {
+            return;
+        };
+        if dev.sram_size == 0 {
+            return;
+        }
+        let ramend = dev.sram_start as u32 + dev.sram_size - 1;
+        let lo = (ramend & 0xFF) as u16;
+        self.emit(Pass1Inst::Op(0xE000 | ((lo & 0xF0) << 4) | (lo & 0x0F))); // LDI r16, lo(RAMEND)
+        self.emit(Pass1Inst::Op(0xBF0D)); // OUT SPL (0x3D), r16
+        if ramend > 0xFF {
+            let hi = ((ramend >> 8) & 0xFF) as u16;
+            self.emit(Pass1Inst::Op(0xE000 | ((hi & 0xF0) << 4) | (hi & 0x0F))); // LDI r16, hi(RAMEND)
+            self.emit(Pass1Inst::Op(0xBF0E)); // OUT SPH (0x3E), r16
+        }
+    }
+
     /// Emits reset/interrupt vectors plus the startup trampoline.
     pub(super) fn emit_startup(&mut self, bindings: &[InterruptBinding]) {
         if let Some(total_slots) = vector_slot_count(&self.device_name) {
@@ -91,6 +114,7 @@ impl CodeGenerator {
             }
 
             self.emit(Pass1Inst::Label("__start".to_string()));
+            self.emit_sp_init();
             self.emit(Pass1Inst::RCallL("@main".to_string()));
             self.emit(Pass1Inst::Op(0xFFFF));
             if needs_default_isr {
@@ -98,6 +122,7 @@ impl CodeGenerator {
                 self.emit(Pass1Inst::Op(0x9518)); // RETI
             }
         } else {
+            self.emit_sp_init();
             self.emit(Pass1Inst::RCallL("@main".to_string()));
             self.emit(Pass1Inst::Op(0xFFFF));
         }

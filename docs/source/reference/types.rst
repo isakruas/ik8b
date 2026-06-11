@@ -56,6 +56,13 @@ Because the format is fixed-point, range and precision are limited. Q8.8
 NaN or infinity; the math library's ``@isnan``/``@isinf`` predicates exist for
 API completeness and reflect this (a fixed-point value is always finite).
 
+.. admonition:: Per-core support
+
+   Fixed-point multiplication and division call a small runtime that requires
+   the hardware multiplier: a program that multiplies ``r8``/``r16`` values is
+   rejected at compile time on cores without ``MUL`` (``AVRe``), and the
+   fixed-point runtime is not available at all on the reduced ``AVRrc`` core.
+
 Arrays
 ======
 

@@ -10,6 +10,13 @@ Byte-wise access to the on-chip EEPROM, which retains its contents across power
 cycles. Both routines wait for any in-progress EEPROM operation to finish before
 starting, so they are safe to call back-to-back.
 
+.. note::
+
+   The module uses the classic ``EECR``/``EEAR``/``EEDR`` access protocol and is
+   available on ``AVRe``/``AVRe+`` cores only; on ``AVRxt``, ``AVRxm``, and
+   ``AVRrc`` targets EEPROM access is rejected at compile time (see
+   :doc:`/reference/memory`).
+
 .. function:: @eeprom_read($addr: u16) -> u8
 
    Return the byte stored at EEPROM address ``$addr``. Waits for the EEPROM to be

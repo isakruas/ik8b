@@ -26,6 +26,19 @@ the program runs. The compiler emits the correct access sequence for each space
 Flash), and it tracks the space in pointer types so a flash pointer is never
 dereferenced as if it were SRAM.
 
+.. admonition:: Per-core support
+
+   Not every space is available on every core family (see
+   :doc:`/toolchain/devices`):
+
+   * ``eeprom`` storage uses the classic ``EECR``/``EEAR``/``EEDR`` access
+     protocol and is supported on the classic cores (``AVRe``/``AVRe+``) only.
+     On ``AVRxt``, ``AVRxm``, and ``AVRrc`` targets an ``eeprom`` declaration
+     is rejected at compile time.
+   * ``flash`` data reads use the ``LPM`` instruction, which the reduced
+     ``AVRrc`` core does not have; ``flash`` declarations are rejected on
+     ``AVRrc`` targets.
+
 Scalar declarations
 ===================
 

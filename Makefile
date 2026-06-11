@@ -58,8 +58,8 @@ test: build
 	    if [ "$$fp" -gt 0 ] && [ "$$sram" -eq 0 ]; then rm -f $$tmp_src $$hex; continue; fi; \
 	     \
 	    if [ $$compile_rc -ne 0 ]; then \
-	      if echo "$$compile_out" | grep -q "Memory Error:"; then rm -f $$hex; continue; fi; \
-	      echo "  -> $$mcu: COMPILE FAIL. Error: $$compile_out"; suite_fail=1; rm -f $$hex; continue; \
+	      if echo "$$compile_out" | grep -q "Memory Error:"; then rm -f $$tmp_src $$hex; continue; fi; \
+	      echo "  -> $$mcu: COMPILE FAIL. Error: $$compile_out"; suite_fail=1; rm -f $$tmp_src $$hex; continue; \
 	    fi; \
 	    out="$$compile_out"; \
 	    rm -f $$tmp_src $$hex; \
