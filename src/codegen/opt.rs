@@ -579,6 +579,18 @@ mod tests {
     }
 
     #[test]
+    fn declaration_narrows_initializer() {
+        // `ram $small: u8 = <u16>` must truncate to 8 bits, just like an
+        // assignment does. Without it the high byte leaks back when the value is
+        // later widened (this was the std/adc ADC read returning 2x the value).
+        let src = "target atmega328p\n@f() -> u16 {\n  ram mut $big: u16 = 700\n  ram imut $small: u8 = $big\n  ram mut $w: u16 = $small\n  return $w\n}\n";
+        let funcs = compile_to_ir(src);
+        let opt = optimize(funcs.into_iter().next().unwrap());
+        let txt = print_function(&opt);
+        assert!(txt.contains("Trunc"), "narrowing declaration should truncate:\n{}", txt);
+    }
+
+    #[test]
     fn removes_dead_block() {
         let src = "target atmega328p\n@m($a: u8, $b: u8) -> u8 {\n  ? $a > $b { return $a } : { return $b }\n}\n";
         let funcs = compile_to_ir(src);

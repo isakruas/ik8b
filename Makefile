@@ -1,6 +1,6 @@
 # Makefile for ik8b Rust compiler
 
-.PHONY: all build compile test test-interrupts benchmark clean
+.PHONY: all build compile test test-unit test-std test-interrupts benchmark clean
 
 all: build
 
@@ -24,10 +24,14 @@ benchmark: build
 	@$(MAKE) -C benchmarks build
 	@$(MAKE) -C benchmarks compare
 
+# Run every test suite: Rust unit tests, the language suite across all MCUs,
+# and ISR/vector coverage.
+test: test-unit test-std test-interrupts
+
 # Run the automated language test suite across all supported MCUs.
 # MCU list is derived from `ik8b --list-devices` (no external registry needed).
 # Per test, the minimum SRAM is derived from compiler report output.
-test: build
+test-std: build
 	@echo "=========================================================="
 	@echo "Running Automated ik8b Test Suite across ALL fitting MCUs..."
 	@echo "=========================================================="
@@ -79,6 +83,14 @@ test: build
 	echo "Results: $$total_runs PASSED runs, $$fail FAILED test suites"; \
 	echo "=========================================================="; \
 	if [ $$fail -ne 0 ]; then exit 1; fi
+
+# Run the Rust unit tests (compiler internals) via Docker. `test` runs this
+# first; it can also be run on its own.
+test-unit: build
+	@echo "=========================================================="
+	@echo "Running Rust unit tests (cargo test) ..."
+	@echo "=========================================================="
+	docker run --rm -v "$(shell pwd):/volume" -w /volume rust:latest cargo test --release
 
 # Validate ISR/vector binding coverage for all devices in src/vectors.rs.
 test-interrupts: build

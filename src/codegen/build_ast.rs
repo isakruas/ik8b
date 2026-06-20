@@ -437,7 +437,10 @@ impl<'a> Lower<'a> {
                     let slot = self.ensure_slot(name);
                     if !ty.contains('[') {
                         // Scalar slot init: store the initial value at the base.
+                        // Coerce to the declared type so a wider initializer narrows
+                        // (e.g. `ram $b: u8 = <u16>` truncates), matching assignment.
                         let v = self.lower_expr(expr, Some(it))?;
+                        let v = self.coerce_to(v, it);
                         let space = self.var_space(name);
                         let addr = self.b.stack_addr(slot, IrType::Ptr { space });
                         self.b.store(space, addr, v);
@@ -449,7 +452,10 @@ impl<'a> Lower<'a> {
                         self.lower_array_init(name, slot, ty, expr)?;
                     }
                 } else {
+                    // Coerce to the declared type so a wider initializer narrows
+                    // (e.g. `ram $x: u8 = <u16>` truncates), matching assignment.
                     let v = self.lower_expr(expr, Some(it))?;
+                    let v = self.coerce_to(v, it);
                     let var = self.b.intern_var(name, it);
                     self.b.def_var(var, v);
                 }
