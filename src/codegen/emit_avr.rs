@@ -22,7 +22,7 @@ use super::regalloc;
 use super::spill;
 use super::types::{Space, Width};
 use crate::codegen::{Pass1Inst, TargetCore};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 /// Registers the allocator may use, in preference order. r0/r1 are reserved (r1 == 0),
 /// r16/r17 are immediate/store scratch, r26..r31 are X/Y/Z addressing scratch.
@@ -177,6 +177,10 @@ struct Emitter<'a> {
     /// Bytes a CALL pushes for the return address on this device (3 on >128 KB
     /// flash parts, else 2). Stack-passed arguments sit above it in the frame.
     ret_addr_bytes: u8,
+    /// Constant values whose register is never read because every use consumes
+    /// them as a compile-time immediate (shift amounts, power-of-two mul/div/rem
+    /// divisors). Their `iconst` need not materialize an `ldi`.
+    imm_only: HashSet<Value>,
 }
 
 impl<'a> Emitter<'a> {
@@ -213,6 +217,7 @@ impl<'a> Emitter<'a> {
             isr_saved: Vec::new(),
             isr_full_frame: false,
             ret_addr_bytes,
+            imm_only: HashSet::new(),
         }
     }
 
@@ -309,6 +314,8 @@ impl<'a> Emitter<'a> {
 
         // Bind ABI parameters (entry block params) to their assigned registers.
         self.emit_param_moves()?;
+
+        self.imm_only = self.compute_imm_only();
 
         // Emit blocks in layout order (entry first, then numeric order).
         let blocks: Vec<Block> = self.f.blocks().collect();
@@ -440,6 +447,77 @@ impl<'a> Emitter<'a> {
         Ok(())
     }
 
+    /// Finds constant values that are only ever consumed as compile-time immediates,
+    /// so their `iconst` can skip emitting an `ldi`. A value is register-read unless
+    /// every use is the immediate operand of a shift, or the power-of-two divisor of a
+    /// strength-reduced mul/div/rem (matching `emit_binary`'s lowering exactly).
+    fn compute_imm_only(&self) -> HashSet<Value> {
+        let mut reg_used: HashSet<Value> = HashSet::new();
+        for b in self.f.blocks() {
+            for &inst in self.f.block_insts(b) {
+                match self.f.inst_data(inst) {
+                    InstData::Binary { op, lhs, rhs } => {
+                        let (lhs, rhs) = (*lhs, *rhs);
+                        match op {
+                            // rhs (the shift amount) must be constant and is consumed
+                            // as an immediate; only the operand is read.
+                            BinOp::Shl | BinOp::Shr => {
+                                reg_used.insert(lhs);
+                            }
+                            BinOp::Mul => {
+                                if self.const_pow2(rhs).is_some() {
+                                    reg_used.insert(lhs);
+                                } else if self.const_pow2(lhs).is_some() {
+                                    reg_used.insert(rhs);
+                                } else {
+                                    reg_used.insert(lhs);
+                                    reg_used.insert(rhs);
+                                }
+                            }
+                            BinOp::Div | BinOp::Rem => {
+                                let signed = self
+                                    .f
+                                    .inst_result(inst)
+                                    .map(|r| self.f.value_type(r).is_signed())
+                                    .unwrap_or(true);
+                                if !signed && self.const_pow2(rhs).is_some() {
+                                    reg_used.insert(lhs);
+                                } else {
+                                    reg_used.insert(lhs);
+                                    reg_used.insert(rhs);
+                                }
+                            }
+                            _ => {
+                                reg_used.insert(lhs);
+                                reg_used.insert(rhs);
+                            }
+                        }
+                    }
+                    // Every operand of any other instruction is read from a register.
+                    other => {
+                        let mut d = other.clone();
+                        d.for_each_arg_mut(|v| {
+                            reg_used.insert(*v);
+                        });
+                    }
+                }
+            }
+        }
+        let mut imm_only = HashSet::new();
+        for b in self.f.blocks() {
+            for &inst in self.f.block_insts(b) {
+                if let InstData::Iconst(_) = self.f.inst_data(inst) {
+                    if let Some(v) = self.f.inst_result(inst) {
+                        if !reg_used.contains(&v) {
+                            imm_only.insert(v);
+                        }
+                    }
+                }
+            }
+        }
+        imm_only
+    }
+
     fn emit_block(&mut self, b: Block) -> Result<(), String> {
         let insts: Vec<Inst> = self.f.block_insts(b).to_vec();
         for (i, &inst) in insts.iter().enumerate() {
@@ -455,7 +533,11 @@ impl<'a> Emitter<'a> {
         match &data {
             InstData::Iconst(c) => {
                 let v = result.unwrap();
-                self.load_imm(v, *c)?;
+                // Skip the load entirely when this constant is only ever read as a
+                // compile-time immediate (its register is never used).
+                if !self.imm_only.contains(&v) {
+                    self.load_imm(v, *c)?;
+                }
             }
             InstData::Binary { op, lhs, rhs } => {
                 self.emit_binary(result.unwrap(), *op, *lhs, *rhs)?;
@@ -595,6 +677,23 @@ impl<'a> Emitter<'a> {
         // Multiply does not follow the two-address pattern (result comes from R1:R0), so
         // handle it before the dst<-lhs move the other ops need.
         if op == BinOp::Mul {
+            // Strength-reduce `x * 2^k` to a left shift (commutative, so check either
+            // operand). Correct for both signed and unsigned since only the low
+            // word is kept. This replaces a multi-instruction MUL expansion (or the
+            // soft-mul loop on cores without hardware MUL) with a few shifts.
+            if let Some((k, src)) = self
+                .const_pow2(rhs)
+                .map(|k| (k, lr))
+                .or_else(|| self.const_pow2(lhs).map(|k| (k, rr)))
+            {
+                if pair {
+                    self.movw_or_pair(dr, src);
+                } else {
+                    self.mov(dr, src);
+                }
+                self.emit_shift_const(dr, k as i64, pair, true, false);
+                return Ok(());
+            }
             if !self.target_core.supports_mul() {
                 return self.emit_soft_mul(dr, lr, rr, pair);
             }
@@ -620,6 +719,27 @@ impl<'a> Emitter<'a> {
                 // sign is sign(lhs)^sign(rhs) for `/` and sign(lhs) for `%`; we save it on
                 // the stack (abs destroys it) and conditionally negate the result.
                 let signed = self.f.value_type(dst).is_signed();
+                // Strength-reduce unsigned `x / 2^k` to a logical right shift and
+                // `x % 2^k` to a bit mask. Only valid unsigned: signed division rounds
+                // toward zero, which an arithmetic shift does not. (dst already holds
+                // lhs from the move above.)
+                if !signed {
+                    if let Some(k) = self.const_pow2(rhs) {
+                        if matches!(op, BinOp::Div) {
+                            self.emit_shift_const(dr, k as i64, pair, false, false);
+                        } else {
+                            // dst &= (2^k - 1)
+                            let mask: u32 = (1u32 << k).wrapping_sub(1);
+                            self.ldi(SCR_LO, (mask & 0xFF) as u8);
+                            self.emit(Self::rdrr(0x2000, dr, SCR_LO)); // AND lo
+                            if pair {
+                                self.ldi(SCR_HI, ((mask >> 8) & 0xFF) as u8);
+                                self.emit(Self::rdrr(0x2000, dr + 1, SCR_HI)); // AND hi
+                            }
+                        }
+                        return Ok(());
+                    }
+                }
                 // Division scratch: r0 normally; the reduced core has no r0,
                 // so it uses r29 (never allocated there: pool is r18..r28).
                 let t = if self.target_core == TargetCore::AVRrc { 29u8 } else { 0u8 };
@@ -699,27 +819,7 @@ impl<'a> Emitter<'a> {
                     "backend: shift by a non-constant amount not yet implemented".to_string()
                 })?;
                 let signed = self.f.value_type(dst).is_signed();
-                for _ in 0..k.min(64) {
-                    if matches!(op, BinOp::Shl) {
-                        // LSL low (= ADD dr,dr); ROL high.
-                        self.emit(Self::rdrr(0x0C00, dr, dr));
-                        if pair {
-                            self.emit(Self::rdrr(0x1C00, dr + 1, dr + 1)); // ROL = ADC dr+1,dr+1
-                        }
-                    } else if pair {
-                        // High byte first, then rotate into low.
-                        if signed {
-                            self.emit(0x9405 | (((dr + 1) as u16) << 4)); // ASR high
-                        } else {
-                            self.emit(0x9406 | (((dr + 1) as u16) << 4)); // LSR high
-                        }
-                        self.emit(0x9407 | ((dr as u16) << 4)); // ROR low
-                    } else if signed {
-                        self.emit(0x9405 | ((dr as u16) << 4)); // ASR
-                    } else {
-                        self.emit(0x9406 | ((dr as u16) << 4)); // LSR
-                    }
-                }
+                self.emit_shift_const(dr, k, pair, matches!(op, BinOp::Shl), signed);
             }
             _ => {
                 return Err(format!("backend: binary op {:?} not yet implemented", op));
@@ -810,6 +910,63 @@ impl<'a> Emitter<'a> {
         self.emit(Self::rdrr(lo, dr, second));
         if pair {
             self.emit(Self::rdrr(hi, dr + 1, second + 1));
+        }
+    }
+
+    /// If `v` is a constant that is a positive power of two (1, 2, 4, ...), returns its
+    /// base-2 logarithm, i.e. the shift amount equivalent to multiplying/dividing by it.
+    fn const_pow2(&self, v: Value) -> Option<u32> {
+        let c = self.const_amount(v)?;
+        if c > 0 && (c & (c - 1)) == 0 {
+            Some(c.trailing_zeros())
+        } else {
+            None
+        }
+    }
+
+    /// Emits a constant-amount shift of `dr` (a register pair when `pair`). `is_shl`
+    /// selects left vs. right; `signed` selects arithmetic (sign-preserving) vs. logical
+    /// right shift. For pairs a shift of 8 or more is done as a byte move plus the
+    /// residual shift, so e.g. `/ 256` or `* 256` costs a couple of instructions instead
+    /// of an eight-iteration bit loop.
+    fn emit_shift_const(&mut self, dr: u8, k0: i64, pair: bool, is_shl: bool, signed: bool) {
+        let mut k = k0.max(0) as u32;
+        if pair && k >= 8 {
+            if is_shl {
+                self.mov(dr + 1, dr); // high <- low
+                self.emit(Self::rdrr(0x2400, dr, dr)); // CLR low
+            } else {
+                self.mov(dr, dr + 1); // low <- high
+                if signed {
+                    self.emit(Self::rdrr(0x2400, dr + 1, dr + 1)); // CLR high
+                    self.emit(0xFC00 | ((dr as u16) << 4) | 7); // SBRC low, 7
+                    self.emit(0x9400 | (((dr + 1) as u16) << 4)); // COM high (-> 0xFF if sign set)
+                } else {
+                    self.emit(Self::rdrr(0x2400, dr + 1, dr + 1)); // CLR high
+                }
+            }
+            k -= 8;
+        }
+        for _ in 0..k.min(64) {
+            if is_shl {
+                // LSL low (= ADD dr,dr); ROL high.
+                self.emit(Self::rdrr(0x0C00, dr, dr));
+                if pair {
+                    self.emit(Self::rdrr(0x1C00, dr + 1, dr + 1)); // ROL = ADC dr+1,dr+1
+                }
+            } else if pair {
+                // High byte first, then rotate into low.
+                if signed {
+                    self.emit(0x9405 | (((dr + 1) as u16) << 4)); // ASR high
+                } else {
+                    self.emit(0x9406 | (((dr + 1) as u16) << 4)); // LSR high
+                }
+                self.emit(0x9407 | ((dr as u16) << 4)); // ROR low
+            } else if signed {
+                self.emit(0x9405 | ((dr as u16) << 4)); // ASR
+            } else {
+                self.emit(0x9406 | ((dr as u16) << 4)); // LSR
+            }
         }
     }
 
