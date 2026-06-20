@@ -284,6 +284,9 @@ impl CodeGenerator {
         // bytes — when ik8bvm models that, switch on flash_size here too.
         let ret_addr_bytes = 2u8;
 
+        // Emit every function, keeping its symbolic stream so identical-code folding can drop
+        // exact duplicates before they reach the flash image. (name, is_isr, sram_used, insts)
+        let mut fn_streams: Vec<(String, bool, u16, Vec<Pass1Inst>)> = Vec::new();
         for (idx, (name, is_isr)) in order.iter().enumerate() {
             let f = ir_funcs
                 .get(name)
@@ -307,8 +310,20 @@ impl CodeGenerator {
             // Peak register pressure across functions; total spills program-wide.
             self.regs_used = self.regs_used.max(emitted.regs_used);
             self.spills += emitted.spills;
-            for inst in emitted.insts {
-                self.emit(inst);
+            fn_streams.push((name.clone(), *is_isr, emitted.sram_used, emitted.insts));
+        }
+
+        // Identical-code folding (ICF): functions whose emitted bodies are byte-for-byte
+        // identical (modulo their own unique labels) are merged — one copy is kept and the
+        // others' callers are redirected to it. See `fold_identical_functions` for the
+        // safety preconditions.
+        let (dropped, rename) = fold_identical_functions(&fn_streams);
+        for (name, _is_isr, _sram, insts) in &fn_streams {
+            if dropped.contains(name) {
+                continue;
+            }
+            for inst in insts {
+                self.emit(rename_label_refs(inst, &rename));
             }
         }
 
@@ -480,4 +495,186 @@ fn vector_index(device: &str, vector: &str) -> Option<u8> {
         .iter()
         .position(|names| names.iter().any(|name| *name == vector))
         .map(|idx| idx as u8)
+}
+
+// -------------------------------------------------------------------------------------------------
+// Identical-code folding (ICF)
+// -------------------------------------------------------------------------------------------------
+
+/// Computes which functions to drop and how to redirect their callers, by detecting functions
+/// whose emitted streams are structurally identical.
+///
+/// A function is eligible only when it is an ordinary direct-call target:
+/// - not `@main`, not an ISR, not a compiler runtime (`@__*`) or vector helper (`__isr_*`);
+/// - not address-taken — folding two functions would make `&@a == &@b`, so any function whose
+///   pointer is loaded (`FnAddr16`) is left untouched to preserve pointer identity;
+/// - using no static SRAM (`sram_used == 0`) — a function with stack slots/spills bakes its
+///   own absolute frame addresses into its code, so "identical" copies are not interchangeable.
+///
+/// Returns `(dropped, rename)`: the set of dropped function labels, and a map from each dropped
+/// label to the canonical label that survives. The first eligible function (in emission order)
+/// with a given signature becomes the canonical one, so the result is deterministic.
+fn fold_identical_functions(
+    streams: &[(String, bool, u16, Vec<Pass1Inst>)],
+) -> (HashSet<String>, HashMap<String, String>) {
+    // Any function whose address is taken must keep a unique address.
+    let mut address_taken: HashSet<String> = HashSet::new();
+    for (_, _, _, insts) in streams {
+        for inst in insts {
+            if let Pass1Inst::FnAddr16(_, label) = inst {
+                address_taken.insert(label.clone());
+            }
+        }
+    }
+
+    let mut canonical_by_sig: HashMap<String, String> = HashMap::new();
+    let mut dropped: HashSet<String> = HashSet::new();
+    let mut rename: HashMap<String, String> = HashMap::new();
+    for (name, is_isr, sram_used, insts) in streams {
+        let eligible = !*is_isr
+            && *sram_used == 0
+            && name != "@main"
+            && !name.starts_with("@__")
+            && !name.starts_with("__isr_")
+            && !address_taken.contains(name);
+        if !eligible {
+            continue;
+        }
+        let sig = function_signature(insts);
+        match canonical_by_sig.get(&sig) {
+            Some(canon) => {
+                dropped.insert(name.clone());
+                rename.insert(name.clone(), canon.clone());
+            }
+            None => {
+                canonical_by_sig.insert(sig, name.clone());
+            }
+        }
+    }
+    (dropped, rename)
+}
+
+/// A canonical string signature of a function's emitted stream. It is invariant to the
+/// function's own (unique) label names — references to labels DEFINED in the function are
+/// renumbered to positional ids — but sensitive to every opcode and to references to symbols
+/// defined elsewhere (those keep their name). Two functions with equal signatures therefore
+/// emit identical machine code once placed.
+fn function_signature(insts: &[Pass1Inst]) -> String {
+    let mut internal: HashSet<&str> = HashSet::new();
+    for inst in insts {
+        if let Pass1Inst::Label(s) = inst {
+            internal.insert(s.as_str());
+        }
+    }
+    let mut ids: HashMap<String, usize> = HashMap::new();
+    let mut norm = |s: &str| -> String {
+        if internal.contains(s) {
+            let next = ids.len();
+            let id = *ids.entry(s.to_string()).or_insert(next);
+            format!("I{}", id)
+        } else {
+            format!("X{}", s)
+        }
+    };
+    let mut out = String::new();
+    for inst in insts {
+        match inst {
+            Pass1Inst::Op(w) => out.push_str(&format!("O{:04x};", w)),
+            Pass1Inst::DataWord(w) => out.push_str(&format!("D{:04x};", w)),
+            Pass1Inst::Label(s) => out.push_str(&format!("L{};", norm(s))),
+            Pass1Inst::RJumpL(s) => out.push_str(&format!("J{};", norm(s))),
+            Pass1Inst::RCallL(s) => out.push_str(&format!("C{};", norm(s))),
+            Pass1Inst::JmpAbsL(s) => out.push_str(&format!("A{};", norm(s))),
+            Pass1Inst::BrbsL(b, s) => out.push_str(&format!("S{}:{};", b, norm(s))),
+            Pass1Inst::BrbcL(b, s) => out.push_str(&format!("B{}:{};", b, norm(s))),
+            Pass1Inst::FnAddr16(r, s) => out.push_str(&format!("F{}:{};", r, norm(s))),
+            Pass1Inst::FlashAddr16(r, s) => out.push_str(&format!("H{}:{};", r, norm(s))),
+        }
+    }
+    out
+}
+
+/// Rewrites any label an instruction references through the ICF rename map (dropped function
+/// label -> canonical label). A label not in the map is left unchanged. Label *definitions*
+/// are not rewritten: dropped functions are simply not emitted, and surviving functions keep
+/// their own labels (which are never rename keys).
+fn rename_label_refs(inst: &Pass1Inst, rename: &HashMap<String, String>) -> Pass1Inst {
+    let map = |s: &String| rename.get(s).cloned().unwrap_or_else(|| s.clone());
+    match inst {
+        Pass1Inst::RJumpL(s) => Pass1Inst::RJumpL(map(s)),
+        Pass1Inst::RCallL(s) => Pass1Inst::RCallL(map(s)),
+        Pass1Inst::JmpAbsL(s) => Pass1Inst::JmpAbsL(map(s)),
+        Pass1Inst::BrbsL(b, s) => Pass1Inst::BrbsL(*b, map(s)),
+        Pass1Inst::BrbcL(b, s) => Pass1Inst::BrbcL(*b, map(s)),
+        Pass1Inst::FnAddr16(r, s) => Pass1Inst::FnAddr16(*r, map(s)),
+        Pass1Inst::FlashAddr16(r, s) => Pass1Inst::FlashAddr16(*r, map(s)),
+        other => other.clone(),
+    }
+}
+
+#[cfg(test)]
+mod icf_tests {
+    use super::*;
+
+    #[test]
+    fn identical_bodies_share_signature_modulo_labels() {
+        // Two functions with different entry + internal label names but identical structure.
+        let a = vec![
+            Pass1Inst::Label("@a".into()),
+            Pass1Inst::Op(0x2411),
+            Pass1Inst::RJumpL("__nb_0_1".into()),
+            Pass1Inst::Label("__nb_0_1".into()),
+            Pass1Inst::RCallL("@shared".into()),
+            Pass1Inst::Op(0x9508),
+        ];
+        let b = vec![
+            Pass1Inst::Label("@b".into()),
+            Pass1Inst::Op(0x2411),
+            Pass1Inst::RJumpL("__nb_7_1".into()),
+            Pass1Inst::Label("__nb_7_1".into()),
+            Pass1Inst::RCallL("@shared".into()),
+            Pass1Inst::Op(0x9508),
+        ];
+        assert_eq!(function_signature(&a), function_signature(&b));
+    }
+
+    #[test]
+    fn different_external_calls_differ() {
+        let a = vec![Pass1Inst::Label("@a".into()), Pass1Inst::RCallL("@x".into())];
+        let b = vec![Pass1Inst::Label("@b".into()), Pass1Inst::RCallL("@y".into())];
+        assert_ne!(function_signature(&a), function_signature(&b));
+    }
+
+    #[test]
+    fn folds_duplicate_but_not_address_taken_or_main() {
+        let dup_a = vec![Pass1Inst::Label("@a".into()), Pass1Inst::Op(0x9508)];
+        let dup_b = vec![Pass1Inst::Label("@b".into()), Pass1Inst::Op(0x9508)];
+        // @main is identical too but must never fold.
+        let main = vec![Pass1Inst::Label("@main".into()), Pass1Inst::Op(0x9508)];
+        let streams = vec![
+            ("@main".to_string(), false, 0u16, main),
+            ("@a".to_string(), false, 0u16, dup_a),
+            ("@b".to_string(), false, 0u16, dup_b),
+        ];
+        let (dropped, rename) = fold_identical_functions(&streams);
+        assert!(dropped.contains("@b"));
+        assert!(!dropped.contains("@a"));
+        assert!(!dropped.contains("@main"));
+        assert_eq!(rename.get("@b").map(String::as_str), Some("@a"));
+    }
+
+    #[test]
+    fn address_taken_is_not_folded() {
+        let dup_a = vec![Pass1Inst::Label("@a".into()), Pass1Inst::Op(0x9508)];
+        let dup_b = vec![Pass1Inst::Label("@b".into()), Pass1Inst::Op(0x9508)];
+        // A third function takes @b's address.
+        let user = vec![Pass1Inst::Label("@u".into()), Pass1Inst::FnAddr16(30, "@b".into())];
+        let streams = vec![
+            ("@a".to_string(), false, 0u16, dup_a),
+            ("@b".to_string(), false, 0u16, dup_b),
+            ("@u".to_string(), false, 0u16, user),
+        ];
+        let (dropped, _) = fold_identical_functions(&streams);
+        assert!(!dropped.contains("@b"), "address-taken function must not fold");
+    }
 }
