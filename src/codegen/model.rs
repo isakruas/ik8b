@@ -51,7 +51,7 @@ impl TargetCore {
 pub(super) fn is_intrinsic_function(name: &str) -> bool {
     matches!(
         name,
-        "@nop" | "@cli" | "@sei" | "@swap" | "@movw" | "@mul" | "@burn" | "@spm" | "@goto" | "@sleep" | "@wdr" | "@break"
+        "@nop" | "@cli" | "@sei" | "@swap" | "@movw" | "@mul" | "@burn" | "@spm" | "@goto" | "@sleep" | "@wdr" | "@break" | "@swtch"
     )
 }
 

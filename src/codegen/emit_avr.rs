@@ -1684,6 +1684,86 @@ impl<'a> Emitter<'a> {
                 }
                 Ok(true)
             }
+            "swtch" => {
+                // @swtch(old_sp_ptr, new_sp) — cooperative/preemptive context switch.
+                //
+                // Saves the callee-saved register file (r2..r15) and a resume
+                // address onto the CURRENT stack, writes the resulting SP through
+                // `old_sp_ptr`, loads SP from `new_sp`, and RETs into the target
+                // context (which resumes at ITS own saved resume address). When a
+                // later @swtch hands control back, the resume label below restores
+                // the saved registers and execution continues after the call.
+                //
+                // Must be called with interrupts disabled (inside a critical
+                // section or an ISR). The save set is the classic/modern ABI
+                // callee-saved class r2..r15; the reduced AVRrc core lacks that
+                // register range, so @swtch is rejected there.
+                if result.is_some() {
+                    return Err("Intrinsic @swtch does not return a value".to_string());
+                }
+                if args.len() != 2 {
+                    return Err("Intrinsic @swtch expects (old_sp_ptr, new_sp)".to_string());
+                }
+                if self.target_core == TargetCore::AVRrc {
+                    return Err(
+                        "Memory Error: @swtch requires the r2-r15 callee-saved register file, which the reduced AVRrc core does not have".to_string(),
+                    );
+                }
+                if !self.is_pair(args[0]) || !self.is_pair(args[1]) {
+                    return Err(
+                        "Intrinsic @swtch: old_sp_ptr and new_sp must be 16-bit values".to_string(),
+                    );
+                }
+                let oldp = self.reg(args[0])?;
+                let newsp = self.reg(args[1])?;
+
+                // Stage the operands into FIXED scratch registers through the
+                // stack (balanced push/pop, SP unchanged), so the sequence is
+                // immune to wherever the allocator placed the arguments:
+                //   r20:r21 = old_sp_ptr,  r18:r19 = new_sp.
+                self.emit_push(oldp + 1);
+                self.emit_push(oldp);
+                self.emit_push(newsp + 1);
+                self.emit_push(newsp);
+                self.emit_pop(18); // new_sp lo
+                self.emit_pop(19); // new_sp hi
+                self.emit_pop(20); // old_ptr lo
+                self.emit_pop(21); // old_ptr hi
+
+                // 1. Save callee-saved r2..r15 onto the current stack.
+                for r in 2..=15u8 {
+                    self.emit_push(r);
+                }
+
+                // 2. Push this site's resume address (hi then lo, matching the
+                //    hardware return-address byte order). RET pops a BYTE address,
+                //    so use FlashAddr16 (word*2), not FnAddr16 (the word address).
+                let resume = self.uniq("swtch_resume");
+                self.out.push(Pass1Inst::FlashAddr16(26, resume.clone())); // r26=lo, r27=hi
+                self.emit_push(27);
+                self.emit_push(26);
+
+                // 3. *old_sp_ptr = SP   (Z = old_ptr; store SPL then SPH).
+                self.movw_or_pair(30, 20);
+                self.emit(0xB60D | (22u16 << 4)); // IN  r22, 0x3D (SPL)
+                self.emit(0x9201 | (22u16 << 4)); // ST  Z+, r22
+                self.emit(0xB60E | (22u16 << 4)); // IN  r22, 0x3E (SPH)
+                self.emit(0x8200 | (22u16 << 4)); // ST  Z,  r22
+
+                // 4. SP = new_sp   (SPH then SPL; interrupts are off).
+                self.emit(0xBE0E | (19u16 << 4)); // OUT 0x3E (SPH), r19
+                self.emit(0xBE0D | (18u16 << 4)); // OUT 0x3D (SPL), r18
+
+                // 5. Transfer control to the target context.
+                self.emit(0x9508); // RET
+
+                // 6. Resume point for THIS context (entered when switched back to).
+                self.out.push(Pass1Inst::Label(resume));
+                for r in (2..=15u8).rev() {
+                    self.emit_pop(r);
+                }
+                Ok(true)
+            }
             _ => Ok(false),
         }
     }
