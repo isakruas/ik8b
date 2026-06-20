@@ -1775,12 +1775,12 @@
 }
 
 ? target == attiny20 {
-    const %SPI0_CTRL_REG: u8 = 0x0050
-    const %SPI0_DATA_REG: u8 = 0x004E
+    const %SPI0_CTRL_REG: u8 = 0x0030
+    const %SPI0_DATA_REG: u8 = 0x002E
     const SPI0_INIT_MASTER: u8 = 0x0051
     const SPI0_IS_MODERN: u8 = 0x0000
     const SPI0_SPIF_MASK: u8 = 0x0080
-    const %SPI0_STATUS_REG: u8 = 0x004F
+    const %SPI0_STATUS_REG: u8 = 0x002F
 }
 
 ? target == attiny202 {
@@ -1973,12 +1973,12 @@
 }
 
 ? target == attiny40 {
-    const %SPI0_CTRL_REG: u8 = 0x0050
-    const %SPI0_DATA_REG: u8 = 0x004E
+    const %SPI0_CTRL_REG: u8 = 0x0030
+    const %SPI0_DATA_REG: u8 = 0x002E
     const SPI0_INIT_MASTER: u8 = 0x0051
     const SPI0_IS_MODERN: u8 = 0x0000
     const SPI0_SPIF_MASK: u8 = 0x0080
-    const %SPI0_STATUS_REG: u8 = 0x004F
+    const %SPI0_STATUS_REG: u8 = 0x002F
 }
 
 ? target == attiny402 {

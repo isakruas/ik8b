@@ -725,7 +725,7 @@
 }
 
 ? target == attiny10 {
-    const %CPU_SREG: u8 = 0x003F
+    const %CPU_SREG: u8 = 0x001F
 }
 
 ? target == attiny11 {
@@ -793,7 +793,7 @@
 }
 
 ? target == attiny20 {
-    const %CPU_SREG: u8 = 0x003F
+    const %CPU_SREG: u8 = 0x001F
 }
 
 ? target == attiny202 {
@@ -877,11 +877,11 @@
 }
 
 ? target == attiny4 {
-    const %CPU_SREG: u8 = 0x003F
+    const %CPU_SREG: u8 = 0x001F
 }
 
 ? target == attiny40 {
-    const %CPU_SREG: u8 = 0x003F
+    const %CPU_SREG: u8 = 0x001F
 }
 
 ? target == attiny402 {
@@ -961,7 +961,7 @@
 }
 
 ? target == attiny5 {
-    const %CPU_SREG: u8 = 0x003F
+    const %CPU_SREG: u8 = 0x001F
 }
 
 ? target == attiny804 {
@@ -1037,7 +1037,7 @@
 }
 
 ? target == attiny9 {
-    const %CPU_SREG: u8 = 0x003F
+    const %CPU_SREG: u8 = 0x001F
 }
 
 ? target == atxmega128a1 {
