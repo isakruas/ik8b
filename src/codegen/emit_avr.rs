@@ -487,6 +487,23 @@ impl<'a> Emitter<'a> {
                                     reg_used.insert(rhs);
                                 }
                             }
+                            BinOp::And => {
+                                match self
+                                    .f
+                                    .inst_result(inst)
+                                    .and_then(|dst| self.and_const_fold(lhs, rhs, dst))
+                                {
+                                    // The mask is consumed as an immediate; only the
+                                    // variable operand is read from a register.
+                                    Some((var, _)) => {
+                                        reg_used.insert(var);
+                                    }
+                                    None => {
+                                        reg_used.insert(lhs);
+                                        reg_used.insert(rhs);
+                                    }
+                                }
+                            }
                             _ => {
                                 reg_used.insert(lhs);
                                 reg_used.insert(rhs);
@@ -700,6 +717,25 @@ impl<'a> Emitter<'a> {
             return self.emit_mul(dr, lr, rr, pair);
         }
 
+        // Strength-reduce `x & CONST` to per-byte CLR / no-op / ANDI, avoiding the
+        // generic path's load of the mask into a register. Common for `& 0xFF` and
+        // friends (byte extraction, register masks).
+        if op == BinOp::And {
+            if let Some((var, c)) = self.and_const_fold(lhs, rhs, dst) {
+                let vr = self.reg(var)?;
+                if pair {
+                    self.movw_or_pair(dr, vr);
+                } else {
+                    self.mov(dr, vr);
+                }
+                self.emit_and_mask_byte(dr, (c & 0xFF) as u8);
+                if pair {
+                    self.emit_and_mask_byte(dr + 1, ((c >> 8) & 0xFF) as u8);
+                }
+                return Ok(());
+            }
+        }
+
         // Two-address arithmetic, emitted alias-safe (handles dst register == rhs).
         if let Some((lo, hi, comm)) = arith_opcodes(op) {
             self.emit_arith(dr, lr, rr, pair, lo, hi, comm);
@@ -910,6 +946,49 @@ impl<'a> Emitter<'a> {
         self.emit(Self::rdrr(lo, dr, second));
         if pair {
             self.emit(Self::rdrr(hi, dr + 1, second + 1));
+        }
+    }
+
+    /// Whether `x & mask` on one byte can be folded without materializing the mask in a
+    /// register: a 0x00 byte becomes CLR, a 0xFF byte is a no-op, any other mask needs
+    /// ANDI which is only encodable for high registers (r16..r31).
+    fn and_byte_foldable(mask: u8, reg: u8) -> bool {
+        mask == 0x00 || mask == 0xFF || reg >= 16
+    }
+
+    /// If this `&`-binary is `var & CONST` and every byte of CONST is foldable against
+    /// `dst`'s register(s) (see `and_byte_foldable`), returns the variable operand and the
+    /// constant. `&` is commutative, so the constant may be either side. Used by both the
+    /// emitter and the immediate-load analysis so they agree on exactly when the mask's
+    /// `iconst` can be skipped.
+    fn and_const_fold(&self, lhs: Value, rhs: Value, dst: Value) -> Option<(Value, i64)> {
+        let (var, c) = if let Some(c) = self.const_amount(rhs) {
+            (lhs, c)
+        } else if let Some(c) = self.const_amount(lhs) {
+            (rhs, c)
+        } else {
+            return None;
+        };
+        let dr = self.reg(dst).ok()?;
+        let lo_ok = Self::and_byte_foldable((c & 0xFF) as u8, dr);
+        let hi_ok = !self.is_pair(dst) || Self::and_byte_foldable(((c >> 8) & 0xFF) as u8, dr + 1);
+        if lo_ok && hi_ok {
+            Some((var, c))
+        } else {
+            None
+        }
+    }
+
+    /// Emits `reg &= mask` for one byte using the cheapest form (no-op / CLR / ANDI).
+    fn emit_and_mask_byte(&mut self, reg: u8, mask: u8) {
+        if mask == 0xFF {
+            // identity
+        } else if mask == 0x00 {
+            self.emit(Self::rdrr(0x2400, reg, reg)); // CLR (EOR reg,reg)
+        } else {
+            // ANDI reg, mask (reg is in r16..r31, guaranteed by and_byte_foldable)
+            let d = (reg - 16) as u16;
+            self.emit(0x7000 | ((mask as u16 & 0xF0) << 4) | (d << 4) | (mask as u16 & 0x0F));
         }
     }
 
