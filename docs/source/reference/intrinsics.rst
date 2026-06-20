@@ -109,6 +109,33 @@ These are the only built-in functions. Everything else that looks like
    Requires a core with SPM (not ``AVRrc``); interrupts should be disabled
    around the call. Returns nothing.
 
+.. function:: @swtch($old_sp_ptr, $new_sp)
+
+   Switches execution from the current context to another — the primitive a
+   cooperative or preemptive scheduler is built on. Both arguments are 16-bit
+   **values** (not literal register numbers): ``$old_sp_ptr`` points to a ``u16``
+   that receives the outgoing context's stack pointer, and ``$new_sp`` is the
+   stack pointer of the context to resume. Returns nothing.
+
+   The sequence is:
+
+   #. push the callee-saved register file (``r2``–``r15``) and a resume address
+      onto the **current** stack;
+   #. store the resulting stack pointer through ``$old_sp_ptr``;
+   #. load the stack pointer from ``$new_sp`` and ``RET`` into that context,
+      which continues at *its* saved resume address.
+
+   When another ``@swtch`` later switches back, this call restores ``r2``–``r15``
+   and execution continues right after it. A freshly created context is entered
+   by hand-building a stack whose top holds the entry address (so the first
+   switch's ``RET`` lands there).
+
+   ``@swtch`` **must run with interrupts disabled** (inside a critical section or
+   an ISR), because it writes the stack pointer in two non-atomic steps. It saves
+   the classic/modern ABI callee-saved class ``r2``–``r15``; the reduced
+   ``AVRrc`` core lacks that register range, so the compiler rejects ``@swtch``
+   there with an error.
+
 Notes
 =====
 
