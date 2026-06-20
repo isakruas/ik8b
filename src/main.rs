@@ -53,6 +53,8 @@ fn print_help(program: &str) {
     println!("  --irq <V>              Raise interrupt vector V at startup");
     println!("  --irq-at <V:STEP>      Raise vector V once at instruction STEP");
     println!("  --irq-every <V:N>      Raise vector V every N instructions");
+    println!("  --peek <addr>          Print data memory at <addr> on exit (hex or decimal)");
+    println!("  --peek-len <N>         Number of bytes for --peek (default: 1)");
     println!();
     println!("The compile target is selected by a mandatory top-level declaration in the");
     println!("source, e.g. `target atmega328p`. The same simulation options are used by the");
@@ -118,6 +120,8 @@ pub struct SimConfig {
     pub irq_init: Vec<u8>,
     pub irq_at: Vec<(u8, u64)>,
     pub irq_every: Vec<(u8, u64)>,
+    pub peek: Option<u32>,
+    pub peek_len: u32,
 }
 
 /// What a compile should write out.
@@ -144,6 +148,15 @@ fn parse_pair(s: &str) -> Option<(u8, u64)> {
     Some((v.parse().ok()?, n.parse().ok()?))
 }
 
+/// Parses an address/number in hex (`0x..`) or decimal (used by `--peek`).
+fn parse_u32(s: &str) -> Option<u32> {
+    s.strip_prefix("0x")
+        .or_else(|| s.strip_prefix("0X"))
+        .map(|h| u32::from_str_radix(h, 16))
+        .unwrap_or_else(|| s.parse())
+        .ok()
+}
+
 /// `ik8b --sim-hex <file.hex> --mcu <device> [--trace] [--limit N] [--dump]`
 /// `        [--irq V] [--irq-at V:STEP] [--irq-every V:PERIOD]`
 ///
@@ -163,10 +176,12 @@ fn run_sim_hex(args: &[String]) -> ! {
     let mut irq_init: Vec<u8> = Vec::new();
     let mut irq_at: Vec<(u8, u64)> = Vec::new();
     let mut irq_every: Vec<(u8, u64)> = Vec::new();
+    let mut peek: Option<u32> = None;
+    let mut peek_len: u32 = 1;
 
     let bad = |msg: &str| -> ! {
         eprintln!("--sim-hex: {}", msg);
-        eprintln!("Usage: ik8b --sim-hex <file.hex> --mcu <device> [--trace] [--limit N] [--dump]");
+        eprintln!("Usage: ik8b --sim-hex <file.hex> --mcu <device> [--trace] [--limit N] [--dump] [--peek ADDR] [--peek-len N]");
         process::exit(1);
     };
 
@@ -195,6 +210,14 @@ fn run_sim_hex(args: &[String]) -> ! {
             "--irq-every" => {
                 i += 1;
                 irq_every.push(args.get(i).and_then(|s| parse_pair(s)).unwrap_or_else(|| bad("--irq-every expects VEC:PERIOD")));
+            }
+            "--peek" => {
+                i += 1;
+                peek = Some(args.get(i).and_then(|s| parse_u32(s)).unwrap_or_else(|| bad("--peek expects a data address")));
+            }
+            "--peek-len" => {
+                i += 1;
+                peek_len = args.get(i).and_then(|s| s.parse().ok()).unwrap_or_else(|| bad("--peek-len expects a byte count"));
             }
             other if !other.starts_with('-') && hexfile.is_none() => hexfile = Some(other.to_string()),
             other => bad(&format!("unexpected argument '{}'", other)),
@@ -271,6 +294,12 @@ fn run_sim_hex(args: &[String]) -> ! {
         }
         println!("PC=0x{:06X} SP=0x{:04X} SREG=0x{:02X}", vm.pc, vm.sp, vm.sreg);
     }
+    if let Some(addr) = peek {
+        for k in 0..peek_len.max(1) {
+            let a = addr + k;
+            println!("MEM[0x{:04X}] = 0x{:02X}", a, vm.read_data(a));
+        }
+    }
     // Machine-readable summary parsed by the benchmark/test harnesses.
     println!("Instructions = {}", executed);
     println!("Cycles = {}", vm.cycles);
@@ -292,6 +321,7 @@ fn parse_compile_args(args: &[String], start: usize) -> Result<CompileOpts, Stri
     let mut sim = SimConfig {
         simulate: false, trace: false, limit: 100_000_000, dump: false,
         irq_init: vec![], irq_at: vec![], irq_every: vec![],
+        peek: None, peek_len: 1,
     };
     let mut idx = start + 1;
 
@@ -353,6 +383,20 @@ fn parse_compile_args(args: &[String], start: usize) -> Result<CompileOpts, Stri
                 match args.get(idx).and_then(|s| parse_pair(s)) {
                     Some((v, n)) => sim.irq_every.push((v, n)),
                     None => return Err("--irq-every expects VEC:PERIOD".to_string()),
+                }
+            }
+            "--peek" => {
+                idx += 1;
+                match args.get(idx).and_then(|s| parse_u32(s)) {
+                    Some(a) => sim.peek = Some(a),
+                    None => return Err("--peek expects a data address".to_string()),
+                }
+            }
+            "--peek-len" => {
+                idx += 1;
+                match args.get(idx).and_then(|s| s.parse().ok()) {
+                    Some(n) => sim.peek_len = n,
+                    None => return Err("--peek-len expects a byte count".to_string()),
                 }
             }
             other if other.starts_with('-') => {
@@ -681,6 +725,13 @@ fn run_compile(opts: CompileOpts) -> ! {
                 if i % 8 == 7 { println!(); }
             }
             println!("PC=0x{:04X} SP=0x{:04X} SREG=0x{:02X}", vm.pc, vm.sp, vm.sreg);
+        }
+
+        if let Some(addr) = sim.peek {
+            for k in 0..sim.peek_len.max(1) {
+                let a = addr + k;
+                println!("MEM[0x{:04X}] = 0x{:02X}", a, vm.read_data(a));
+            }
         }
     }
 
