@@ -68,8 +68,9 @@ test-std: build
 	    out="$$compile_out"; \
 	    rm -f $$tmp_src $$hex; \
 	    if echo "$$out" | grep -q "HEX overflows flash"; then continue; fi; \
-	    r16=$$(echo "$$out" | grep -o 'R16 = 0x[0-9A-Fa-f]*' | awk '{print $$3}'); \
 	    ran=$$((ran+1)); total_runs=$$((total_runs+1)); \
+	    if echo "$$out" | grep -q "DID NOT HALT"; then echo "  -> $$mcu ($$core,$$sram B): FAIL (did not halt -- hit instruction limit)"; suite_fail=1; continue; fi; \
+	    r16=$$(echo "$$out" | grep -o 'R16 = 0x[0-9A-Fa-f]*' | awk '{print $$3}'); \
 	    if [ "$$r16" != "0x01" ]; then echo "  -> $$mcu ($$core,$$sram B): FAIL (R16 = $$r16)"; suite_fail=1; fi; \
 	  done; \
 	  if [ $$suite_fail -eq 0 ]; then \

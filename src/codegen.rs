@@ -50,7 +50,18 @@ pub use model::{CodeGenerator, Pass1Inst, TargetCore};
 /// AVR instruction selection. It is exposed through `--emit-ir` for development and
 /// snapshot testing.
 pub fn emit_ir_text(ast: &[ASTNode]) -> Result<String, String> {
-    let funcs = build_ast::lower_program(ast, &build_ast::all_function_names(ast), &mut Vec::new())?;
+    // Mirror the HEX build: lower only the functions reachable from @main (+ISRs),
+    // so unreachable std helpers that reference target-specific constants cannot
+    // abort IR emission. For @main-less snippets (dev/snapshot use) lower everything.
+    let has_main = ast
+        .iter()
+        .any(|n| matches!(n, ASTNode::Func { name, .. } if name == "@main"));
+    let wanted = if has_main {
+        pipeline::reachable_functions(ast)
+    } else {
+        build_ast::all_function_names(ast)
+    };
+    let funcs = build_ast::lower_program(ast, &wanted, &mut Vec::new())?;
     let mut s = String::new();
     for f in funcs {
         let f = opt::optimize(f);

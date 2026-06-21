@@ -1818,6 +1818,17 @@ impl<'a> Emitter<'a> {
                     );
                 }
                 let spmcsr = self.intrinsic_literal_arg(args, 0, "@spm")? as u16;
+                // A zero SPMCSR address is the std/boot.ik sentinel for parts with
+                // no classic SPM register (e.g. AVRxt/AVRxm devices that self-program
+                // through NVMCTRL instead). Generating the classic sequence there would
+                // poll a bogus register and spin forever, so reject it outright — the
+                // same "Memory Error" contract the harness treats as an unsupported skip.
+                if spmcsr == 0 {
+                    return Err(
+                        "Memory Error: @spm is not available on this target (no classic SPMCSR register; it self-programs via NVMCTRL)"
+                            .to_string(),
+                    );
+                }
                 let cmd = self.reg(args[1])?;
                 if !self.is_pair(args[2]) || !self.is_pair(args[3]) {
                     return Err(
@@ -1972,12 +1983,15 @@ impl<'a> Emitter<'a> {
                 }
 
                 // 2. Push this site's resume address (hi then lo, matching the
-                //    hardware return-address byte order). RET pops a BYTE address,
-                //    so use FlashAddr16 (word*2), not FnAddr16 (the word address).
+                //    hardware return-address byte order). On the real AVR, RET pops
+                //    a WORD address (the PC), so use FnAddr16 (the word address),
+                //    not FlashAddr16 (word*2, a byte address).
                 let resume = self.uniq("swtch_resume");
-                self.out.push(Pass1Inst::FlashAddr16(26, resume.clone())); // r26=lo, r27=hi
-                self.emit_push(27);
+                self.out.push(Pass1Inst::FnAddr16(26, resume.clone())); // r26=lo, r27=hi
+                // AVR RET reads the high byte from the lower stack address, so push
+                // the low byte first (higher address) then the high byte (lower).
                 self.emit_push(26);
+                self.emit_push(27);
 
                 // 3. *old_sp_ptr = SP   (Z = old_ptr; store SPL then SPH).
                 self.movw_or_pair(30, 20);

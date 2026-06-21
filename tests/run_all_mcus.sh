@@ -87,6 +87,13 @@ for mcu in "${MCUS[@]}"; do
             mcu_skip=$((mcu_skip+1))
             continue
         fi
+        if echo "$out" | grep -q "DID NOT HALT"; then
+            mcu_fail=$((mcu_fail+1))
+            overall_fail=$((overall_fail+1))
+            echo ""
+            echo "  -> [FAIL] Test '$name' on MCU '$mcu' did not halt (hit the instruction limit)"
+            continue
+        fi
         r16=$(echo "$out" | grep -o 'R16 = 0x[0-9A-Fa-f]*' | awk '{print $3}' || true)
 
         if [ "$r16" != "0x01" ]; then

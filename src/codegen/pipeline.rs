@@ -103,6 +103,49 @@ impl CodeGenerator {
         }
     }
 
+    /// Emits a startup loop that clears the entire SRAM [sram_start, RAMEND] to
+    /// zero before @main runs. The AVR does NOT clear RAM on reset, so without
+    /// this a program observes power-on garbage in any location it reads before
+    /// writing -- making behaviour diverge between the (zeroed) simulator and
+    /// real silicon. This mirrors avr-libc's crt0, which zeroes .bss. It also
+    /// leaves r1 == 0 (the AVR zero-register convention). Runs after SP is set
+    /// and before the call to @main; uses only r1/r18/X, all free at reset.
+    fn emit_clear_sram(&mut self) {
+        let Some(dev) = crate::devices::lookup_device(&self.device_name) else {
+            return;
+        };
+        if dev.sram_size == 0 {
+            return;
+        }
+        let start = dev.sram_start as u32;
+        let end = start + dev.sram_size as u32; // one past RAMEND
+        let lo_s = (start & 0xFF) as u16;
+        let hi_s = ((start >> 8) & 0xFF) as u16;
+        let lo_e = (end & 0xFF) as u16;
+        let hi_e = ((end >> 8) & 0xFF) as u16;
+        let ldi = |rd: u16, k: u16| 0xE000 | ((k & 0xF0) << 4) | (((rd - 16) & 0x0F) << 4) | (k & 0x0F);
+        let eor = |rd: u16| 0x2400 | ((rd & 0x10) << 5) | ((rd & 0x10) << 4) | ((rd & 0x0F) << 4) | (rd & 0x0F);
+        let cpc = |rd: u16, rr: u16| {
+            0x0400 | ((rr & 0x10) << 5) | ((rd & 0x10) << 4) | ((rd & 0x0F) << 4) | (rr & 0x0F)
+        };
+        // The reduced AVRrc core has no r0/r1, so clear through r16 there; the
+        // classic cores keep the r1 == 0 zero-register convention.
+        let (zero, endhi) = if self.target_core == TargetCore::AVRrc {
+            (16u16, 17u16)
+        } else {
+            (1u16, 18u16)
+        };
+        self.emit(Pass1Inst::Op(eor(zero))); // clr <zero> (zero source + zero-register)
+        self.emit(Pass1Inst::Op(ldi(endhi, hi_e))); // <endhi> = hi(RAMEND+1)
+        self.emit(Pass1Inst::Op(ldi(26, lo_s))); // XL = lo(sram_start)
+        self.emit(Pass1Inst::Op(ldi(27, hi_s))); // XH = hi(sram_start)
+        // loop: st X+, <zero> ; cpi r26, lo(end) ; cpc r27, <endhi> ; brne loop (-4)
+        self.emit(Pass1Inst::Op(0x920D | (zero << 4))); // st X+, <zero>
+        self.emit(Pass1Inst::Op(0x3000 | ((lo_e & 0xF0) << 4) | (10 << 4) | (lo_e & 0x0F))); // cpi r26, lo(end)
+        self.emit(Pass1Inst::Op(cpc(27, endhi))); // cpc r27, <endhi>
+        self.emit(Pass1Inst::Op(0xF7E1)); // brne -4 -> st X+
+    }
+
     /// Emits reset/interrupt vectors plus the startup trampoline.
     pub(super) fn emit_startup(&mut self, bindings: &[InterruptBinding]) {
         if let Some(total_slots) = vector_slot_count(&self.device_name) {
@@ -121,6 +164,7 @@ impl CodeGenerator {
 
             self.emit(Pass1Inst::Label("__start".to_string()));
             self.emit_sp_init();
+            self.emit_clear_sram();
             self.emit(Pass1Inst::RCallL("@main".to_string()));
             self.emit(Pass1Inst::Op(0xFFFF));
             if needs_default_isr {
@@ -129,6 +173,7 @@ impl CodeGenerator {
             }
         } else {
             self.emit_sp_init();
+            self.emit_clear_sram();
             self.emit(Pass1Inst::RCallL("@main".to_string()));
             self.emit(Pass1Inst::Op(0xFFFF));
         }
@@ -136,50 +181,7 @@ impl CodeGenerator {
 
     /// Computes the callable frontier rooted at `@main` and all ISR bodies.
     pub(super) fn compute_reachable_functions(&self, ast: &[ASTNode]) -> HashSet<String> {
-        let mut call_map: HashMap<String, HashSet<String>> = HashMap::new();
-        for node in ast {
-            if let ASTNode::Func { name, body, .. } = node {
-                let mut calls = HashSet::new();
-                for stmt in body {
-                    collect_calls_stmt(stmt, &mut calls);
-                }
-                call_map.insert(name.clone(), calls);
-            }
-        }
-
-        let mut reachable = HashSet::new();
-        let mut queue = VecDeque::new();
-        reachable.insert("@main".to_string());
-        queue.push_back("@main".to_string());
-
-        for node in ast {
-            if let ASTNode::Isr { vector, body } = node {
-                // The ISR itself is a root: it is reached by the hardware vector table, not
-                // by any call, so seed it (and everything it calls) into the frontier.
-                reachable.insert(format!("__isr_{}", vector));
-                let mut calls = HashSet::new();
-                for stmt in body {
-                    collect_calls_stmt(stmt, &mut calls);
-                }
-                for call in calls {
-                    if reachable.insert(call.clone()) {
-                        queue.push_back(call);
-                    }
-                }
-            }
-        }
-
-        while let Some(current) = queue.pop_front() {
-            if let Some(calls) = call_map.get(&current) {
-                for call in calls {
-                    if reachable.insert(call.clone()) {
-                        queue.push_back(call.clone());
-                    }
-                }
-            }
-        }
-
-        reachable
+        reachable_functions(ast)
     }
 
     /// Rejects hardware constants that alias compiler-owned SRAM.
@@ -404,6 +406,57 @@ impl CodeGenerator {
 
         Ok(self.instructions.clone())
     }
+}
+
+/// Computes the callable frontier rooted at `@main` and all ISR bodies. Shared by
+/// the HEX build and `--emit ir` so both lower exactly the same set of functions
+/// (unreachable std helpers may reference constants undefined for the target, so
+/// lowering everything would spuriously fail).
+pub(super) fn reachable_functions(ast: &[ASTNode]) -> HashSet<String> {
+    let mut call_map: HashMap<String, HashSet<String>> = HashMap::new();
+    for node in ast {
+        if let ASTNode::Func { name, body, .. } = node {
+            let mut calls = HashSet::new();
+            for stmt in body {
+                collect_calls_stmt(stmt, &mut calls);
+            }
+            call_map.insert(name.clone(), calls);
+        }
+    }
+
+    let mut reachable = HashSet::new();
+    let mut queue = VecDeque::new();
+    reachable.insert("@main".to_string());
+    queue.push_back("@main".to_string());
+
+    for node in ast {
+        if let ASTNode::Isr { vector, body } = node {
+            // The ISR itself is a root: it is reached by the hardware vector table, not
+            // by any call, so seed it (and everything it calls) into the frontier.
+            reachable.insert(format!("__isr_{}", vector));
+            let mut calls = HashSet::new();
+            for stmt in body {
+                collect_calls_stmt(stmt, &mut calls);
+            }
+            for call in calls {
+                if reachable.insert(call.clone()) {
+                    queue.push_back(call);
+                }
+            }
+        }
+    }
+
+    while let Some(current) = queue.pop_front() {
+        if let Some(calls) = call_map.get(&current) {
+            for call in calls {
+                if reachable.insert(call.clone()) {
+                    queue.push_back(call.clone());
+                }
+            }
+        }
+    }
+
+    reachable
 }
 
 fn collect_calls_stmt(stmt: &Stmt, out: &mut HashSet<String>) {

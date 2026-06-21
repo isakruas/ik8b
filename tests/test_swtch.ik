@@ -35,14 +35,15 @@
     ram mut $stk: u8[48] = 0
     ram mut $old_sp: u16 = 0
 
-    # Bootstrap the fresh stack so a RET pops @reached's entry address. RET pops
-    # a BYTE address, while &@reached is a word address, so convert (word*2).
-    # Byte order matches the hardware return address: high byte at the top.
+    # Bootstrap the fresh stack so a RET pops @reached's entry address. On the
+    # real AVR, RET pops a WORD address (the PC counts program words), and
+    # &@reached already yields that word address, so store it as-is. The byte
+    # order matches the hardware return address: the HIGH byte sits at the LOWER
+    # stack address, so put the low byte at the top and the high byte below it.
     ram imut $entry: u16 = &@reached
-    ram imut $eb: u16 = $entry * 2
     ram imut $top: u16 = &$stk[47]
-    ($eb / 256) -> $stk[47]        # return-address high byte
-    ($eb & 0xFF) -> $stk[46]       # return-address low byte
+    ($entry & 0xFF) -> $stk[47]    # return-address low byte (higher address)
+    ($entry / 256) -> $stk[46]     # return-address high byte (lower address)
     ram imut $new_sp: u16 = $top - 2
 
     # Switch. On success this never returns here.

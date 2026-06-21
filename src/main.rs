@@ -303,6 +303,10 @@ fn run_sim_hex(args: &[String]) -> ! {
     // Machine-readable summary parsed by the benchmark/test harnesses.
     println!("Instructions = {}", executed);
     println!("Cycles = {}", vm.cycles);
+    if vm.running && max_instr > 0 && executed >= max_instr {
+        // Stopped on the instruction cap, not a clean halt: R16 is meaningless.
+        println!("SIMULATION DID NOT HALT: reached the {}-instruction limit (likely an infinite loop).", max_instr);
+    }
     println!("R16 = 0x{:02X}", vm.r[16]);
 
     process::exit(if vm.unknown_opcode { 2 } else { 0 });
@@ -715,7 +719,15 @@ fn run_compile(opts: CompileOpts) -> ! {
                 }
             }
         }
+        let hit_limit = vm.running && executed >= sim.limit;
         println!("Simulation completed after {} cycles ({} instructions executed).", vm.cycles, executed);
+        if hit_limit {
+            // The program never reached a terminating self-loop, so R16 below is
+            // whatever happened to be in the register when the cap fired -- NOT a
+            // meaningful result. Emit a stable marker so test harnesses fail this
+            // run instead of trusting a coincidental R16 value.
+            println!("SIMULATION DID NOT HALT: reached the {}-instruction limit (likely an infinite loop).", sim.limit);
+        }
         println!("R16 = 0x{:02X}", vm.r[16]);
 
         if sim.dump {
