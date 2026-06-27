@@ -34,21 +34,29 @@
 # the part name (the IDE flashes the image with avrdude). This list must stay in
 # sync with has_bootloader_support() in the IDE (src/core/bootloader.rs).
 #
-# Wire protocol (host = IDE, target = this bootloader); integers big-endian:
+# Wire protocol (host = IDE, target = this bootloader); ADDR is big-endian:
 #
-#   Frame  host -> target:  0x1B 'i' 'k'  CMD  LEN_HI LEN_LO  payload[LEN]  CRC_HI CRC_LO
-#                           CRC-16/ARC (poly 0xA001, init 0) over CMD,LEN_HI,LEN_LO,payload.
+#   Frame  host -> target:  0x1B 'i' 'k'  CMD  payload  CRC8
+#                           CRC-8/MAXIM (poly 0x8C reflected, init 0) over CMD and payload.
 #   Reply  target -> host:  0x06 (ACK) or 0x15 (NAK), then command-specific bytes.
 #
-#   CMD 0x01 HELLO  payload: (none)  -> ACK, VER, PAGE_HI, PAGE_LO, APPEND_HI, APPEND_LO
 #   CMD 0x02 WRITE  payload: ADDR_HI ADDR_LO  <PAGE_SIZE data bytes>  -> ACK | NAK
-#   CMD 0x04 RUN    payload: (none)  -> ACK, then jump to the application at 0x0000
+#   CMD 0x04 RUN    payload: (none)                                   -> ACK, then jump to 0x0000
+#
+# The protocol has no HELLO handshake and no length field. Each command's
+# payload length is fixed (RUN: none; WRITE: 2 address bytes + one flash page),
+# so the receiver knows exactly how many bytes to read from the command alone.
+# The host derives PAGE_SIZE and BOOT_ORIGIN from the selected MCU instead of
+# querying the device (see bootloader_params() in src/core/bootloader.rs), and
+# detects a live loader by retrying the first WRITE across the board-reset
+# window -- any ACK proves the loader is up. Dropping HELLO and the 2-byte
+# length, and replacing CRC-16 with CRC-8, keeps the image under 2 KB.
 #
 # Security / validation rules (enforced below):
-#   - every frame is CRC-16 checked; a bad CRC is NAKed and ignored.
-#   - WRITE is rejected (NAK) unless the page address is page-aligned and the
-#     whole page lies strictly below the boot section -> the bootloader can
-#     never erase/overwrite itself nor write past the application section.
+#   - every frame is CRC-8 checked; a bad CRC is NAKed and ignored.
+#   - WRITE is rejected (NAK) unless the page address is page-aligned and lies
+#     strictly below the boot section -> the loader can never erase/overwrite
+#     itself nor write past the application section.
 #   - interrupts are disabled around every SPM sequence.
 #   - with no valid sync inside the startup window, the existing application is
 #     started, so a normally-flashed board boots without the IDE.
@@ -79,8 +87,10 @@ import std/crc
 ? target == atmega32 {
     const PAGE_SIZE:   u16 = 128
     const PAGE_MASK:   u16 = 127
-    const BOOT_ORIGIN: u16 = 0x7000
-    boot 0x7000
+    # 1024-word (2 KB) max boot section -> starts at byte 0x7800. The loader must
+    # live entirely here so SPM (boot-section only) actually programs flash.
+    const BOOT_ORIGIN: u16 = 0x7800
+    boot 0x7800
 }
 
 ? target == atmega324a {
@@ -233,8 +243,9 @@ import std/crc
 ? target == atmega32a {
     const PAGE_SIZE:   u16 = 128
     const PAGE_MASK:   u16 = 127
-    const BOOT_ORIGIN: u16 = 0x7000
-    boot 0x7000
+    # 1024-word (2 KB) max boot section -> starts at byte 0x7800 (see atmega32).
+    const BOOT_ORIGIN: u16 = 0x7800
+    boot 0x7800
 }
 
 ? target == atmega64 {
@@ -379,49 +390,35 @@ const SOF1: u8 = 0x69          # 'i'
 const SOF2: u8 = 0x6B          # 'k'
 const ACK:  u8 = 0x06
 const NAK:  u8 = 0x15
-const CMD_HELLO: u8 = 0x01
 const CMD_WRITE: u8 = 0x02
 const CMD_RUN:   u8 = 0x04
-const PROTO_VER: u8 = 1
+
+# SPM (Store-Program-Memory) sub-commands routed through the single @bl_spm
+# wrapper. These are the same action codes the std @boot_* wrappers would use.
+const SPM_FILL:  u8 = 0x01     # load one word into the page temporary buffer
+const SPM_ERASE: u8 = 0x03     # erase the addressed flash page
+const SPM_WRITE: u8 = 0x05     # write the page buffer to flash
+const SPM_RWW:   u8 = 0x11     # re-enable the Read-While-Write section
 
 # Coarse startup window (outer x inner UART polls) before running the app.
 const BL_WAIT_OUTER: u16 = 250
 const BL_WAIT_INNER: u16 = 2000
 
-# Read `$n` bytes from the UART into the buffer at offset `$off`.
-@bl_read_into($buf: ptr ram u8, $off: u16, $n: u16) {
-    loop 0..$n -> $i {
-        ram imut $b: u8 = @uart_receive()
-        $b -> *($buf + $off + $i)
-    }
-}
-
-# Block until the 3-byte sync magic (0x1B 'i' 'k') arrives. Every frame is
-# prefixed with it, so this also resynchronises after any garbled frame.
-@bl_resync() {
+# Wait for the 3-byte sync magic (0x1B 'i' 'k'), polling the UART without
+# blocking so it can time out. Returns 1 when the magic is seen, 0 on timeout.
+#
+# This is the loader's only sync routine. Every frame opens with the magic, so
+# the same state machine serves both the initial startup window and inter-frame
+# resynchronisation (recovery after a corrupt or unknown frame). It also bounds
+# the startup window: with no magic inside it, the caller boots the application.
+@bl_sync() -> u8 {
     ram mut $state: u8 = 0
-    loop * {
-        ram imut $b: u8 = @uart_receive()
-        ? $state == 0 {
-            ? $b == SOF0 { 1 -> $state }
-        } : {
-            ? $state == 1 {
-                ? $b == SOF1 { 2 -> $state } : { 0 -> $state }
-            } : {
-                ? $b == SOF2 { return } : { 0 -> $state }
-            }
-        }
-    }
-}
-
-# Wait for the 3-byte sync magic, polling without blocking so we can time out.
-# Returns 1 when sync is seen, 0 on timeout.
-@bl_wait_sync() -> u8 {
-    ram mut $state: u8 = 0
+    # Startup window: outer x inner polling loops before giving up.
     loop 0..BL_WAIT_OUTER -> $o {
         loop 0..BL_WAIT_INNER -> $j {
             ? @uart_available() != 0 {
                 ram imut $b: u8 = @uart_receive()
+                # Magic state machine: advance 0->1->2 and finish on 'k'.
                 ? $state == 0 {
                     ? $b == SOF0 { 1 -> $state }
                 } : {
@@ -437,93 +434,108 @@ const BL_WAIT_INNER: u16 = 2000
     return 0
 }
 
-# Program one flash page from buffer[$data_off .. +PAGE_SIZE] at page byte
+# Single SPM-sequence wrapper. The @spm intrinsic expands inline (~120 bytes) at
+# every call site; routing erase/fill/write/rww through one function emits the
+# sequence once -- the loader's largest flash saving. (%SPM_CTRL_REG comes from
+# std/boot, selected per target, which is why the import remains.)
+@bl_spm($cmd: u8, $addr: u16, $word: u16) {
+    @spm(%SPM_CTRL_REG, $cmd, $addr, $word)
+}
+
+# Program one flash page from $data (a page of words already in RAM) to byte
 # address $addr. The caller has already validated $addr.
-@bl_write_page($buf: ptr ram u8, $addr: u16, $data_off: u16) {
+#
+# $data is a u16 pointer: the page image arrives over the UART in flash byte
+# order (little-endian, low byte of each word first), so each word is loaded
+# directly with a single 16-bit read -- no lo/hi assembly and no multiply by
+# 256, which was the hottest part of the loop.
+#
+# Pointer arithmetic is byte-scaled (ptr + n advances n bytes, not n elements),
+# so the word at index $k lives at byte offset $k * 2 from $data -- the same
+# stride used for the flash address.
+@bl_write_page($data: ptr ram u16, $addr: u16) {
     @cli()
-    @boot_page_erase($addr)
+    @bl_spm(SPM_ERASE, $addr, 0)
     ram imut $words: u16 = PAGE_SIZE / 2
     loop 0..$words -> $k {
-        ram imut $lo: u16 = *($buf + $data_off + ($k * 2))
-        ram imut $hi: u16 = *($buf + $data_off + ($k * 2) + 1)
-        @boot_page_fill($addr + ($k * 2), $lo + ($hi * 256))
+        @bl_spm(SPM_FILL, $addr + ($k * 2), *($data + ($k * 2)))
     }
-    @boot_page_write($addr)
-    @boot_rww_enable()
+    @bl_spm(SPM_WRITE, $addr, 0)
+    @bl_spm(SPM_RWW, 0, 0)
 }
 
-# Handle one validated (CRC-checked) frame.
-@bl_dispatch($buf: ptr ram u8, $cmd: u8, $len: u16) {
-    ? $cmd == CMD_HELLO {
-        @uart_send(ACK)
-        @uart_send(PROTO_VER)
-        @uart_send(PAGE_SIZE / 256)
-        @uart_send(PAGE_SIZE & 0xFF)
-        @uart_send(BOOT_ORIGIN / 256)
-        @uart_send(BOOT_ORIGIN & 0xFF)
-        return
-    }
-    ? $cmd == CMD_RUN {
-        @uart_send(ACK)
-        @boot_rww_enable()
-        @goto(0)
-    }
-    ? $cmd == CMD_WRITE {
-        ram imut $addr: u16 = (*($buf + 3) * 256) + *($buf + 4)
-        # Security: page-aligned, inside the application section, whole page
-        # below the boot section, and exactly one page of data.
-        ram mut $ok: u8 = 1
-        ? ($addr & PAGE_MASK) != 0 { 0 -> $ok }
-        ? $addr >= BOOT_ORIGIN { 0 -> $ok }
-        ? ($addr + PAGE_SIZE) > BOOT_ORIGIN { 0 -> $ok }
-        ? $len != (PAGE_SIZE + 2) { 0 -> $ok }
-        ? $ok == 1 {
-            @bl_write_page($buf, $addr, 5)
-            @uart_send(ACK)
-        } : {
-            @uart_send(NAK)
-        }
-        return
-    }
-    @uart_send(NAK)
-}
-
-# Bootloader entry point. Initialises UART0 at the given divisor, waits briefly
-# for the IDE, then either services the upload protocol or starts the existing
-# application. `$ubrr` = F_CPU / (16 * baud) - 1 for the board's crystal + baud.
+# Bootloader entry point. Initialises UART0 at the given divisor, then loops
+# receiving frames; if the sync window expires with no frame, it boots the
+# existing application. `$ubrr` = F_CPU / (16 * baud) - 1 for the board's
+# crystal + baud.
 @bootloader_run($ubrr: u16) {
-    # Frame scratch: CMD + LEN(2) + payload(<=PAGE_SIZE+2) + CRC(2).
-    ram mut $frame: u8[263] = 0
+    # Frame scratch holds the CRC input contiguously for the largest command:
+    # ADDR(2) + one flash page (<= PAGE_SIZE). The CRC covers the payload only,
+    # not CMD (CMD is validated by the command branch below), so CMD is never
+    # stored here; the trailing CRC byte is read into a local.
+    ram mut $frame: u8[258] = 0
 
     @uart_init($ubrr)
 
-    # Startup window: if nobody syncs, run whatever is already in flash.
-    ? @bl_wait_sync() == 0 {
-        @goto(0)
-    }
-
+    # Main loop. Each frame is self-delimited by the sync magic, so every
+    # iteration starts by waiting for it with bl_sync(). If the window expires
+    # without sync -- host absent at startup, or idle/disconnected mid-session
+    # -- the already-flashed application is started (@goto(0)). Thus the startup
+    # window is just the first iteration (no separate routine), a normal board
+    # boots without the IDE, and the session never hangs if the host vanishes.
     loop * {
-        # CMD (1) + LEN (2).
-        @bl_read_into(&$frame[0], 0, 3)
-        ram imut $cmd: u8 = $frame[0]
-        ram imut $len: u16 = ($frame[1] * 256) + $frame[2]
+        ? @bl_sync() == 0 {
+            @goto(0)
+        }
 
-        ? $len > (PAGE_SIZE + 2) {
-            # Reject oversized frames (still drain the trailing CRC bytes).
-            @bl_read_into(&$frame[0], 3, 2)
-            @uart_send(NAK)
-        } : {
-            # Payload then the 2 CRC bytes, contiguous after CMD/LEN.
-            @bl_read_into(&$frame[0], 3, $len + 2)
-            ram imut $rx_crc: u16 = ($frame[3 + $len] * 256) + $frame[4 + $len]
-            ram imut $calc: u16 = @crc16(&$frame[0], 3 + $len)
-            ? $calc != $rx_crc {
-                @uart_send(NAK)
-            } : {
-                @bl_dispatch(&$frame[0], $cmd, $len)
+        # The command byte follows the magic. Its payload length is fixed per
+        # command, so there is no length field to read.
+        ram imut $cmd: u8 = @uart_receive()
+
+        # Reply defaults to NAK and is sent once at the end of the iteration, so
+        # every rejection path simply falls through to a single @uart_send call
+        # site (cheaper than a send per branch, especially on 3-byte-PC parts).
+        # Only a fully validated WRITE upgrades it to ACK; RUN replies inline
+        # because it must ACK and then jump before this loop body ends.
+        ram mut $reply: u8 = NAK
+
+        ? $cmd == CMD_WRITE {
+            # Payload is ADDR(2) + one page at frame[0..], read byte by byte,
+            # then the trailing CRC byte.
+            loop 0..(PAGE_SIZE + 2) -> $i {
+                @uart_receive() -> $frame[$i]
+            }
+            ram imut $rx_crc: u8 = @uart_receive()
+            ? @crc8(&$frame[0], PAGE_SIZE + 2) == $rx_crc {
+                ram imut $addr: u16 = ($frame[0] * 256) + $frame[1]
+                # Security: accept only a page-aligned address below the boot
+                # section. The "whole page below boot" test
+                # ($addr + PAGE_SIZE <= BOOT_ORIGIN) is implied -- BOOT_ORIGIN is
+                # a PAGE_SIZE multiple on every target, so alignment plus
+                # $addr < BOOT_ORIGIN already guarantee it. Nested checks let the
+                # default NAK stand on any failure.
+                ? ($addr & PAGE_MASK) == 0 {
+                    ? $addr < BOOT_ORIGIN {
+                        # Page data starts at frame[2]; passed as a u16 pointer.
+                        @bl_write_page(&$frame[2], $addr)
+                        ACK -> $reply
+                    }
+                }
             }
         }
-        # Every frame is self-framed: wait for the next one's sync magic.
-        @bl_resync()
+
+        ? $cmd == CMD_RUN {
+            # RUN has an empty payload, so its CRC over nothing is the init value
+            # 0; a single 0x00 byte must follow. This guards against a stray sync
+            # sequence triggering a spurious jump.
+            ram imut $rx_crc: u8 = @uart_receive()
+            ? $rx_crc == 0 {
+                @uart_send(ACK)
+                @bl_spm(SPM_RWW, 0, 0)    # re-enable RWW before jumping to the app
+                @goto(0)
+            }
+        }
+
+        @uart_send($reply)
     }
 }
